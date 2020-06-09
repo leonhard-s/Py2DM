@@ -41,10 +41,9 @@ class Entity(metaclass=abc.ABCMeta):
         :class:`~py2dm.errors.FormatError` should be raised.
 
         :param line: The line to parse
-        :raises FormatError: Raised if the provided line does
-            not match the format expected
+        :type line: Sequence[str]
         :return: The instance described by the given line
-
+        :rtype: :class:`Entity`
         """
         ...
 
@@ -56,7 +55,7 @@ class Entity(metaclass=abc.ABCMeta):
         into constant-width columns.
 
         :return: A list of words to write to disk
-
+        :rtype: List[str]
         """
         ...
 
@@ -70,11 +69,14 @@ class Node(Entity):
     objects like elements or node strings reference them by ID to
     position themselves in space.
 
-    :param id: The unique ID of the node
+    :param id_: The unique ID of the node
+    :type id_: int
     :param x: X position of the node
+    :type x: float
     :param y: Y position of the node
+    :type y: float
     :param z: Z position of the node
-
+    :type z: float
     """
 
     __slots__ = ['id', 'x', 'y', 'z']
@@ -82,10 +84,10 @@ class Node(Entity):
 
     # pylint: disable=invalid-name
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
-        self.id = id_
-        self.x = x
-        self.y = y
-        self.z = z
+        self.id = id_  #: The unique ID of the noe
+        self.x = x  #: The X position of the node
+        self.y = y  #: The Y position of the node
+        self.z = z  #: The Z position of the node
 
     def __repr__(self) -> str:
         return f'Node #{self.id}: {self.pos}'
@@ -119,10 +121,13 @@ class Element(Entity):
     element. The actual element classes themselves mostly serve to
     specify the 2DM card and number of nodes.
 
-    :param id: The unique ID of the element
+    :param id_: The unique ID of the element
+    :type id_: int
     :param \*nodes: Any number of nodes making up the element
-    :param materials: Any number of material IDs for the element
-
+    :type \*nodes: int
+    :param materials: Any number of material IDs for the element,
+        defaults to ``None``
+    :type materials: Tuple[Union[int, float], ...], optional
     """
 
     # pylint: disable=invalid-name
@@ -133,9 +138,9 @@ class Element(Entity):
     def __init__(self, id_: int, *nodes: int,
                  materials: Optional[Tuple[MaterialIndex, ...]] = None
                  ) -> None:
-        self.id = id_
-        self.materials = materials or ()
-        self.nodes = tuple(nodes)
+        self.id = id_  #: The unique ID of the element
+        self.materials = materials or ()  #: The material IDs of the element
+        self.nodes = tuple(nodes)  #: The nodes making up the element
 
     def __repr__(self) -> str:
         return f'Element #{self.id} [{self.card}]: Node IDs {self.nodes}'
@@ -315,8 +320,10 @@ class NodeString:
     This type's card tag is ``NS``.
 
     :param \*nodes: A list of node IDs making up the node string
-    :param name: An optional name to give to a particular node string
-
+    :type \*nodes: int
+    :param name: An optional name to give to a particular node string,
+        defaults to ``None``
+    :type name: str, optional
     """
 
     __slots__ = ['name', 'nodes']
@@ -348,9 +355,12 @@ class NodeString:
         ID.
 
         :param line: The line to parse
-        :param node_string: An existing node string to append
+        :type lint: Sequence[str]
+        :param node_string: An existing node string to append, defaults
+            to ``None``
+        :type node_string: :class:`NodeString`, optional
         :return: The created node string and the final flag
-
+        :rtype: Tuple[:class:`NodeString`, bool]
         """
         if node_string is None:
             node_string = cls()
@@ -380,7 +390,7 @@ class NodeString:
         into constant-width columns.
 
         :return: A list of words to write to disk
-
+        :rtype: List[str]
         """
         list_ = [self.card, *[str(n) for n in self.nodes]]
         if self.name is not None:
