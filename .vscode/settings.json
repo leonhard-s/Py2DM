@@ -1,0 +1,44 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/__pycache__": true, // Python cache
+        "**/.mypy_cache": true // Mypy cache
+    },
+    // Python linting
+    "python.linting.pydocstyleEnabled": false,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--enable=all",
+        "--disable=suppressed-message,locally-disabled"
+    ],
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyArgs": [
+        "--ignore-missing-imports",
+        "--follow-imports=silent",
+        "--show-column-numbers",
+        "--strict"
+    ],
+    // Python unit tests
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true,
+    // VS Intellicode
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "python.jediEnabled": false,
+    // ReStructuredText
+    "autoDocstring.docstringFormat": "sphinx",
+    "restructuredtext.confPath": "${workspaceFolder}\\docs\\source",
+    "restructuredtext.languageServer.disabled": false
+}
