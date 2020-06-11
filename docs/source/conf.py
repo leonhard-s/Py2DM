@@ -7,7 +7,6 @@
 import os
 import sys
 
-import py2dm
 
 # -- Path setup --------------------------------------------------------------
 
@@ -23,7 +22,7 @@ sys.path.insert(0, os.path.abspath('./.'))
 project = 'Py2DM'
 copyright = '2020, Leonhard S.'
 author = 'Leonhard S.'
-version = py2dm.__version__
+version = '0.1.0a'
 
 
 # -- General configuration ---------------------------------------------------
@@ -47,6 +46,9 @@ primary_domain = 'py'
 
 # Append "()" to any function or method references in the docs
 add_function_parentheses = True
+
+# Specify the master document for the documentation
+master_doc = 'index'
 
 
 # -- Options for HTML output -------------------------------------------------
