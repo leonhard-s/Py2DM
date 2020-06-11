@@ -7,6 +7,8 @@
 import os
 import sys
 
+import py2dm
+
 
 # -- Path setup --------------------------------------------------------------
 
@@ -22,7 +24,7 @@ sys.path.insert(0, os.path.abspath('./.'))
 project = 'Py2DM'
 copyright = '2020, Leonhard S.'
 author = 'Leonhard S.'
-version = '0.1.0a'
+version = py2dm.__version__
 
 
 # -- General configuration ---------------------------------------------------
