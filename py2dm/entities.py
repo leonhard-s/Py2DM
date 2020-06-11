@@ -162,7 +162,7 @@ class Element(Entity):
     def to_list(self) -> List[str]:
         nodes = [str(n) for n in self.nodes]
         materials = [format_matid(m) for m in self.materials]
-        return [self.card, *nodes, *materials]
+        return [self.card, str(self.id), *nodes, *materials]
 
 
 class LinearElement(Element):

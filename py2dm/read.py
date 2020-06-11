@@ -226,8 +226,9 @@ class Reader:
         """
         self._require_open()
         assert self._file is not None
+        self._file.seek(0)
         while True:
-            line = next_line(iter(self._file))
+            line = next_line(self._file)
             if not line:
                 break
             if filter_(line):
@@ -250,8 +251,8 @@ class Reader:
         :rtype: Iterator[:class:`~py2dm.entities.Element`]
         """
         def is_element(line: str) -> bool:
-            element_tags = ('E2L', 'E3L', 'E3T', 'E4Q', 'E6T', 'E8Q', 'E9Q')
-            return line.split()[0] in element_tags
+            element_cards = ('E2L', 'E3L', 'E3T', 'E4Q', 'E6T', 'E8Q', 'E9Q')
+            return line.strip().split()[0] in element_cards
 
         last_id = 0
         for line in self._filter_lines(is_element):

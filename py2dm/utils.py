@@ -52,7 +52,6 @@ def format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     :rtype: str
     """
     string = f'{float(value):.{decimals}e}'  # Format
-    string = f'{string.rstrip("0")}0'  # Strip all but 1 trailing zero
     return string
 
 
