@@ -7,7 +7,7 @@ with open(os.path.join(readme_dir, 'README.md')) as readme:
     long_description = readme.read()
 
 setuptools.setup(name='py2dm',
-                 version='0.1.0a',
+                 version='0.1.0a2',
                  description='Read and write 2DM mesh files',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
@@ -19,4 +19,5 @@ setuptools.setup(name='py2dm',
                               'Programming Language :: Python :: 3',
                               'Programming Language :: Python :: 3.7',
                               'Programming Language :: Python :: 3 :: Only'],
+                 packages=['py2dm'],
                  keywords='mesh 2dm')

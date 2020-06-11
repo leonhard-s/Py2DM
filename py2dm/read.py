@@ -212,10 +212,11 @@ class Reader:
         :rtype: :class:`~py2dm.entities.Element`
         """
         try:
-            if (element := self.elements[element_id-1]).id == element_id:
-                return element
+            element = self.elements[element_id-1]
         except IndexError as err:
             raise KeyError(f'No element with ID {element_id} found') from err
+        if element.id == element_id:
+            return element
         for element in self.elements:
             if element.id == element_id:
                 return element
@@ -334,10 +335,11 @@ class Reader:
         :rtype: :class:`~py2dm.entities.Node`
         """
         try:
-            if (node := self.nodes[node_id-1]).id == node_id:
-                return node
+            node = self.nodes[node_id-1]
         except IndexError as err:
             raise KeyError(f'No node with ID {node_id} found') from err
+        if node.id == node_id:
+            return node
         for node in self.nodes:
             if node.id == node_id:
                 return node
