@@ -6,19 +6,19 @@ A Python module for reading and writing SMS 2DM mesh files.
 
 This module currently only supports a small subset of the cards defined in the 2DM format specification. If your use-case requires support of additional cards, feel free to get in touch via the [repository issues](https://github.com/leonhard-s/Py2DM/issues).
 
-| Card                   | Description                            |
-| :--------------------- | :------------------------------------- |
-| MESH2D                 | File format identifier                 |
-| NUM_MATERIALS_PER_ELEM | The number of material IDs per element |
-| ND                     | A 3D mesh node                         |
-| NS                     | A line string connecting nodes         |
-| E2L                    | Two-noded line element                 |
-| E3L                    | Three-noded linear element             |
-| E3T                    | Three-noded triangular element         |
-| E6T                    | Six-noded triangular element           |
-| E4Q                    | Four-noded quadrilateral element       |
-| E8Q                    | Eight-noded quadrilateral element      |
-| E9Q                    | Nine-noded quadrilateral element       |
+| Card                   | Description                            | Python representation                                                                     |
+| :--------------------- | :------------------------------------- | :---------------------------------------------------------------------------------------- |
+| MESH2D                 | File format identifier                 | -                                                                                         |
+| NUM_MATERIALS_PER_ELEM | The number of material IDs per element | -                                                                                         |
+| ND                     | A 3D mesh node                         | [`Node`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Node)             |
+| NS                     | A line string connecting nodes         | [`NodeString`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.NodeString) |
+| E2L                    | Two-noded line element                 | [`Element2L`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element2L)   |
+| E3L                    | Three-noded linear element             | [`Element3L`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element3L)   |
+| E3T                    | Three-noded triangular element         | [`Element3T`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element3T)   |
+| E6T                    | Six-noded triangular element           | [`Element6T`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element6T)   |
+| E4Q                    | Four-noded quadrilateral element       | [`Element4Q`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element4Q)   |
+| E8Q                    | Eight-noded quadrilateral element      | [`Element8Q`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element8Q)   |
+| E9Q                    | Nine-noded quadrilateral element       | [`Element9Q`](https://py2dm.readthedocs.io/en/latest/api.html#py2dm.entities.Element9Q)   |
 
 ## Getting Started
 
