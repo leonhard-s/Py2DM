@@ -6,7 +6,7 @@ readme_dir = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(readme_dir, 'README.md')) as readme:
     long_description = readme.read()
 
-setuptools.setup(name='Py2DM',
+setuptools.setup(name='py2dm',
                  version='0.1.0a',
                  description='Read and write 2DM mesh files',
                  long_description=long_description,
