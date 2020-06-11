@@ -1,5 +1,6 @@
 """Reader class."""
 
+import warnings
 from types import TracebackType
 from typing import Callable, Dict, IO, Iterator, List, Optional, Type
 from typing_extensions import Literal
@@ -59,8 +60,8 @@ class Reader:
                   f'  {self.num_elements} elements\n'
                   f'  {self.num_node_strings} node strings')
         num_materials = self.materials_per_element
-        if num_materials > 0:
-            plural = 's' if num_materials > 1 else ''
+        if num_materials is not None:
+            plural = '' if num_materials == 1 else 's'
             string += f'\n  {num_materials} material{plural} per element'
         return string
 
@@ -132,20 +133,26 @@ class Reader:
         return self._stats['num_nodestrings']
 
     @property
-    def materials_per_element(self) -> int:
-        """Return the maximum number of materials for mesh elements."""
+    def materials_per_element(self) -> Optional[int]:
+        """Return the maximum number of materials for mesh elements.
+
+        If not specified, return ``None`` instead.
+        """
         if not self._stats:
             self._calculate_stats()
-        return self._stats['num_materials_per_element']
+        nmpe = self._stats['num_materials_per_element']
+        if nmpe < 0:
+            return None
+        return nmpe
 
     def _calculate_stats(self) -> None:
         self._require_open()
         assert self._file is not None
-        self._stats = {}
+        self._stats = {'num_materials_per_element': -1}
         nodes = 0
         elements = 0
         nodestrings = 0
-        for line in self._file:
+        for line in iter(self._file):
             if line.startswith('ND'):
                 nodes += 1
             elif line.startswith('NS'):
@@ -205,7 +212,7 @@ class Reader:
         :rtype: :class:`~py2dm.entities.Element`
         """
         try:
-            if (element := self.elements[element_id+1]).id == element_id:
+            if (element := self.elements[element_id-1]).id == element_id:
                 return element
         except IndexError as err:
             raise KeyError(f'No element with ID {element_id} found') from err
@@ -259,7 +266,11 @@ class Reader:
             card = line.split(maxsplit=1)[0]
             element = element_factory(card).parse_line(line.split())
             if element.id != last_id + 1:
-                raise FormatError('Element list is not ordered')
+                if last_id == 0 and element.id == 0:
+                    warnings.warn(
+                        'Element indices are starting at 0 instead of 1')
+                else:
+                    raise FormatError('Element list is not ordered')
             last_id = element.id
             yield element
 
@@ -282,7 +293,11 @@ class Reader:
         for line in self._filter_lines(lambda s: s.startswith('ND')):
             node = Node.parse_line(line.split())
             if node.id != last_id + 1:
-                raise FormatError('Node list is not ordered')
+                if last_id == 0 and node.id == 0:
+                    warnings.warn(
+                        'Node indices are starting at 0 instead of 1')
+                else:
+                    raise FormatError('Node list is not ordered')
             last_id = node.id
             yield node
 
@@ -319,7 +334,7 @@ class Reader:
         :rtype: :class:`~py2dm.entities.Node`
         """
         try:
-            if (node := self.nodes[node_id+1]).id == node_id:
+            if (node := self.nodes[node_id-1]).id == node_id:
                 return node
         except IndexError as err:
             raise KeyError(f'No node with ID {node_id} found') from err

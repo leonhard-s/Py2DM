@@ -1,3 +1,3 @@
 # This is still a valid mesh file as far as the standard is concerned.
-MESH2DM
+MESH2D
 NUM_MATERIALS_PER_ELEM 0
