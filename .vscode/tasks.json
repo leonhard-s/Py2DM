@@ -16,7 +16,8 @@
                 "${workspaceFolder}/docs/build" // Build directory
             ],
             "presentation": {
-                "echo": false
+                "echo": false,
+                "reveal": "silent"
             },
             "problemMatcher": []
         }

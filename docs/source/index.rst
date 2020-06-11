@@ -10,8 +10,10 @@ Welcome to Py2DM's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-.. quickstart
-.. api
+   quickstart
+   api
+
+.. note:: This library is in very early stages of development and may be subject to heavy changes.
 
 .. automodule:: py2dm
 
