@@ -73,7 +73,7 @@ class Writer:
         :return: The ID of the created element
         :rtype: int
         """
-        id_ = len(self.elements)
+        id_ = len(self.elements) + 1
         self.elements.append(type_(id_, *nodes, materials=materials))
         return id_
 
@@ -126,7 +126,7 @@ class Writer:
         :return: The ID of the created node
         :rtype: int
         """
-        id_ = len(self.nodes)
+        id_ = len(self.nodes) + 1
         self.nodes.append(Node(id_, pos_x, pos_y, pos_z))
         return id_
 
