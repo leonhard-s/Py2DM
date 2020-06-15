@@ -173,10 +173,12 @@ class Writer:
         """Write all elements registered."""
         node_col = int(math.log10(len(self.nodes))) + 1
         ele_col = int(math.log10(len(self.elements))) + 1
-        matid_col = int(math.log10(self._nmpe)) + 1
+        if self._nmpe > 0:
+            matid_col = int(math.log10(self._nmpe)) + 1
         for element in self.elements:
-            columns = (3, ele_col, *(node_col,)*element.num_nodes,
-                       *(matid_col,)*self._nmpe)
+            columns = (3, ele_col, *(node_col,)*element.num_nodes)
+            if self._nmpe > 0:
+                columns = *columns, *(matid_col,)*self._nmpe
             self._write_line(element.to_list(), columns=columns)
 
     def write_header(self) -> None:
