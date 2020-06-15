@@ -148,6 +148,7 @@ class Reader:
     def _calculate_stats(self) -> None:
         self._require_open()
         assert self._file is not None
+        self._file.seek(0)
         self._stats = {'num_materials_per_element': -1}
         nodes = 0
         elements = 0
