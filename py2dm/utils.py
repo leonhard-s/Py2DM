@@ -51,7 +51,7 @@ def format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     :return: The formatted string with no extra whitespace
     :rtype: str
     """
-    string = f'{float(value):.{decimals}e}'  # Format
+    string = f'{" " if float(value) >= 0.0 else ""}{float(value):.{decimals}e}'
     return string
 
 
