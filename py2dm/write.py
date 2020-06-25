@@ -56,6 +56,16 @@ class Writer:
             string += f'\n {num_materials} material{plural} per element'
         return string
 
+    def close(self) -> None:
+        """Close the associated mesh file.
+
+        You only have to call this yourself if you opened the file
+        using :meth:`open`. The context manager will do this
+        automatically.
+        """
+        if self._file is not None:
+            self._file.close()
+
     def element(self, type_: Type[Element], nodes: Tuple[int, ...],
                 materials: Optional[Tuple[MaterialIndex, ...]] = None) -> int:
         """Create a new node at the given position.
@@ -77,17 +87,8 @@ class Writer:
         self.elements.append(type_(id_, *nodes, materials=materials))
         return id_
 
-    def close(self) -> None:
-        """Close the associated mesh file.
-
-        You only have to call this yourself if you opened the file
-        using :meth:`open`. The context manager will do this
-        automatically.
-        """
-        if self._file is not None:
-            self._file.close()
-
-    def find_node(self, pos_x: float, pos_y: float, pos_z: float) -> Optional[Node]:
+    def find_node(self, pos_x: float, pos_y: float, pos_z: float
+                  ) -> Optional[Node]:
         """Return the node at the given position, if any.
 
         This performs an exact check, be wary of floating point errors.
@@ -129,6 +130,19 @@ class Writer:
         id_ = len(self.nodes) + 1
         self.nodes.append(Node(id_, pos_x, pos_y, pos_z))
         return id_
+
+    def node_string(self, nodes: Tuple[int, ...], name: Optional[str] = None
+                    ) -> None:
+        """Create a new node string from the given node IDs.
+
+        :param nodes: The node to create the node string from
+        :type nodes: Tuple[int, ...]
+        :param name: An optional name to append to the mesh. This
+            argument should be considered deprecated by design and will
+            likely be removed in upcoming versions.
+        :type name: Optional[str]
+        """
+        self.node_strings.append(NodeString(*nodes, name=name))
 
     def num_materials_per_elem(self, value: int) -> None:
         """Set the number of materials per element for the mesh.
