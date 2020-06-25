@@ -393,6 +393,7 @@ class NodeString:
         :rtype: List[str]
         """
         list_ = [self.card, *[str(n) for n in self.nodes]]
+        list_[-1] = f'-{list_[-1]}'
         if self.name is not None:
             list_.append(self.name)
         return list_
