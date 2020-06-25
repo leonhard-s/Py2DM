@@ -40,5 +40,6 @@
     // ReStructuredText
     "autoDocstring.docstringFormat": "sphinx",
     "restructuredtext.confPath": "${workspaceFolder}\\docs\\source",
-    "restructuredtext.languageServer.disabled": false
+    "restructuredtext.languageServer.disabled": false,
+    "python.languageServer": "Microsoft"
 }
