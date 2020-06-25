@@ -2,6 +2,10 @@
 
 A Python module for reading and writing SMS 2DM mesh files.
 
+## Documentation
+
+This project's documentation is hosted at [Read the Docs](https://py2dm.readthedocs.io/en/latest/).
+
 ### Supported 2DM Cards
 
 This module currently only supports a small subset of the cards defined in the 2DM format specification. If your use-case requires support of additional cards, feel free to get in touch via the [repository issues](https://github.com/leonhard-s/Py2DM/issues).
