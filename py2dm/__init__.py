@@ -20,4 +20,4 @@ __all__ = ['Element', 'Element2L', 'Element3L', 'Element3T', 'Element4Q',
            'NodeString', 'QuadrilateralElement', 'Reader', 'TriangularElement',
            'Writer']
 
-__version__ = '0.1.0a'
+__version__ = '0.1.0'
