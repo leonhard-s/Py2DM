@@ -2,7 +2,7 @@
 
 import unittest
 
-import py2dm
+import py2dm  # pylint: disable=import-error
 
 
 class ReaderTests(unittest.TestCase):
