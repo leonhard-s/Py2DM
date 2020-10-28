@@ -11,8 +11,8 @@ from .entities import (Element, Element2L, Element3L, Element3T, Element4Q,
 from .utils import next_line
 
 # 2DM cards that can be read and re-written without losing information
-_SUPPORTED_CARDS = ['E2L', 'E3L', 'E3T', 'E4Q', 'E6T', 'E8Q', 'E9Q',
-                    'ND', 'NS', 'NUM_MATERIALS_PER_ELEM']
+_SUPPORTED_CARDS = ['E2L', 'E3L', 'E3T', 'E4Q', 'E6T', 'E8Q', 'E9Q', 'MESH2D',
+                    'MESHNAME', 'ND', 'NS', 'NUM_MATERIALS_PER_ELEM']
 
 
 class Reader:
@@ -41,6 +41,7 @@ class Reader:
         self._stats: Dict[str, int] = {}
         self._nodes: List[Node]
         self._elements: List[Element]
+        self._name: Optional[str] = None
         self._node_strings: List[NodeString]
 
     def __enter__(self) -> 'Reader':
@@ -79,6 +80,16 @@ class Reader:
         except AttributeError:
             self._elements = list(self.iter_elements())
             return self._elements
+
+    @property
+    def name(self) -> Optional[str]:
+        """Return the name of the mesh.
+
+        If a ``MESHNAME <name>`` tag was encountered in the file
+        header, this is the name used for the mesh. Otherwise, this
+        returns ``None``.
+        """
+        return self._name
 
     @property
     def nodes(self) -> List[Node]:
@@ -181,6 +192,9 @@ class Reader:
         if next_line(iterator) != 'MESH2D':
             raise MissingCardError('Missing required card MESH2D')
         line = next_line(iterator)
+        if line.startswith('MESHNAME'):
+            _, self._name = line.split(maxsplit=1)
+            line = next_line(iterator)
         nmpe_card = 'NUM_MATERIALS_PER_ELEM'
         if not line.startswith(nmpe_card):
             raise MissingCardError(f'Missing required card {nmpe_card}')
@@ -190,9 +204,9 @@ class Reader:
                             f'Expected 1 field, got {len(chunks)-1}')
         try:
             _ = int(chunks[1])
-        except ValueError:
-            raise CardError(nmpe_card,
-                            f'Unable to convert {chunks[1]} to an integer')
+        except ValueError as err:
+            raise CardError(nmpe_card, f'Unable to convert {chunks[1]} to '
+                            'an integer') from err
 
     def close(self) -> None:
         """Close the associated mesh file.
@@ -221,7 +235,7 @@ class Reader:
         for element in self.elements:
             if element.id == element_id:
                 return element
-        raise KeyError(f'No element with ID of {element_id} found') from err
+        raise KeyError(f'No element with ID of {element_id} found')
 
     def _filter_lines(self, filter_: Callable[[str], bool]) -> Iterator[str]:
         """Walk the entire file and return matching lines.
@@ -344,7 +358,7 @@ class Reader:
         for node in self.nodes:
             if node.id == node_id:
                 return node
-        raise KeyError(f'No node with ID of {node_id} found') from err
+        raise KeyError(f'No node with ID of {node_id} found')
 
     def open(self) -> IO[str]:
         """Open the associated mesh file.
