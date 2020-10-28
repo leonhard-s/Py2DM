@@ -20,4 +20,5 @@ setuptools.setup(name='py2dm',
                               'Programming Language :: Python :: 3.7',
                               'Programming Language :: Python :: 3 :: Only'],
                  packages=['py2dm'],
+                 package_data={'py2dm': ['py.typed']},
                  keywords='mesh 2dm')

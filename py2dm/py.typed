@@ -1,0 +1,3 @@
+# This is a marker file used to inform static type checkers like Mypy or
+# Pylance that this library is fully type-hinted and does not require external
+# type stubs.
