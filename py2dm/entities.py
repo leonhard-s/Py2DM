@@ -1,4 +1,4 @@
-"""Python versions of the objects representated by the 2DM mesh."""
+"""Python versions of the objects represented by the 2DM mesh."""
 
 import abc
 from typing import ClassVar, List, Optional, Sequence, Tuple, Type, TypeVar
