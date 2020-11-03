@@ -109,13 +109,13 @@ class Reader(metaclass=abc.ABCMeta):
 
         Arguments:
             filepath: The path of the mesh file to read.
+
             validate (optional): Whether to check the mesh for
                 inconsistencies and other issues. Disabling this may
                 slightly improve performance when opening large meshes.
-                Defaults to True.
+                Defaults to ``True``.
 
         """
-        self._file = open(filepath)
         self._filepath = filepath
         if validate:
             self._validate()
@@ -134,8 +134,8 @@ class Reader(metaclass=abc.ABCMeta):
                 Defaults to :attr:`py2dm.ReadMode.BATCHED`.
 
         Raises:
-            ValueError: Raised if the given `mode` does not match any
-                subclass of :class:`py2dm.Reader`.
+            NotImplementedError: Raised if the given `mode` does not
+                match any subclass of :class:`py2dm.Reader`.
 
         Returns:
             A subclass of :class:`py2dm.Reader` if the `mode` argument
@@ -148,7 +148,7 @@ class Reader(metaclass=abc.ABCMeta):
             for subclass in cls.__subclasses__():
                 if subclass._mode == mode:
                     return subclass(*args, **kwargs)
-            raise ValueError(
+            raise NotImplementedError(
                 f'No subclass registered for read mode \'{mode}\'')
         # NOTE: A mode of None is reserved to allow propagation of this call to
         # the default object constructor, since this method has to act work as
@@ -246,11 +246,9 @@ class Reader(metaclass=abc.ABCMeta):
             via the context manager.
 
         """
-        if not self._file.closed:
-            self._file.close()
 
     @abc.abstractmethod
-    def get_element(self, id_: int) -> Element:
+    def element(self, id_: int) -> Element:
         """Return a mesh element by its unique ID.
 
         Arguments:
@@ -267,7 +265,7 @@ class Reader(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_node(self, id_: int) -> Node:
+    def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
 
         Arguments:
@@ -284,21 +282,23 @@ class Reader(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def iter_elements(self, start: int = -1,
+    def iter_elements(self, start: int = 1,
                       end: int = -1) -> Iterator[Element]:
         """Iterate over the mesh elements.
 
         Arguments:
-            start (optional): The starting element ID. If negative, the
-                first element in the mesh (i.e. 0 or 1) will be used.
-                Defaults to ``-1``.
+            start (optional): The starting element ID. Defaults to
+                ``1``.
+
             end (optional): The end element ID (exclusive). If
                 negative, continues until the list of elements is
                 exhausted. Defaults to ``-1``.
 
         Raises:
-            IndexError: Raised if the `end` ID is less than or equal to
-                the `start` ID.
+            IndexError: Raised if the `start` ID is less than ``1``, or
+                if the `end` ID is less than or equal to the `start`
+                ID, or if either of the IDs exceeds the number of
+                elements in the mesh.
 
         Yields:
             Mesh elements from the given range of IDs.
@@ -307,23 +307,25 @@ class Reader(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
+    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterate over the mesh elements.
 
         If the `end` ID is less than the `start` ID, the IDs will be
         traversed in reverse order.
 
         Arguments:
-            start (optional): The starting node ID. If negative, the
-                first node in the mesh (i.e. ID 0 or 1) will be used.
-                Defaults to ``-1``.
+            start (optional): The starting node ID. Must be greater
+                than or equal to ``1``. Defaults to ``1``.
+
             end (optional): The end node ID (exclusive). If negative,
                 continues until the list of nodes is exhausted.
                 Defaults to ``-1``.
 
         Raises:
-            IndexError: Raised if the `end` ID is less than or equal to
-                the `start` ID.
+            IndexError: Raised if the `start` ID is less than ``1``, or
+                if the `end` ID is less than or equal to the `start`
+                ID, or if either of the IDs exceeds the number of
+                nodes in the mesh.
 
         Yields:
             Mesh nodes from the given range of IDs.
