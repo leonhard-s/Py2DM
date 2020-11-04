@@ -10,7 +10,7 @@ for details.
 import abc
 import enum
 from types import TracebackType
-from typing import Any, ClassVar, Iterator, List, Optional, Type
+from typing import Any, ClassVar, Iterator, List, Optional, Type, TypeVar
 
 from .entities import Element, Node, NodeString
 
@@ -28,6 +28,8 @@ __all__ = [
     'Reader',
     'ReadMode'
 ]
+
+ReaderT = TypeVar('ReaderT', bound='Reader')
 
 # A list of all tags that are considered elements
 _ELEMENTS = [
@@ -63,7 +65,9 @@ class ReadMode(enum.Enum):
             system performance or instability.
 
         BATCHED: Mesh data is retrieved in batches of a given size as
-            specified by the :attr:`py2dm.Reader.batch_size` argument.
+            specified by :class:`py2dm.BatchedReader` class's
+            `batch_size` argument.
+
             The beginning of each batch is cached, allowing for
             retrieval of a given node or element by matching its ID to
             its associated batch. Separate batches are created for
@@ -110,13 +114,25 @@ class Reader(metaclass=abc.ABCMeta):
     node strings. Everything else (metadata, mesh names, node or
     element count, etc.) is handled by the :class:`py2dm.Reader` class.
 
+    .. note::
+
+        The abstract methods here are abstract because they raise a
+        ``NotImplementedError`` in their default implementation. They
+        do not use the :meth:`abc.abstractmethod()` decorators as this
+        upsets linters due to the factory-like usage of this base
+        class.
+
+        This is done for compatibility with the previous version's
+        syntax but has been deprecated.
+
     """
 
     # This attribute is used by subclasses to indicate which ReadMode they
     # correspond to
     _mode: ClassVar[Optional[ReadMode]] = None
 
-    def __init__(self, filepath: str, validate: bool = True) -> None:
+    def __init__(self, filepath: str, validate: bool = True,
+                 **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -131,12 +147,17 @@ class Reader(metaclass=abc.ABCMeta):
                 Defaults to ``True``.
 
         """
+        _ = kwargs.pop('mode', None)
+        if kwargs:
+            kwarg = next(iter(kwargs))
+            raise TypeError(
+                f'__init__() got an unexpected keyword argument \'{kwarg}\'')
         self._filepath = filepath
         if validate:
             self._validate()
 
-    def __new__(cls, *args: Any, mode: ReadMode = ReadMode.BATCHED,
-                **kwargs: Any) -> 'Reader':
+    def __new__(cls: Type[ReaderT], *args: Any, mode: ReadMode = ReadMode.BATCHED,
+                **kwargs: Any) -> ReaderT:
         """Return a new :class:`py2dm.Reader` instance.
 
         If `mode` has been set to a value other than ``None``, this
@@ -168,7 +189,7 @@ class Reader(metaclass=abc.ABCMeta):
         # NOTE: A mode of None is reserved to allow propagation of this call to
         # the default object constructor, since this method has to act work as
         # both the factory and as part of the regular object instantiation MRO.
-        instance: 'Reader' = super().__new__(cls)
+        instance: ReaderT = super().__new__(cls)
         return instance
 
     def __enter__(self) -> 'Reader':
@@ -262,7 +283,6 @@ class Reader(metaclass=abc.ABCMeta):
 
         """
 
-    @abc.abstractmethod
     def element(self, id_: int) -> Element:
         """Return a mesh element by its unique ID.
 
@@ -277,9 +297,8 @@ class Reader(metaclass=abc.ABCMeta):
             The element matching the given ID.
 
         """
-        ...
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
 
@@ -294,9 +313,8 @@ class Reader(metaclass=abc.ABCMeta):
             The node matching the given ID.
 
         """
-        ...
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def iter_elements(self, start: int = 1,
                       end: int = -1) -> Iterator[Element]:
         """Iterate over the mesh elements.
@@ -319,9 +337,8 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh elements from the given range of IDs.
 
         """
-        ...
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterate over the mesh elements.
 
@@ -346,9 +363,8 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh nodes from the given range of IDs.
 
         """
-        ...
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def iter_node_strings(self) -> Iterator[NodeString]:
         """Iterate over the mesh node strings.
 
@@ -356,7 +372,7 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh node strings in order of definition.
 
         """
-        ...
+        raise NotImplementedError
 
     def _validate(self) -> None:
         """Check the mesh file for issues and incompatibilities."""
@@ -377,22 +393,20 @@ class MemoryReader(Reader):
 
     _mode = ReadMode.MEMORY
 
-    def __init__(self, filepath: str, validate: bool = True) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
         mesh.
 
         Arguments:
-            filepath: The path of the mesh file to read.
+            *args: Arguments for :meth:`py2dm.Reader.__init__()`.
 
-            validate (optional): Whether to check the mesh for
-                inconsistencies and other issues. Disabling this may
-                slightly improve performance when opening large meshes.
-                Defaults to ``True``.
+            **kwargs: Keyword arguments for
+                :meth:`py2dm.Reader.__init__()`.
 
         """
-        super().__init__(filepath, validate=validate)
+        super().__init__(*args, **kwargs)
         # Load all searchable entities into memory
         self._cache_nodes: List[Node] = [
             Node.parse_line(l) for l in self._filter_lines('ND')]
