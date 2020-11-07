@@ -269,6 +269,21 @@ class Reader(metaclass=abc.ABCMeta):
         """
         return self.iter_node_strings()
 
+    @property
+    def num_elements(self) -> int:
+        """Return the number of elements in the mesh."""
+        raise NotImplementedError
+
+    @property
+    def num_nodes(self) -> int:
+        """Return the number of nodes in the mesh."""
+        raise NotImplementedError
+
+    @property
+    def num_node_strings(self) -> int:
+        """Return the number of node strings in the mesh."""
+        raise NotImplementedError
+
     def close(self) -> None:
         """Close the mesh reader.
 
@@ -421,6 +436,21 @@ class MemoryReader(Reader):
                     node_string, is_done = NodeString.parse_line(line.split())
                     if is_done:
                         self._cache_node_strings.append(node_string)
+
+    @property
+    def num_nodes(self) -> int:
+        """Return the number of elements in the mesh."""
+        return len(self._cache_nodes)
+
+    @property
+    def num_elements(self) -> int:
+        """Return the number of nodes in the mesh."""
+        return len(self._cache_elements)
+
+    @property
+    def num_node_strings(self) -> int:
+        """Return the number of node strings in the mesh."""
+        return len(self._cache_node_strings)
 
     def _filter_lines(self, card: str, *args: str) -> Iterator[List[str]]:
         """Filter the mesh's lines by their card.
