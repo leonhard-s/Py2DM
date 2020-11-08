@@ -156,7 +156,7 @@ class Reader(metaclass=abc.ABCMeta):
         if validate:
             self._validate()
 
-    def __new__(cls: Type[ReaderT], *args: Any, mode: ReadMode = ReadMode.BATCHED,
+    def __new__(cls: Type[ReaderT], *args: Any, mode: ReadMode = ReadMode.MEMORY,
                 **kwargs: Any) -> ReaderT:
         """Return a new :class:`py2dm.Reader` instance.
 
@@ -167,7 +167,7 @@ class Reader(metaclass=abc.ABCMeta):
         Arguments:
             mode (optional): The read mode to use. This controls which
                 subclass of :class:`py2dm.Reader` will be returned.
-                Defaults to :attr:`py2dm.ReadMode.BATCHED`.
+                Defaults to :attr:`py2dm.ReadMode.MEMORY`.
 
         Raises:
             NotImplementedError: Raised if the given `mode` does not
