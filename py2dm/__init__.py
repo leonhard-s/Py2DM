@@ -13,7 +13,7 @@ from . import errors
 from .entities import (Element, Element2L, Element3L, Element3T, Element4Q,
                        Element6T, Element8Q, Element9Q, LinearElement, Node,
                        NodeString, QuadrilateralElement, TriangularElement)
-from .read import Reader
+from .read import MemoryReader, Reader
 from .write import Writer
 
 __all__ = [
@@ -27,6 +27,7 @@ __all__ = [
     'Element9Q',
     'errors',
     'LinearElement',
+    'MemoryReader',
     'Node',
     'NodeString',
     'QuadrilateralElement',

@@ -391,7 +391,15 @@ class Reader(metaclass=abc.ABCMeta):
 
     def _validate(self) -> None:
         """Check the mesh file for issues and incompatibilities."""
-        # TODO: Implement 'Reader._validate()'
+        with open(self._filepath) as file_:
+            for line in file_:
+                if line.startswith(('ND', *_ELEMENTS)):
+                    _, id_str, *_ = line.split(maxsplit=2)
+                    if int(id_str) == 0:
+                        raise RuntimeError(
+                            'Zero-indexed node strings are not supported. '
+                            'See the documentation on ways to convert your '
+                            'meshes to a compatible format.')
 
 
 class MemoryReader(Reader):
