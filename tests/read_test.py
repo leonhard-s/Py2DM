@@ -8,19 +8,21 @@ import py2dm  # pylint: disable=import-error
 class ReaderTests(unittest.TestCase):
     """Test cases for the Reader class."""
 
+    reader = py2dm.Reader
+
     def test_empty(self) -> None:
         """Tests using an empty mesh file."""
-        with py2dm.Reader('tests/data/empty.2dm') as mesh:
+        with self.reader('tests/data/empty.2dm') as mesh:
             self.assertEqual(mesh.num_elements, 0)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 0)
-            self.assertListEqual(mesh.elements, [])
-            self.assertListEqual(mesh.node_strings, [])
-            self.assertListEqual(mesh.nodes, [])
+            self.assertListEqual(list(mesh.elements), [])
+            self.assertListEqual(list(mesh.node_strings), [])
+            self.assertListEqual(list(mesh.nodes), [])
 
     def test_comments(self) -> None:
         """Test using a heavily commented file."""
-        with py2dm.Reader('tests/data/all-the-comments.2dm') as mesh:
+        with self.reader('tests/data/all-the-comments.2dm') as mesh:
             self.assertEqual(mesh.num_elements, 2)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 4)
@@ -33,7 +35,7 @@ class ReaderTests(unittest.TestCase):
 
     def test_nodes_only(self) -> None:
         """Test using a mesh only containing nodes."""
-        with py2dm.Reader('tests/data/nodes-only.2dm') as mesh:
+        with self.reader('tests/data/nodes-only.2dm') as mesh:
             self.assertEqual(mesh.num_elements, 0)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 4)
@@ -43,12 +45,12 @@ class ReaderTests(unittest.TestCase):
 
     def test_zero_index(self) -> None:
         """Test using a mesh whos IDs start at 0 rather than 1."""
-        with py2dm.Reader('tests/data/zero-indexed.2dm') as mesh:
-            with self.assertWarns(UserWarning):
-                element = mesh.element(0)
-                self.assertIsInstance(element, py2dm.Element)
-                self.assertTupleEqual(element.nodes, (0, 1, 2))
-            with self.assertWarns(UserWarning):
-                node = mesh.node(0)
-                self.assertIsInstance(node, py2dm.Node)
-                self.assertTupleEqual(node.pos, (-10.0, 10.0, 0.0))
+        with self.assertRaises(RuntimeError):
+            with self.reader('tests/data/zero-indexed.2dm') as mesh:
+                pass
+
+
+class MemoryReaderTests(ReaderTests):
+    """Run the shared test cases for the MemoryReader class."""
+
+    reader = py2dm.MemoryReader
