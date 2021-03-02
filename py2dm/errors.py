@@ -10,7 +10,11 @@ class Py2DMError(BaseException):
     """
 
 
-class FormatError(Py2DMError):
+class ReadError(Py2DMError):
+    """Base exception for errors when reading a 2DM file."""
+
+
+class FormatError(ReadError):
     """Base exception related to misformatted 2DM files."""
 
 
@@ -42,6 +46,21 @@ class Py2DMWarning(Warning):
 
     This may be used to filter any custom warnings broadcast by this
     module.
+
+    """
+
+
+class FormatWarning(Py2DMWarning):
+    """Warn about a format issue with a file that could be handled."""
+
+
+class CustomFormatIgnored(FormatWarning):
+    """A custom, application-specific format extension was ignored.
+
+    Some programs utilise custom formats or extra columns. When PY2DM
+    recognises such a format but isn't able to keep its data, it sends
+    this warning to notify the user of the potential loss of
+    information.
 
     """
 
