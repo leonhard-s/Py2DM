@@ -16,7 +16,7 @@ from .entities import Element, Node, NodeString
 
 try:
     from typing import Literal
-except ModuleNotFoundError as err:
+except ModuleNotFoundError as err:  # pragma: no cover
     # Required for compatibilty with Python 3.7 (used in QGIS 3)
     try:
         from typing_extensions import Literal  # type: ignore
@@ -272,17 +272,17 @@ class Reader(metaclass=abc.ABCMeta):
     @property
     def num_elements(self) -> int:
         """Return the number of elements in the mesh."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def num_nodes(self) -> int:
         """Return the number of nodes in the mesh."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def num_node_strings(self) -> int:
         """Return the number of node strings in the mesh."""
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def close(self) -> None:
         """Close the mesh reader.
@@ -312,7 +312,7 @@ class Reader(metaclass=abc.ABCMeta):
             The element matching the given ID.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
@@ -328,7 +328,7 @@ class Reader(metaclass=abc.ABCMeta):
             The node matching the given ID.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def iter_elements(self, start: int = 1,
                       end: int = -1) -> Iterator[Element]:
@@ -352,7 +352,7 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh elements from the given range of IDs.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterate over the mesh elements.
@@ -378,7 +378,7 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh nodes from the given range of IDs.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def iter_node_strings(self) -> Iterator[NodeString]:
         """Iterate over the mesh node strings.
@@ -387,7 +387,7 @@ class Reader(metaclass=abc.ABCMeta):
             Mesh node strings in order of definition.
 
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def _validate(self) -> None:
         """Check the mesh file for issues and incompatibilities."""

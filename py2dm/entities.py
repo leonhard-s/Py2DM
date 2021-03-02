@@ -45,7 +45,6 @@ class Entity(metaclass=abc.ABCMeta):
         :return: The instance described by the given line
         :rtype: :class:`Entity`
         """
-        ...
 
     @abc.abstractmethod
     def to_list(self) -> List[str]:
@@ -57,7 +56,6 @@ class Entity(metaclass=abc.ABCMeta):
         :return: A list of words to write to disk
         :rtype: List[str]
         """
-        ...
 
 
 class Node(Entity):
