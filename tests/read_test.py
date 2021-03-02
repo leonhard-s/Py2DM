@@ -1,18 +1,18 @@
-"""Unit tests for the reader submodule."""
+"""Unit tests for the reader class."""
 
 import unittest
+import warnings
 
 import py2dm  # pylint: disable=import-error
 
 
-class ReaderTests(unittest.TestCase):
-    """Test cases for the Reader class."""
-
-    reader = py2dm.Reader
+class TestReadBasic(unittest.TestCase):
+    """Basic tests using synthetic files to check parsing behaviour."""
 
     def test_empty(self) -> None:
         """Tests using an empty mesh file."""
-        with self.reader('tests/data/empty.2dm') as mesh:
+        path = 'tests/data/empty.2dm'
+        with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_elements, 0)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 0)
@@ -22,7 +22,8 @@ class ReaderTests(unittest.TestCase):
 
     def test_comments(self) -> None:
         """Test using a heavily commented file."""
-        with self.reader('tests/data/all-the-comments.2dm') as mesh:
+        path = 'tests/data/all-the-comments.2dm'
+        with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_elements, 2)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 4)
@@ -35,7 +36,8 @@ class ReaderTests(unittest.TestCase):
 
     def test_nodes_only(self) -> None:
         """Test using a mesh only containing nodes."""
-        with self.reader('tests/data/nodes-only.2dm') as mesh:
+        path = 'tests/data/nodes-only.2dm'
+        with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_elements, 0)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 4)
@@ -44,13 +46,11 @@ class ReaderTests(unittest.TestCase):
             self.assertTupleEqual(node_2.pos, (-10.0, -10.0, 0.0))
 
     def test_zero_index(self) -> None:
-        """Test using a mesh whos IDs start at 0 rather than 1."""
-        with self.assertRaises(RuntimeError):
-            with self.reader('tests/data/zero-indexed.2dm') as mesh:
-                pass
-
-
-class MemoryReaderTests(ReaderTests):
-    """Run the shared test cases for the MemoryReader class."""
-
-    reader = py2dm.MemoryReader
+        """Test using a mesh whose IDs start at 0 rather than 1."""
+        path = 'tests/data/zero-indexed.2dm'
+        with py2dm.Reader(path, zero_index=True) as mesh:
+            self.assertEqual(mesh.num_nodes, 4)
+            self.assertEqual(mesh.num_elements, 2)
+            node_2 = mesh.node(2)
+            self.assertIsInstance(node_2, py2dm.Node)
+            self.assertTupleEqual(node_2.pos, (10.0, 10.0, 0.0))
