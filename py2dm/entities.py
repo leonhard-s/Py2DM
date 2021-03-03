@@ -362,7 +362,6 @@ class NodeString:
         """
         if node_string is None:
             node_string = cls()
-        name: Optional[str] = None
         nodes: List[int] = []
         is_done = True
         for index, field in enumerate(line[1:]):
@@ -370,15 +369,13 @@ class NodeString:
             if id_ < 0:
                 nodes.append(-id_)
                 if len(line) > index+2:
-                    name = line[index+2]
+                    node_string.name = line[index+2]
                 break
             nodes.append(id_)
         else:
             is_done = False
         # Update NodeString instance
-        node_string.nodes = *node_string.nodes, *nodes
-        node_string.name = name
-        # Break -> is done
+        node_string.nodes = (*node_string.nodes, *nodes)
         return node_string, is_done
 
     def to_list(self) -> List[str]:
