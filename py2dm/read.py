@@ -8,7 +8,7 @@ for details.
 """
 
 from types import TracebackType
-from typing import Any, ClassVar, Iterator, List, Optional, Type
+from typing import Any, ClassVar, Iterator, List, Optional, Tuple, Type
 
 from .entities import Element, Node, NodeString
 
@@ -89,6 +89,56 @@ class Reader:
         _ = exc_type, exc_value, exc_tb
         self.close()
         return False
+
+    def __str__(self) -> str:
+        return ('Py2DM Reader\n'
+                f'\t{self.num_nodes} nodes\n'
+                f'\t{self.num_elements} elements\n'
+                f'\t{self.num_node_strings} node strings')
+
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        """Alias for :attr:`Reader.extent`."""
+        return self.extent
+
+    @property
+    def extent(self) -> Tuple[float, float, float, float]:
+        """Return the extents of the mesh as a tuple of four floats.
+
+        The tuple is structured as ``[minX, maxX, minY, maxY]``.
+
+        If the given mesh is empty, the returned tuple will consist of
+        four ``nan`` (not a number) values.
+
+        .. note::
+
+            The 2DM format does not cache the mesh extents. The first
+            time this property is accessed, all nodes are checked to
+            find the extreme values, which can take considerable time
+            for very large meshes (i.e. ones with millions of nodes).
+
+            Any successive calls will re-use this value.
+
+        """
+        iterator = iter(self.iter_nodes())
+        # Get initial node for base values
+        try:
+            node = next(iterator)
+        except StopIteration:
+            # Mesh is empty/contains no nodes
+            return (float('nan'),) * 4
+        minX, maxX, minY, maxY = (*node.x, *node.y)
+        # Update value
+        for node in self.iter_nodes():
+            if node.x < minX:
+                minX = node.x
+            elif node.x > maxX:
+                maxX = node.x
+            if node.y < minY:
+                minY = node.y
+            elif node.y > maxY:
+                maxY = node.y
+        return minX, maxX, minY, maxY
 
     @property
     def elements(self) -> Iterator[Element]:
