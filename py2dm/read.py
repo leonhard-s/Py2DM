@@ -457,10 +457,27 @@ class Reader:
         :type start: :class:`int`
         :param end: End index for the node strings (exclusive).
         :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``0``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs reaches the number of
+            node strings in the mesh.
         :yield: Mesh node strings in order of definition.
         :type: :class:`py2dm.NodeString`
         """
-        return iter(self._cache_node_strings)
+        # TODO: Fix to support negative limits and zero-indexed files
+        if start < 0:
+            raise IndexError('Start node string index may not be negative '
+                             f'({start})')
+        if 0 < end <= start:
+            raise IndexError('End node string index must be greater than the '
+                             f'start node string index ({start}>={end})')
+        iterator = iter(self._cache_node_strings)
+        for _ in range(start):
+            _ = next(iterator)
+        for index, node_string in enumerate(iterator):
+            if start + index >= end:
+                break
+            yield node_string
 
     def _filter_lines(self, card: str, *args: str) -> Iterator[List[str]]:
         """Filter the mesh's lines by their card.
