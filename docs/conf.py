@@ -4,6 +4,8 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+# pylint: skip-file
+
 import os
 import sys
 
@@ -16,7 +18,7 @@ import py2dm
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-sys.path.insert(0, os.path.abspath('./.'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -64,3 +66,15 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+# -- Autodoc configuration ---------------------------------------------------
+
+autodoc_typehints = 'none'
+
+
+# -- Intersphinx configuration -----------------------------------------------
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None)
+}
