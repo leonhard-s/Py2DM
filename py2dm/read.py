@@ -39,7 +39,33 @@ _ELEMENTS = [
 
 
 class Reader:
-    """Reader interface specification and class factory."""
+    """Py2DM reader class used to parse and validate 2DM files.
+
+    This class wraps the underlying mesh file and provides getters and
+    iterators to access its contents. The preferred way to use it is
+    via the context manger interface. This ensures the underlying file
+    is closed properly after access.
+
+    Py2DM supports two different read modes depending on the use case.
+    By default, the entire file is parsed and read into memory upon
+    initialisation of the reader. This is the faster option for most
+    use cases, but may cause issues with very large meshes with
+    millions of elements or multiple Gigabytes in file size.
+
+    Alternatively, passing `lazy=True` into the :class:`Reader` class's
+    initialiser will switch to a different implementation. In this
+    mode, the file is parsed once to provide metadata like element or
+    node count, but nodes and elements will not be read into memory to
+    save space in exchange for higher access latency.
+
+    In lazy read mode, file iterators are used for sequential access
+    like :meth:`Reader.iter_nodes`, while random ID-based getters like
+    :meth:`Reader.node` use a binary search to identify the requested
+    element instead.
+
+    For more information on the lazy read mode, refer to the `Py2DM
+    documentation <https://py2dm.readthedocs.io/en/latest/>`_.
+    """
 
     def __init__(self, filepath: str, lazy: bool = False, **kwargs: Any) -> None:
         """Initialise the mesh reader.
@@ -47,13 +73,37 @@ class Reader:
         This opens the underlying file and preloads metadata for the
         mesh.
 
-        Arguments:
-            filepath: The path of the mesh file to read.
-
+        :param filepath: Path to the mesh file to open
+        :type filepath: :class:`str`
+        :param lazy: Disables preloading of node and element data. Use this
+            setting to reduce memory usage with large meshes
+        :type lazy: :class:`bool`
         """
         self.materials_per_element = int(kwargs.get('materials', 0))
+        """Number of materials per element.
+
+        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
+        card. Alternatively, the user may specify the number of
+        materials to use via the `materials` argument of the
+        :class:`Reader` class.
+
+        If the number of materials is not specified in the file or via
+        the `materials` argument, the number of elements will default
+        to `0`.
+
+        :type: :class:`int`
+        """
         # TODO: Add MATERIALS_PER_ELEM parser
         self.name = 'Unnamed mesh'
+        """Display name of the mesh.
+        
+        If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are
+        provided, their specified name will be used here. If neither
+        card is given, the mesh name will default to
+        ``"Unnamed mesh"``.
+
+        :type: :class:`str`
+        """
         # TODO: Add MESHNAME and GM parsers
         self._filepath = filepath
         self._lazy = lazy
@@ -80,24 +130,11 @@ class Reader:
                         self._cache_node_strings.append(node_string)
 
     def __enter__(self) -> 'Reader':
-        """Enter the context manager.
-
-        This has no side effects and does not alter the class in any
-        way.
-
-        """
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
                  exc_value: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> Literal[False]:
-        """Exit the context manager.
-
-        This closes the underlying mesh file if it is still open.
-
-        This will never suppress any exceptions.
-
-        """
         _ = exc_type, exc_value, exc_tb
         self.close()
         return False
@@ -110,7 +147,11 @@ class Reader:
 
     @property
     def bbox(self) -> Tuple[float, float, float, float]:
-        """Alias for :attr:`Reader.extent`."""
+        """Alias for :attr:`Reader.extent`.
+
+        :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
+            :class:`float`, :class:`float`]
+        """
         return self.extent
 
     @property
@@ -131,6 +172,9 @@ class Reader:
 
             Any successive calls will re-use this value.
 
+
+            :type: :obj:`typing.Tuple [:class:`float`, :class:`float`,
+                :class:`float`, :class:`float`]`
         """
         iterator = iter(self.iter_nodes())
         # Get initial node for base values
@@ -154,39 +198,45 @@ class Reader:
 
     @property
     def elements(self) -> Iterator[Element]:
-        """Iterate over the mesh elements.
+        """Return an iterator over all elements in the mesh.
 
         This is synonymous to calling
         :meth:`py2dm.Reader.iter_elements()` with default arguments.
 
-        If you prefer a list of elements, pass this iterator into the
-        ``list()`` constructor instead:
+        If you prefer a list of elements, cast this iterator to
+        :class:`list`.
 
         .. code-block:: python
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 elements = list(mesh.elements)
 
+        :yield: Elements from the mesh in order.
+        :type: :class:`py2dm.Element`
         """
-        return self.iter_elements()
+        for element in self.iter_elements():
+            yield element
 
     @property
     def nodes(self) -> Iterator[Node]:
-        """Iterate over the mesh nodes.
+        """Return an iterator over all nodes in the mesh.
 
         This is synonymous to calling :meth:`py2dm.Reader.iter_nodes()`
         with default arguments.
 
-        If you prefer a list of nodes, pass this iterator into the
-        ``list()`` constructor instead:
+        If you prefer a list of nodes, cast this iterator to
+        :class:`list`.
 
         .. code-block:: python
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)
 
+        :yield: Nodes from the mesh in order.
+        :type: :class:`py2dm.Node`
         """
-        return self.iter_nodes()
+        for node in self.iter_nodes():
+            yield node
 
     @property
     def node_strings(self) -> Iterator[NodeString]:
@@ -204,22 +254,34 @@ class Reader:
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)
 
+        :yield: Node strings from the mesh in order.
+        :type: :class:`py2dm.NodeString`
         """
-        return self.iter_node_strings()
+        for node_string in self.iter_node_strings():
+            yield node_string
 
     @property
     def num_elements(self) -> int:
-        """Return the number of elements in the mesh."""
+        """Return the number of elements in the mesh.
+
+        :type: :class:`int`
+        """
         return len(self._cache_elements)
 
     @property
     def num_nodes(self) -> int:
-        """Return the number of nodes in the mesh."""
+        """Return the number of nodes in the mesh.
+
+        :type: :class:`int`
+        """
         return len(self._cache_nodes)
 
     @property
     def num_node_strings(self) -> int:
-        """Return the number of node strings in the mesh."""
+        """Return the number of node strings in the mesh.
+
+        :type: :class:`int`
+        """
         return len(self._cache_node_strings)
 
     def close(self) -> None:
@@ -235,19 +297,16 @@ class Reader:
             via the context manager.
 
         """
+        _ = self
 
     def element(self, id_: int) -> Element:
         """Return a mesh element by its unique ID.
 
-        Arguments:
-            id_: The ID of the element to return.
-
-        Raises:
-            KeyError: Raised if the given `id_` is invalid
-
-        Returns:
-            The element matching the given ID.
-
+        :param id_: The ID of the element to return.
+        :type id_: :class:`int`
+        :raises KeyError: Raised if the given `id_` is invalid.
+        :return: The element matching the given ID.
+        :rtype: :class:`py2dm.Element`
         """
         # Conform ID to always be one-indexed
         id_conf = id_+1 if self._zero_index else id_
@@ -270,15 +329,11 @@ class Reader:
     def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
 
-        Arguments:
-            id_: The ID of the node to return.
-
-        Raises:
-            KeyError: Raised if the given `id_` is invalid
-
-        Returns:
-            The node matching the given ID.
-
+        :param id_: The ID of the node to return.
+        :type id_: :class:`int`
+        :raises KeyError: Raised if the given `id_` is invalid.
+        :return: The node matching the given ID.
+        :rtype: :class:`py2dm.Node`
         """
         # Conform ID to alwasy be one-indexed
         id_conf = id_+1 if self._zero_index else id_
@@ -315,34 +370,31 @@ class Reader:
         :raises KeyError: Raised if no node string of the given name
             exists
         :return: The node string of the given name, if any.
+        :rtype: :class:`py2dm.NodeString`
         """
         for node_string in self.iter_node_strings():
             if node_string.name == name:
                 return node_string
         raise KeyError(f'Node string \'{name}\' not found')
 
-    def iter_elements(self, start: int = 1,
+    def iter_elements(self, start: int = -1,
                       end: int = -1) -> Iterator[Element]:
-        """Iterate over the mesh elements.
+        """Iterator over the mesh elements.
 
-        Arguments:
-            start (optional): The starting element ID. Must be greater
-                than or equal to ``1``. Defaults to ``1``.
-
-            end (optional): The end element ID (exclusive). If
-                negative, continues until the list of elements is
-                exhausted. Defaults to ``-1``.
-
-        Raises:
-            IndexError: Raised if the `start` ID is less than ``1``, or
-                if the `end` ID is less than or equal to the `start`
-                ID, or if either of the IDs exceeds the number of
-                elements in the mesh.
-
-        Yields:
-            Mesh elements from the given range of IDs.
-
+        :param start: The starting element ID. If not specified, the
+            first node in the mesh is used as the starting point.
+        :type start: :class:`int`
+        :param end: The end element ID (excluding the `end` ID). If
+            negative, the entire range of elements is yielded.
+        :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``1``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs exceeds the number of
+            elements in the mesh.
+        :yield: Mesh elements from the given range of IDs.
+        :type: :class:`py2dm.Element`
         """
+        # TODO: Fix to support negative limits and zero-indexed files
         if start < 1:
             raise IndexError(f'Start element ID must be greater than or equal '
                              f'to 1 ({start})')
@@ -356,29 +408,22 @@ class Reader:
                              f'{len(self._cache_elements)} elements') from err
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
-        """Iterate over the mesh elements.
+        """Iterator over the mesh nodes.
 
-        If the `end` ID is less than the `start` ID, the IDs will be
-        traversed in reverse order.
-
-        Arguments:
-            start (optional): The starting node ID. Must be greater
-                than or equal to ``1``. Defaults to ``1``.
-
-            end (optional): The end node ID (exclusive). If negative,
-                continues until the list of nodes is exhausted.
-                Defaults to ``-1``.
-
-        Raises:
-            IndexError: Raised if the `start` ID is less than ``1``, or
-                if the `end` ID is less than or equal to the `start`
-                ID, or if either of the IDs exceeds the number of
-                nodes in the mesh.
-
-        Yields:
-            Mesh nodes from the given range of IDs.
-
+        :param start: The starting node ID. If not specified, the
+            first node in the mesh is used as the starting point.
+        :type start: :class:`int`
+        :param end: The end node ID (excluding the `end` ID). If
+            negative, the entire range of nodes is yielded.
+        :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``1``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs exceeds the number of
+            nodes in the mesh.
+        :yield: Mesh nodes from the given range of IDs.
+        :type: :class:`py2dm.Node`
         """
+        # TODO: Fix to support negative limits and zero-indexed files
         if start < 1:
             raise IndexError(f'Start node ID must be greater than or equal '
                              f'to 1 ({start})')
@@ -393,12 +438,27 @@ class Reader:
             raise IndexError(f'Invalid end node ID {end}; mesh only has '
                              f'{len(self._cache_nodes)} node') from err
 
-    def iter_node_strings(self) -> Iterator[NodeString]:
-        """Iterate over the mesh node strings.
+    def iter_node_strings(self, start: int = 0,
+                          end: int = -1) -> Iterator[NodeString]:
+        """Iterator over the mesh's node strings.
 
-        Yields:
-            Mesh node strings in order of definition.
+        .. node::
 
+            Unlike :meth:`Reader.iter_elements` or
+            :meth:`Reader.iter_nodes`, this method uses Python slicing
+            notation for its ranges due to node strings not having
+            explicit IDs.
+
+            Even if the mesh is using one-indexed IDs, starting
+            iteration on the second node string still requires setting
+            `start` to ``1`` when using this function.
+
+        :param start: Starting offset for the iterator.
+        :type start: :class:`int`
+        :param end: End index for the node strings (exclusive).
+        :type end: :class:`int`
+        :yield: Mesh node strings in order of definition.
+        :type: :class:`py2dm.NodeString`
         """
         return iter(self._cache_node_strings)
 
