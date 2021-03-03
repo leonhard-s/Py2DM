@@ -41,8 +41,7 @@ _ELEMENTS = [
 class Reader:
     """Reader interface specification and class factory."""
 
-    def __init__(self, filepath: str, validate: bool = True,
-                 **kwargs: Any) -> None:
+    def __init__(self, filepath: str, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -51,15 +50,8 @@ class Reader:
         Arguments:
             filepath: The path of the mesh file to read.
 
-            validate (optional): Whether to check the mesh for
-                inconsistencies and other issues. Disabling this may
-                slightly improve performance when opening large meshes.
-                Defaults to ``True``.
-
         """
         self._filepath = filepath
-        if validate:
-            self._validate()
         # Load all searchable entities into memory
         self._cache_nodes: List[Node] = [
             Node.parse_line(l) for l in self._filter_lines('ND')]
@@ -327,18 +319,6 @@ class Reader:
                 if line.startswith(valid_cards):
                     line, *_ = line.split('#', maxsplit=1)
                     yield line.split()
-
-    def _validate(self) -> None:
-        """Check the mesh file for issues and incompatibilities."""
-        with open(self._filepath) as file_:
-            for line in file_:
-                if line.startswith(('ND', *_ELEMENTS)):
-                    _, id_str, *_ = line.split(maxsplit=2)
-                    if int(id_str) == 0:
-                        raise RuntimeError(
-                            'Zero-indexed node strings are not supported. '
-                            'See the documentation on ways to convert your '
-                            'meshes to a compatible format.')
 
 
 def _element_factory(card: str) -> Type[Element]:
