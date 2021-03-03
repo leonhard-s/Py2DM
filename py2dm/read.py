@@ -231,18 +231,29 @@ class Reader:
             id_: The ID of the element to return.
 
         Raises:
-            IndexError: Raised if the given `id_` is negative or
-                exceeds the number of elements in the mesh.
+            KeyError: Raised if the given `id_` is invalid
 
         Returns:
             The element matching the given ID.
 
         """
-        try:
-            return self._cache_elements[id_-1]
-        except IndexError as err:
-            raise IndexError(f'Invalid element ID {id_}; mesh only has '
-                             f'{len(self._cache_elements)} elements') from err
+        # Conform ID to always be one-indexed
+        id_conf = id_+1 if self._zero_index else id_
+        # Check ID range
+        if not 1 <= id_conf <= self.num_elements:
+            id_min = 0 if self._zero_index else 1
+            id_max = (
+                self.num_elements-1 if self._zero_index else self.num_elements)
+            raise KeyError(f'Invalid element ID {id_}, element IDs must be '
+                           f'between {id_min} and {id_max}')
+        if self._lazy:
+            # TODO: Check if element is contained in cached blocks
+            # TODO: Get block containing this element
+            # TODO: Resolve and add block to cache
+            # TODO: Return element
+            raise NotImplementedError()
+        else:
+            return self._cache_elements[id_conf-1]
 
     def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
@@ -251,18 +262,28 @@ class Reader:
             id_: The ID of the node to return.
 
         Raises:
-            IndexError: Raised if the given `id_` is negative or
-                exceeds the number of nodes in the mesh.
+            KeyError: Raised if the given `id_` is invalid
 
         Returns:
             The node matching the given ID.
 
         """
-        try:
-            return self._cache_nodes[id_-1]
-        except IndexError as err:
-            raise IndexError(f'Invalid node ID {id_}; mesh only has '
-                             f'{len(self._cache_nodes)} nodes') from err
+        # Conform ID to alwasy be one-indexed
+        id_conf = id_+1 if self._zero_index else id_
+        # Check ID range
+        if not 1 <= id_conf <= self.num_nodes:
+            id_min = 0 if self._zero_index else 1
+            id_max = self.num_nodes-1 if self._zero_index else self.num_nodes
+            raise KeyError(f'Invalid node ID {id_}, node IDs must be between '
+                           f'{id_min} and {id_max}')
+        if self._lazy:
+            # TODO: Check if node is contained in a cached block
+            # TODO: Get block containing this node
+            # TODO: Resolve and add block to cache
+            # TODO: Return element
+            raise NotImplementedError()
+        else:
+            return self._cache_nodes[id_conf-1]
 
     def iter_elements(self, start: int = 1,
                       end: int = -1) -> Iterator[Element]:
