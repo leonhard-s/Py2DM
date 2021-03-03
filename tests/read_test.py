@@ -441,7 +441,7 @@ class TestReadMDAL(unittest.TestCase):
     def test_not_a_mesh_file(self) -> None:
         path = 'tests/data/external/mdal/not_a_mesh_file.2dm'
         with self.assertRaises(py2dm.errors.ReadError):
-            with py2dm.Reader(path) as mesh:
+            with py2dm.Reader(path):
                 pass
 
     def test_quad_and_line(self) -> None:
@@ -451,7 +451,7 @@ class TestReadMDAL(unittest.TestCase):
             self.assertEqual(mesh.num_nodes, 5)
             self.assertTupleEqual(mesh.node(4).pos, (2000.0, 3000.0, 50.0))
             self.assertTupleEqual(mesh.element(1).nodes, (1, 2, 4, 5))
-            self.assertTupleEqual(mesh.element(2).nodes, (2, 3, 1))
+            self.assertTupleEqual(mesh.element(2).nodes, (2, 3))
 
     def test_quad_and_triangle(self) -> None:
         path = 'tests/data/external/mdal/quad_and_triangle.2dm'
@@ -464,7 +464,7 @@ class TestReadMDAL(unittest.TestCase):
 
     def test_regular_grid(self) -> None:
         path = 'tests/data/external/mdal/regular_grid.2dm'
-        with py2dm.Reader(path, materials=5) as mesh:
+        with py2dm.Reader(path, materials=1) as mesh:
             # TODO: Add compatibility flags for TUFLOW georeferencing
             self.assertEqual(mesh.num_elements, 2)
             self.assertEqual(mesh.num_nodes, 2)
@@ -476,8 +476,8 @@ class TestReadMDAL(unittest.TestCase):
     def test_triangle_e6t(self) -> None:
         path = 'tests/data/external/mdal/triangleE6T.2dm'
         with py2dm.Reader(path, materials=1) as mesh:
-            self.assertEqual(mesh.num_elements, 2)
-            self.assertEqual(mesh.num_nodes, 2)
+            self.assertEqual(mesh.num_elements, 6)
+            self.assertEqual(mesh.num_nodes, 26)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.materials_per_elem, 1)
             self.assertTupleEqual(mesh.node(14).pos, (8.281, 7.819, 0.0))
