@@ -8,7 +8,7 @@ for details.
 """
 
 from types import TracebackType
-from typing import Any, Iterator, List, Optional, Tuple, Type
+from typing import Any, Iterator, List, NamedTuple, Optional, Tuple, Type
 
 from .entities import Element, Node, NodeString
 
@@ -36,6 +36,16 @@ _ELEMENTS = [
     'E8Q',
     'E9Q'
 ]
+
+
+class _Metadata(NamedTuple):
+    """Container for mesh metadata."""
+
+    num_nodes: int
+    num_elements: int
+    num_node_strings: int
+    name: Optional[str] = None
+    num_materials_per_elem: Optional[int] = None
 
 
 class Reader:
@@ -96,7 +106,7 @@ class Reader:
         # TODO: Add MATERIALS_PER_ELEM parser
         self.name = 'Unnamed mesh'
         """Display name of the mesh.
-        
+
         If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are
         provided, their specified name will be used here. If neither
         card is given, the mesh name will default to
@@ -108,6 +118,14 @@ class Reader:
         self._filepath = filepath
         self._lazy = lazy
         self._zero_index = bool(kwargs.get('zero_index', False))
+
+        # Parse metadata
+        data = self._parse_metadata()
+        self.name = data.name
+        self.materials_per_element = data.num_materials_per_elem
+        self._num_elements = data.num_elements
+        self._num_nodes = data.num_nodes
+        self._num_node_strings = data.num_node_strings
 
         if not lazy:
 
@@ -266,7 +284,7 @@ class Reader:
 
         :type: :class:`int`
         """
-        return len(self._cache_elements)
+        return self._num_elements
 
     @property
     def num_nodes(self) -> int:
@@ -274,7 +292,7 @@ class Reader:
 
         :type: :class:`int`
         """
-        return len(self._cache_nodes)
+        return self._num_nodes
 
     @property
     def num_node_strings(self) -> int:
@@ -282,7 +300,7 @@ class Reader:
 
         :type: :class:`int`
         """
-        return len(self._cache_node_strings)
+        return self._num_node_strings
 
     def close(self) -> None:
         """Close the mesh reader.
@@ -503,6 +521,38 @@ class Reader:
                 if line.startswith(valid_cards):
                     line, *_ = line.split('#', maxsplit=1)
                     yield line.split()
+
+    def _parse_metadata(self) -> _Metadata:
+        """Parse the file for metadata.
+
+        This method is only intended to be called as part of the
+        initialiser and should not be called by other functions.
+        """
+        num_materials_per_elem: Optional[int] = None
+        name: Optional[str] = None
+        num_nodes = 0
+        num_elements = 0
+        num_node_strings = 0
+        with open(self._filepath) as file_:
+            for line in file_:
+                if line.startswith('NUM_MATERIALS_PER_ELEM'):
+                    chunks = line.split('#', maxsplit=1)[0].split(maxsplit=2)
+                    num_materials_per_elem = int(chunks[1])
+                elif line.startswith('MESHNAME') or line.startswith('GM'):
+                    # NOTE: This fails for meshes with double quotes in their
+                    # mesh name, but that is an unreasonable thing to want to
+                    # do anyway. "We'll fix it later" (tm)
+                    chunks = line.split('"', maxsplit=2)
+                    name = chunks[1]
+                elif line.startswith('ND'):
+                    num_nodes += 1
+                elif (line.startswith('NS')
+                        and '-' in line.split('#', maxsplit=1)[0]):
+                    num_node_strings += 1
+                elif line.split(maxsplit=1)[0] in _ELEMENTS:
+                    num_elements += 1
+        return _Metadata(num_nodes, num_elements, num_node_strings, name,
+                         num_materials_per_elem)
 
 
 def _element_factory(card: str) -> Type[Element]:
