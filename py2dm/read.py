@@ -285,6 +285,30 @@ class Reader:
         else:
             return self._cache_nodes[id_conf-1]
 
+    def node_string(self, name: str) -> NodeString:
+        """Return a node string by its unique name.
+
+        This is only available if the node strings define a name. For
+        meshes whose node strings are not named, convert
+        :meth:`Reader.iter_node_strings` to a :class:`list` and access
+        the node strings by index.
+
+        .. code-block:: python3
+
+            with py2dm.Reader('my-mesh.2dm') as mesh:
+                node_strings = list(mesh.iter_node_strings())
+                node_string_two = node_strings[1]
+
+        :param name: Unique name of the node string
+        :raises KeyError: Raised if no node string of the given name
+            exists
+        :return: The node string of the given name, if any.
+        """
+        for node_string in self.iter_node_strings():
+            if node_string.name == name:
+                return node_string
+        raise KeyError(f'Node string \'{name}\' not found')
+
     def iter_elements(self, start: int = 1,
                       end: int = -1) -> Iterator[Element]:
         """Iterate over the mesh elements.
