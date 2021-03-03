@@ -8,7 +8,7 @@ for details.
 """
 
 from types import TracebackType
-from typing import Any, ClassVar, Iterator, List, Optional, Tuple, Type
+from typing import Any, Iterator, List, Optional, Tuple, Type
 
 from .entities import Element, Node, NodeString
 
