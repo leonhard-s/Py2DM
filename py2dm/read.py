@@ -41,7 +41,7 @@ _ELEMENTS = [
 class Reader:
     """Reader interface specification and class factory."""
 
-    def __init__(self, filepath: str, **kwargs: Any) -> None:
+    def __init__(self, filepath: str, lazy: bool = False, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -51,13 +51,25 @@ class Reader:
             filepath: The path of the mesh file to read.
 
         """
+        self.materials_per_element = int(kwargs.get('materials', 0))
+        # TODO: Add MATERIALS_PER_ELEM parser
+        self.name = 'Unnamed mesh'
+        # TODO: Add MESHNAME and GM parsers
         self._filepath = filepath
-        # Load all searchable entities into memory
-        self._cache_nodes: List[Node] = [
-            Node.parse_line(l) for l in self._filter_lines('ND')]
-        self._cache_elements: List[Element] = [
-            _element_factory(l[0]).parse_line(l)
-            for l in self._filter_lines(*_ELEMENTS)]
+        self._lazy = lazy
+        self._zero_index = bool(kwargs.get('zero_index', False))
+
+        if not lazy:
+
+            # Create a cache of all
+            # Load all searchable entities into memory
+            self._cache_nodes: List[Node] = [
+                Node.parse_line(l) for l in self._filter_lines('ND')]
+
+            self._cache_elements: List[Element] = [
+                _element_factory(l[0]).parse_line(l)
+                for l in self._filter_lines(*_ELEMENTS)]
+
         # Node strings are special and require multiline parsing
         self._cache_node_strings: List[NodeString] = []
         with open(self._filepath, 'r') as file_:
