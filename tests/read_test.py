@@ -536,7 +536,7 @@ class TestReadMDAL(unittest.TestCase):
             self.assertEqual(mesh.num_nodes, 8)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.materials_per_element, 1)
-            self.assertTupleEqual(mesh.node(5).pos, (2000.0, 1000.0, 00.0))
+            self.assertTupleEqual(mesh.node(5).pos, (2000.0, 1000.0, 20.0))
             self.assertIsInstance(mesh.element(1), py2dm.Element8Q)
             self.assertTupleEqual(
                 mesh.element(1).nodes, (1, 2, 3, 4, 5, 6, 7, 8))
