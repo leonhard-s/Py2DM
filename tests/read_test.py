@@ -121,6 +121,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
             str(element), 'Element #1 [E2L]: Node IDs (2, 3)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E2L 2 3 4 5 6'
         element = py2dm.Element2L.parse_line(line.split())
@@ -128,6 +129,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (5, 6))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E3L 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
@@ -154,6 +156,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
             str(element), 'Element #1 [E3L]: Node IDs (2, 3, 4)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3L 2 3 4 5 6 7'
         element = py2dm.Element3L.parse_line(line.split())
@@ -161,6 +164,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (6, 7))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E2L 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
@@ -187,6 +191,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
             str(element), 'Element #1 [E3T]: Node IDs (2, 3, 4)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3T 1 2 3 4 5 6'
         element = py2dm.Element3T.parse_line(line.split())
@@ -194,6 +199,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (5, 6))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E3L 1 2 3 4'
         with self.assertRaises(py2dm.errors.CardError):
@@ -234,6 +240,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
             str(element), 'Element #1 [E6T]: Node IDs (2, 3, 4, 5, 6, 7)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E6T 1 2 3 4 5 6 7 8 9'
         element = py2dm.Element6T.parse_line(line.split())
@@ -241,6 +248,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (8, 9))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E3T 1 2 3 4 5 6 7'
         with self.assertRaises(py2dm.errors.CardError):
@@ -267,6 +275,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(
             str(element), 'Element #1 [E4Q]: Node IDs (2, 3, 4, 5)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E4Q 1 2 3 4 5 6 7'
         element = py2dm.Element4Q.parse_line(line.split())
@@ -274,6 +283,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (6, 7))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E3Q 1 2 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
@@ -300,6 +310,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(str(element), 'Element #1 [E8Q]: Node IDs '
                                  '(2, 3, 4, 5, 6, 7, 8, 9)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E8Q 1 2 3 4 5 6 7 8 9 10 11'
         element = py2dm.Element8Q.parse_line(line.split())
@@ -307,6 +318,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (10, 11))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E6Q 1 2 3 4 5 6 7 8 9'
         with self.assertRaises(py2dm.errors.CardError):
@@ -336,6 +348,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(str(element), 'Element #1 [E9Q]: Node IDs '
                                  '(2, 3, 4, 5, 6, 7, 8, 9, 10)')
+        self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E9Q 1 2 3 4 5 6 7 8 9 10 11 12'
         element = py2dm.Element9Q.parse_line(line.split())
@@ -343,6 +356,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
         self.assertTupleEqual(element.materials, (11, 12))
+        self.assertEqual(element.num_materials, 2)
         # Bad card
         line = 'E6Q 1 2 3 4 5 6 7 8 9 10'
         with self.assertRaises(py2dm.errors.CardError):
