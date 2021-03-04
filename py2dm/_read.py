@@ -136,10 +136,12 @@ class Reader:
             # Create a cache of all
             # Load all searchable entities into memory
             self._cache_nodes: List[Node] = [
-                Node.parse_line(l) for l in self._filter_lines('ND')]
+                Node.parse_line(l, allow_extra=True)
+                for l in self._filter_lines('ND')]
 
             self._cache_elements: List[Element] = [
-                _element_factory(l[0]).parse_line(l)
+                _element_factory(l[0]).parse_line(
+                    l, allow_float_materials=True)
                 for l in self._filter_lines(*_ELEMENTS)]
 
         # Node strings are special and require multiline parsing
@@ -561,6 +563,8 @@ class Reader:
         num_elements = 0
         num_node_strings = 0
         mesh2d_found: bool = False
+        last_node = -1
+        last_element = -1
         with open(self._filepath) as file_:
             for index, line in enumerate(file_):
                 if not mesh2d_found and line.split('#', maxsplit=1)[0].strip():
@@ -577,24 +581,36 @@ class Reader:
                     # mesh name, but that is an unreasonable thing to want to
                     # do anyway. "We'll fix it later" (tm)
                     chunks = line.split('"', maxsplit=2)
+                    if len(chunks) < 2:
+                        chunks = line.split(maxsplit=2)
                     name = chunks[1]
                 elif line.startswith('ND'):
-                    if(int(line.split(maxsplit=2)[1]) == 0
-                            and not self._zero_index):
+                    id_ = int(line.split(maxsplit=2)[1])
+                    if id_ == 0 and not self._zero_index:
                         raise FormatError(
                             'Zero index encountered in non-zero-indexed file',
                             self._filepath, index+1)
                     num_nodes += 1
+                    if last_node != -1 and last_node+1 != id_:
+                        raise FormatError('Node IDs are have holes',
+                                          self._filepath, index+1)
+                    last_node = id_
                 elif (line.startswith('NS')
                         and '-' in line.split('#', maxsplit=1)[0]):
                     num_node_strings += 1
                 elif line.split(maxsplit=1)[0] in _ELEMENTS:
-                    if (int(line.split(maxsplit=2)[1]) == 0
-                            and not self._zero_index):
+                    id_ = int(line.split(maxsplit=2)[1])
+                    if id_ == 0 and not self._zero_index:
                         raise FormatError(
                             'Zero index encountered in non-zero-indexed file',
                             self._filepath, index+1)
                     num_elements += 1
+                    if last_element != -1 and last_element+1 != id_:
+                        raise FormatError('Element IDs are have holes',
+                                          self._filepath, index+1)
+                    last_element = id_
+        if not mesh2d_found:
+            raise ReadError('MESH2D tag not found', self._filepath)
         return _Metadata(num_nodes, num_elements, num_node_strings, name,
                          num_materials_per_elem)
 
