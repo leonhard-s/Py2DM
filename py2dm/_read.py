@@ -10,7 +10,7 @@ for details.
 from types import TracebackType
 from typing import Any, Iterator, List, NamedTuple, Optional, Tuple, Type
 
-from .entities import Element, Node, NodeString
+from ._entities import Element, Node, NodeString
 
 try:
     from typing import Literal

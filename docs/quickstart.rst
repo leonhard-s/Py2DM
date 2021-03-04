@@ -24,7 +24,7 @@ The preferred way to use this class is via the context manager interface.
 
 For most use-cases, it will be sufficient to retrieve the geometries defined via the :attr:`py2dm.Reader.nodes`, :attr:`py2dm.Reader.elements`, and :attr:`py2dm.Reader.node_strings` attributes.
 
-.. note:: As of v0.1.0, the :attr:`Element.nodes <py2dm.entities.Element.nodes>` attribute returns node IDs, not the node objects themselves.
+.. note:: As of v0.1.0, the :attr:`Element.nodes <py2dm.Element.nodes>` attribute returns node IDs, not the node objects themselves.
 
 For larger meshes, it is not advisable to load all of the nodes or elements in a single batch. In these cases, you can process these attributes' information via their iterator counterparts, i.e. the :meth:`py2dm.Reader.iter_nodes`, :meth:`py2dm.Reader.iter_elements`, and :meth:`py2dm.Reader.iter_node_strings` methods respectively.
 

@@ -22,7 +22,7 @@ Mesh Writer
 Mesh Entities
 -------------
 
-.. automodule:: py2dm.entities
+.. automodule:: py2dm._entities
     :members:
 
 Exceptions

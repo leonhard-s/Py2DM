@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import IO, List, Optional, Tuple, Type
 from typing_extensions import Literal
 
-from .entities import Element, Node, NodeString
+from ._entities import Element, Node, NodeString
 from .types import MaterialIndex
 
 
@@ -74,7 +74,7 @@ class Writer:
         exists at this location.
 
         :param type_: The type of element to create
-        :type type_: Type[:class:`~py2dm.entities.Element`]
+        :type type_: Type[:class:`~py2dm._entities.Element`]
         :param nodes: The nodes to create the element from
         :type nodes: Tuple[int, ...]
         :param materials: Material indices for this element, defaults
