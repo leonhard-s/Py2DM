@@ -442,7 +442,7 @@ class TestReadMDAL(unittest.TestCase):
     def test_tuflow_m01_5m(self) -> None:
         path = 'tests/data/external/mdal/M01_5m_002.2dm'
         with py2dm.Reader(path, materials=1) as mesh:
-            self.assertEqual(mesh.num_elements, 20893)
+            self.assertEqual(mesh.num_elements, 20486)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.num_nodes, 20893)
             self.assertEqual(mesh.materials_per_element, 1)
