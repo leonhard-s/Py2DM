@@ -224,7 +224,8 @@ class TestReadPedantic(unittest.TestCase):
         # BASEMENT-specific element format (float material: warning or ignored)
         line = 'E3T 5 6 7 8 9.5'
         with self.assertWarns(py2dm.errors.CustomFormatIgnored):
-            _ = py2dm.Element3T.parse_line(line.split())
+            _ = py2dm.Element3T.parse_line(
+                line.split(), allow_float_materials=False)
         with warnings.catch_warnings(record=True) as warnings_:
             _ = py2dm.Element3T.parse_line(
                 line.split(), allow_float_materials=True)
@@ -503,15 +504,10 @@ class TestReadMDAL(unittest.TestCase):
 
     def test_triangle_e6t(self) -> None:
         path = 'tests/data/external/mdal/triangleE6T.2dm'
-        with py2dm.Reader(path, materials=1) as mesh:
-            self.assertEqual(mesh.num_elements, 6)
-            self.assertEqual(mesh.num_nodes, 26)
-            self.assertEqual(mesh.num_node_strings, 0)
-            self.assertEqual(mesh.materials_per_element, 1)
-            self.assertTupleEqual(mesh.node(14).pos, (8.281, 7.819, 0.0))
-            self.assertIsInstance(mesh.element(1), py2dm.Element6T)
-            self.assertTupleEqual(
-                mesh.element(4).nodes, (6, 21, 13, 22, 14, 19))
+        # NOTE: This mesh has poorly formatted IDs and is not valid for Py2DM
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path, materials=1):
+                pass
 
     def test_unordered_ids(self) -> None:
         path = 'tests/data/external/mdal/unordered_ids.2dm'
@@ -540,17 +536,12 @@ class TestReadRealistic(unittest.TestCase):
 
     def test_tm_forum_one(self) -> None:
         path = 'tests/data/external/tm_forum/HYDRO_AS-2D.2dm'
-        with py2dm.Reader(path, materials=1) as mesh:
-            self.assertEqual(mesh.name, 'HYDRO_AS-2D V2.1')
-            self.assertEqual(mesh.num_elements, 111761)
-            self.assertEqual(mesh.num_node_strings, 3)
-            self.assertEqual(mesh.num_nodes, 57094)
-            self.assertEqual(mesh.materials_per_element, 1)
-            self.assertTupleEqual(
-                mesh.node(420).pos, (7.10408867e+5, 9.61317448e+6, 9.0e+1))
-            self.assertTupleEqual(mesh.element(10).nodes, (15, 5, 16))
-            self.assertListEqual(
-                list(mesh.node_strings)[1].nodes[:10], list(range(10)))
+        # NOTE: This mesh has holes in its element IDs and cannot be read by
+        # Py2DM. Once the converter/conformer has been added, it should be
+        # enabled here.
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path, materials=1) as mesh:
+                pass
 
     def test_tm_forum_two(self) -> None:
         path = 'tests/data/external/tm_forum/original_mesh.2dm'
