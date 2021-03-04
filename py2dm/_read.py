@@ -416,18 +416,34 @@ class Reader:
         :yield: Mesh elements from the given range of IDs.
         :type: :class:`py2dm.Element`
         """
-        # TODO: Fix to support negative limits and zero-indexed files
-        if start < 1:
-            raise IndexError(f'Start element ID must be greater than or equal '
-                             f'to 1 ({start})')
-        if 0 < end <= start:
-            raise IndexError('End element ID must be greater than than start '
-                             f'element ID ({start}>={end})')
-        try:
-            return iter(self._cache_elements[start-1:end-1])
-        except IndexError as err:
-            raise IndexError(f'Invalid end element ID {end}; mesh only has '
-                             f'{len(self._cache_elements)} elements') from err
+        if self.num_elements < 1:
+            return ()
+        # Get defaults
+        id_min = 0 if self._zero_index else 1
+        id_max = self.num_elements+1 if self._zero_index else self.num_elements
+        if start < 0:
+            start = id_min
+        if end < 0:
+            end = id_max
+        # Check bounds
+        if start > id_max:
+            raise IndexError(f'Start element ID must be less than or equal to '
+                             f'{id_max} ({start})')
+        if end <= start:
+            raise IndexError('End element ID must be greater than the start '
+                             f'element ID ({end}<={start})')
+        if end > id_max:
+            raise IndexError('End element ID must be less than or equal to '
+                             f'{id_max} ({end})')
+        if self._lazy:
+            # TODO: Implement lazy iterator
+            raise NotImplementedError()
+        else:
+            offset = int(self._zero_index)
+            for index, element in enumerate(
+                    self._cache_elements[start-offset:end-offset]):
+                if index == 0 and element.id != int(self._zero_index):
+                    raise FormatError('idk', 'idk', 1)
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
@@ -445,20 +461,31 @@ class Reader:
         :yield: Mesh nodes from the given range of IDs.
         :type: :class:`py2dm.Node`
         """
-        # TODO: Fix to support negative limits and zero-indexed files
-        if start < 1:
-            raise IndexError(f'Start node ID must be greater than or equal '
-                             f'to 1 ({start})')
-        if 0 < end <= start:
-            raise IndexError('End node ID must be greater than than start '
-                             f'node ID ({start}>={end})')
-        try:
-            if end < 0:
-                return iter(self._cache_nodes[start-1:])
-            return iter(self._cache_nodes[start-1:end-1])
-        except IndexError as err:
-            raise IndexError(f'Invalid end node ID {end}; mesh only has '
-                             f'{len(self._cache_nodes)} node') from err
+        if self.num_nodes < 1:
+            return ()
+        # Get defaults
+        id_min = 0 if self._zero_index else 1
+        id_max = self.num_nodes+1 if self._zero_index else self.num_nodes
+        if start < 0:
+            start = id_min
+        if end < 0:
+            end = id_max
+        # Check bounds
+        if start > id_max:
+            raise IndexError(f'Start node ID must be less than or equal to '
+                             f'{id_max} ({start})')
+        if end <= start:
+            raise IndexError('End node ID must be greater than the start '
+                             f'element ID ({end}<={start})')
+        if end > id_max:
+            raise IndexError('End node ID must be less than or equal to '
+                             f'{id_max} ({end})')
+        if self._lazy:
+            # TODO: Implement lazy iterator
+            raise NotImplementedError()
+        else:
+            offset = int(self._zero_index)
+            return iter(self._cache_nodes[start-offset:end-offset])
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
@@ -486,20 +513,16 @@ class Reader:
         :yield: Mesh node strings in order of definition.
         :type: :class:`py2dm.NodeString`
         """
-        # TODO: Fix to support negative limits and zero-indexed files
-        if start < 0:
-            raise IndexError('Start node string index may not be negative '
-                             f'({start})')
-        if 0 < end <= start:
-            raise IndexError('End node string index must be greater than the '
-                             f'start node string index ({start}>={end})')
-        iterator = iter(self._cache_node_strings)
-        for _ in range(start):
-            _ = next(iterator)
-        for index, node_string in enumerate(iterator):
-            if start + index >= end:
-                break
-            yield node_string
+        if self.num_node_strings < 1:
+            return ()
+        if self._lazy:
+            # TODO: Implement lazy iterator
+            raise NotImplementedError()
+        else:
+            if end < 0:
+                return iter(self._cache_node_strings[start:])
+            else:
+                return iter(self._cache_node_strings[start:end])
 
     def _filter_lines(self, card: str, *args: str) -> Iterator[List[str]]:
         """Filter the mesh's lines by their card.
