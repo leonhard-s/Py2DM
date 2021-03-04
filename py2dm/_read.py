@@ -11,6 +11,7 @@ from types import TracebackType
 from typing import Any, Iterator, List, NamedTuple, Optional, Tuple, Type
 
 from ._entities import Element, Node, NodeString
+from .errors import FormatError, ReadError
 
 try:
     from typing import Literal
@@ -536,8 +537,15 @@ class Reader:
         num_nodes = 0
         num_elements = 0
         num_node_strings = 0
+        mesh2d_found: bool = False
         with open(self._filepath) as file_:
-            for line in file_:
+            for index, line in enumerate(file_):
+                if not mesh2d_found and line.split('#', maxsplit=1)[0].strip():
+                    if line.startswith('MESH2D'):
+                        mesh2d_found = True
+                    else:
+                        raise ReadError(
+                            'File is not a 2DM mesh file', self._filepath)
                 if line.startswith('NUM_MATERIALS_PER_ELEM'):
                     chunks = line.split('#', maxsplit=1)[0].split(maxsplit=2)
                     num_materials_per_elem = int(chunks[1])
@@ -548,11 +556,21 @@ class Reader:
                     chunks = line.split('"', maxsplit=2)
                     name = chunks[1]
                 elif line.startswith('ND'):
+                    if(int(line.split(maxsplit=2)[1]) == 0
+                            and not self._zero_index):
+                        raise FormatError(
+                            'Zero index encountered in non-zero-indexed file',
+                            self._filepath, index+1)
                     num_nodes += 1
                 elif (line.startswith('NS')
                         and '-' in line.split('#', maxsplit=1)[0]):
                     num_node_strings += 1
                 elif line.split(maxsplit=1)[0] in _ELEMENTS:
+                    if (int(line.split(maxsplit=2)[1]) == 0
+                            and not self._zero_index):
+                        raise FormatError(
+                            'Zero index encountered in non-zero-indexed file',
+                            self._filepath, index+1)
                     num_elements += 1
         return _Metadata(num_nodes, num_elements, num_node_strings, name,
                          num_materials_per_elem)
