@@ -104,7 +104,7 @@ class TestReadPedantic(unittest.TestCase):
         with self.assertWarns(py2dm.errors.FormatWarning):
             node = py2dm.Node.parse_line(line.split())
         self.assertEqual(node.id, 4)
-        self.assertTupleEqual(node.pos, (12.0, 34.0, 56.0))
+        self.assertTupleEqual(node.pos, (11.0, 22.0, 33.0))
         # "Strange" TUFLOW-specific node (extra data ignored: specific warning)
         line = 'ND 5 1.0 2.0 3.0 2 0. 0. 0.'
         with self.assertWarns(py2dm.errors.CustomFormatIgnored):
@@ -418,13 +418,6 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(string.name, 'string1')
         self.assertSequenceEqual(str(string), 'NodeString "string1": '
                                  '(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)')
-        # Test raw multi-word string (expected warning to use quotes)
-        line = 'NS 1 2 3 4 5 6 7 8 9 -10 string2 string3'
-        with self.assertWarns(py2dm.errors.FormatWarning):
-            string, flag = py2dm.NodeString.parse_line(line.split())
-        self.assertTrue(flag)
-        self.assertEqual(string.num_nodes, 10)
-        self.assertEqual(string.name, 'string2 string3')
         # Test quoted string ID (no known users but most sensible)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 "string4"'
         string, flag = py2dm.NodeString.parse_line(line.split())
@@ -501,8 +494,8 @@ class TestReadMDAL(unittest.TestCase):
         path = 'tests/data/external/mdal/regular_grid.2dm'
         with py2dm.Reader(path, materials=1) as mesh:
             # TODO: Add compatibility flags for TUFLOW georeferencing
-            self.assertEqual(mesh.num_elements, 2)
-            self.assertEqual(mesh.num_nodes, 2)
+            self.assertEqual(mesh.num_elements, 1875)
+            self.assertEqual(mesh.num_nodes, 1976)
             self.assertTupleEqual(
                 mesh.node(800).pos, (381527.785, 168720.985, 35.879))
             self.assertTupleEqual(
