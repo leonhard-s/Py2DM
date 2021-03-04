@@ -491,7 +491,7 @@ class Reader:
                           end: int = -1) -> Iterator[NodeString]:
         """Iterator over the mesh's node strings.
 
-        .. node::
+        .. note::
 
             Unlike :meth:`Reader.iter_elements` or
             :meth:`Reader.iter_nodes`, this method uses Python slicing
