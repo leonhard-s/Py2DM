@@ -101,7 +101,7 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Node.parse_line(line.split())
         # "Strange" node (too many coordinates: generic warning)
         line = 'ND 4 11 22 33 44'
-        with self.assertWarns(py2dm.errors.FormatWarning):
+        with self.assertWarns(py2dm.errors.CustomFormatIgnored):
             node = py2dm.Node.parse_line(line.split())
         self.assertEqual(node.id, 4)
         self.assertTupleEqual(node.pos, (11.0, 22.0, 33.0))
@@ -442,13 +442,14 @@ class TestReadMDAL(unittest.TestCase):
 
     def test_tuflow_m01_5m(self) -> None:
         path = 'tests/data/external/mdal/M01_5m_002.2dm'
-        with py2dm.Reader(path, materials=1) as mesh:
-            self.assertEqual(mesh.num_elements, 20486)
-            self.assertEqual(mesh.num_node_strings, 0)
-            self.assertEqual(mesh.num_nodes, 20893)
-            self.assertEqual(mesh.materials_per_element, 1)
-            self.assertTupleEqual(
-                mesh.node(20890).pos, (293604.333, 6178410.628, 44.671))
+        with warnings.catch_warnings(record=True):
+            with py2dm.Reader(path, materials=1) as mesh:
+                self.assertEqual(mesh.num_elements, 20486)
+                self.assertEqual(mesh.num_node_strings, 0)
+                self.assertEqual(mesh.num_nodes, 20893)
+                self.assertEqual(mesh.materials_per_element, 1)
+                self.assertTupleEqual(
+                    mesh.node(20890).pos, (293604.333, 6178410.628, 44.671))
 
     def test_numbering_gaps(self) -> None:
         path = 'tests/data/external/mdal/mesh_with_numbering_gaps.2dm'
@@ -493,14 +494,15 @@ class TestReadMDAL(unittest.TestCase):
 
     def test_regular_grid(self) -> None:
         path = 'tests/data/external/mdal/regular_grid.2dm'
-        with py2dm.Reader(path, materials=1) as mesh:
-            # TODO: Add compatibility flags for TUFLOW georeferencing
-            self.assertEqual(mesh.num_elements, 1875)
-            self.assertEqual(mesh.num_nodes, 1976)
-            self.assertTupleEqual(
-                mesh.node(800).pos, (381527.785, 168720.985, 35.879))
-            self.assertTupleEqual(
-                mesh.element(1111).nodes, (1202, 1201, 1125, 1126))
+        with warnings.catch_warnings(record=True):
+            with py2dm.Reader(path, materials=1) as mesh:
+                # TODO: Add compatibility flags for TUFLOW georeferencing
+                self.assertEqual(mesh.num_elements, 1875)
+                self.assertEqual(mesh.num_nodes, 1976)
+                self.assertTupleEqual(
+                    mesh.node(800).pos, (381527.785, 168720.985, 35.879))
+                self.assertTupleEqual(
+                    mesh.element(1111).nodes, (1202, 1201, 1125, 1126))
 
     def test_triangle_e6t(self) -> None:
         path = 'tests/data/external/mdal/triangleE6T.2dm'
