@@ -206,15 +206,15 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Element3T.parse_line(line.split())
         # Invalid element (negative element ID: error)
         line = 'E3T -2 3 4 5'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element3T.parse_line(line.split())
         # Invalid element (negative node ID: error)
         line = 'E3T 3 -4 5 6'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element3T.parse_line(line.split())
         # Invalid elements (too few node IDs: error)
-        line = 'E3T 4 5 6 7 8 9'
-        with self.assertRaises(py2dm.errors.FormatError):
+        line = 'E3T 4 5 6'
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element3T.parse_line(line.split())
 
         # NOTE: The BASEMENT-specific element format is supported for all
@@ -255,15 +255,15 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Element6T.parse_line(line.split())
         # Invalid element (negative element ID: error)
         line = 'E6T -2 3 4 5 6 7 8'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element6T.parse_line(line.split())
         # Invalid element (negative node ID: error)
         line = 'E6T 3 -4 5 6 7 8 9'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element6T.parse_line(line.split())
         # Invalid elements (too few node IDs: error)
         line = 'E6T 4 5 6 7 8 9'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element6T.parse_line(line.split())
 
     def test_e4q(self) -> None:
@@ -290,15 +290,15 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Element4Q.parse_line(line.split())
         # Invalid element (negative element ID: error)
         line = 'E4Q -2 3 4 5 6'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element4Q.parse_line(line.split())
         # Invalid element (negative node ID: error)
         line = 'E4Q 3 -4 5 6 7'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element4Q.parse_line(line.split())
         # Invalid elements (too few node IDs: error)
         line = 'E4Q 4 5 6 7'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element4Q.parse_line(line.split())
 
     def test_e8q(self) -> None:
@@ -325,15 +325,15 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Element8Q.parse_line(line.split())
         # Invalid element (negative element ID: error)
         line = 'E8Q -2 3 4 5 6 7 8 9 10'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element8Q.parse_line(line.split())
         # Invalid element (negative node ID: error)
         line = 'E8Q 3 -4 5 6 7 8 9 10 11'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element8Q.parse_line(line.split())
         # Invalid elements (too few node IDs: error)
         line = 'E8Q 4 5 6 7 8 9 10 11'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element8Q.parse_line(line.split())
 
     def test_e9q(self) -> None:
@@ -363,15 +363,15 @@ class TestReadPedantic(unittest.TestCase):
             _ = py2dm.Element9Q.parse_line(line.split())
         # Invalid element (negative element ID: error)
         line = 'E9Q -2 3 4 5 6 7 8 9 10 11'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element9Q.parse_line(line.split())
         # Invalid element (negative node ID: error)
         line = 'E9Q 3 -4 5 6 7 8 9 10 11 12'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element9Q.parse_line(line.split())
         # Invalid elements (too few node IDs: error)
         line = 'E9Q 4 5 6 7 8 9 10 11 12'
-        with self.assertRaises(py2dm.errors.FormatError):
+        with self.assertRaises(py2dm.errors.CardError):
             _ = py2dm.Element9Q.parse_line(line.split())
 
     def test_ns(self) -> None:
