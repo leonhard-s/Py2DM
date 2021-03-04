@@ -560,7 +560,7 @@ class TestReadRealistic(unittest.TestCase):
                 list(mesh.node_strings)[1].nodes[:10], list(range(10)))
 
     def test_tm_forum_two(self) -> None:
-        path = 'tests/data/external/tm_forum/HYDRO_AS-2D.2dm'
+        path = 'tests/data/external/tm_forum/original_mesh.2dm'
         with py2dm.Reader(path, materials=1) as mesh:
             self.assertEqual(mesh.name, 'Mesh')
             self.assertEqual(mesh.num_elements, 31580)
