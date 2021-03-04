@@ -77,7 +77,8 @@ class Reader:
     documentation <https://py2dm.readthedocs.io/en/latest/>`_.
     """
 
-    def __init__(self, filepath: str, lazy: bool = False, **kwargs: Any) -> None:
+    def __init__(self, filepath: str, lazy: bool = False,
+                 materials: int = None, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -123,6 +124,8 @@ class Reader:
         data = self._parse_metadata()
         self.name = data.name
         self.materials_per_element = data.num_materials_per_elem
+        if materials is not None:
+            self.materials_per_element = int(materials)
         self._num_elements = data.num_elements
         self._num_nodes = data.num_nodes
         self._num_node_strings = data.num_node_strings
