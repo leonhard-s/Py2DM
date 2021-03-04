@@ -191,8 +191,8 @@ class Reader:
             Any successive calls will re-use this value.
 
 
-            :type: :obj:`typing.Tuple [:class:`float`, :class:`float`,
-                :class:`float`, :class:`float`]`
+            :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
+                :class:`float`, :class:`float`]
         """
         iterator = iter(self.iter_nodes())
         # Get initial node for base values
