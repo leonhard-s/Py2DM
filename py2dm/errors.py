@@ -1,7 +1,7 @@
 """Defines custom exception and warning types used by Py2DM."""
 
 
-class Py2DMError(BaseException):
+class Py2DMError(Exception):
     """Base exception for any errors specific to Py2DM.
 
     Any exceptions that arise from within Py2DM will be a subclass of
