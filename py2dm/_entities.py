@@ -8,6 +8,14 @@ from .errors import CardError, CustomFormatIgnored, FormatError
 from .types import MaterialIndex
 from .utils import cast_matid, format_float, format_matid
 
+try:
+    from ._cparser import parse_element, parse_node, parse_node_string
+except ImportError:
+    from ._parser import parse_element, parse_node, parse_node_string
+    import platform
+    if platform.python_implementation == 'CPython':
+        warnings.warn('C parser not found, using Python implementation')
+
 __all__ = ['Entity', 'Element', 'Element2L', 'Element3L', 'Element3T',
            'Element4Q', 'Element6T', 'Element8Q', 'Element9Q', 'LinearElement',
            'Node', 'NodeString', 'QuadrilateralElement', 'TriangularElement']
