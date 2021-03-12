@@ -32,7 +32,7 @@ class Entity(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def parse_line(cls: Type[EntityT], line: Sequence[str]) -> EntityT:
+    def parse_line(cls: Type[EntityT], line: str) -> EntityT:
         """Create a new instance from the given line.
 
         The line passed will start with the entity's tag and have
@@ -42,7 +42,7 @@ class Entity(metaclass=abc.ABCMeta):
         :class:`~py2dm.errors.FormatError` should be raised.
 
         :param line: The line to parse
-        :type line: Sequence[str]
+        :type line: str
         :return: The instance described by the given line
         :rtype: :class:`Entity`
         """
@@ -97,7 +97,7 @@ class Node(Entity):
         return self.x, self.y, self.z
 
     @classmethod
-    def parse_line(cls, line: Sequence[str], allow_extra: bool = False) -> 'Node':
+    def parse_line(cls, line: str, **kwargs: Any) -> 'Node':
         if len(line[1:]) != 4:
             if len(line[1:]) < 4:
                 raise CardError(f'Found {len(line)-1} fields, expected '
@@ -160,7 +160,7 @@ class Element(Entity):
         return len(self.materials)
 
     @classmethod
-    def parse_line(cls: Type[ElementT], line: Sequence[str],
+    def parse_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
                    allow_float_materials: bool = True) -> ElementT:
         if len(line) < cls.num_nodes + 2:
             raise CardError(line[0], 'TODO', -1, cls.card)
@@ -372,9 +372,8 @@ class NodeString:
         return len(self.nodes)
 
     @classmethod
-    def parse_line(cls, line: Sequence[str],
-                   node_string: Optional['NodeString'] = None
-                   ) -> Tuple['NodeString', bool]:
+    def parse_line(cls, line: str, node_string: Optional['NodeString'] = None,
+                   **kwargs: Any) -> Tuple['NodeString', bool]:
         """Create a new instance from the given line.
 
         This returns a tuple consisting of the :class:`NodeString`
@@ -383,7 +382,7 @@ class NodeString:
         ID.
 
         :param line: The line to parse
-        :type lint: Sequence[str]
+        :type lint: str
         :param node_string: An existing node string to append, defaults
             to ``None``
         :type node_string: :class:`NodeString`, optional
