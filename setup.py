@@ -6,6 +6,10 @@ readme_dir = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(readme_dir, 'README.md')) as readme:
     long_description = readme.read()
 
+# Create C extension
+c_parser = setuptools.Extension(
+    "py2dm._cparser", ["src/_cparser.cpp"], optional=True)
+
 setuptools.setup(name='py2dm',
                  version='0.1.1',
                  description='Read and write 2DM mesh files',
@@ -21,4 +25,5 @@ setuptools.setup(name='py2dm',
                               'Programming Language :: Python :: 3 :: Only'],
                  packages=['py2dm'],
                  package_data={'py2dm': ['py.typed']},
-                 keywords='mesh 2dm')
+                 keywords='mesh 2dm',
+                 ext_modules=[c_parser])
