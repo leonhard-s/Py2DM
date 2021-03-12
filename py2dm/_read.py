@@ -207,19 +207,20 @@ class Reader:
             node = next(iterator)
         except StopIteration:
             # Mesh is empty/contains no nodes
-            return (float('nan'),) * 4
-        minX, maxX, minY, maxY = (*node.x, *node.y)
+            return float('nan'), float('nan'), float('nan'), float('nan')
+        min_x = max_x = node.x
+        min_y = max_y = node.y
         # Update value
         for node in self.iter_nodes():
-            if node.x < minX:
-                minX = node.x
-            elif node.x > maxX:
-                maxX = node.x
-            if node.y < minY:
-                minY = node.y
-            elif node.y > maxY:
-                maxY = node.y
-        return minX, maxX, minY, maxY
+            if node.x < min_x:
+                min_x = node.x
+            elif node.x > max_x:
+                max_x = node.x
+            if node.y < min_y:
+                min_y = node.y
+            elif node.y > max_y:
+                max_y = node.y
+        return min_x, max_x, min_y, max_y
 
     @property
     def elements(self) -> Iterator[Element]:
@@ -420,7 +421,7 @@ class Reader:
         :type: :class:`py2dm.Element`
         """
         if self.num_elements < 1:
-            return ()
+            return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
         id_max = self.num_elements+1 if self._zero_index else self.num_elements
@@ -447,6 +448,7 @@ class Reader:
                     self._cache_elements[start-offset:end-offset]):
                 if index == 0 and element.id != int(self._zero_index):
                     raise FormatError('idk', 'idk', 1)
+                yield element
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
@@ -465,7 +467,7 @@ class Reader:
         :type: :class:`py2dm.Node`
         """
         if self.num_nodes < 1:
-            return ()
+            return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
         id_max = self.num_nodes+1 if self._zero_index else self.num_nodes
@@ -517,7 +519,7 @@ class Reader:
         :type: :class:`py2dm.NodeString`
         """
         if self.num_node_strings < 1:
-            return ()
+            return iter(())
         if self._lazy:
             # TODO: Implement lazy iterator
             raise NotImplementedError()
@@ -593,7 +595,7 @@ class Reader:
                             self._filepath, index+1)
                     num_nodes += 1
                     if last_node != -1 and last_node+1 != id_:
-                        raise FormatError('Node IDs are have holes',
+                        raise FormatError('Node IDs have holes',
                                           self._filepath, index+1)
                     last_node = id_
                 elif (line.startswith('NS')
@@ -607,7 +609,7 @@ class Reader:
                             self._filepath, index+1)
                     num_elements += 1
                     if last_element != -1 and last_element+1 != id_:
-                        raise FormatError('Element IDs are have holes',
+                        raise FormatError('Element IDs have holes',
                                           self._filepath, index+1)
                     last_element = id_
         if not mesh2d_found:
