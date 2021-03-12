@@ -418,16 +418,13 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
     {
         return nullptr;
     }
-    // std::cout << "1\n";
     // Set default value
     if (nodes == nullptr)
     {
-        // std::cout << "No list passed\n";
         nodes = PyList_New(0);
     }
     else
     {
-        // std::cout << "List passed\n";
     }
     // Parse line
     const std::vector<std::string> chunks = chunks_from_line(line);
@@ -439,8 +436,6 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
                      "(node_id), got %d",
                      chunks.size() - 1);
     }
-    // std::cout << "2\n";
-
     // 2DM card
     if (chunks[0] != "NS")
     {
@@ -456,7 +451,6 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         PyErr_SetString(PyExc_TypeError, "Argument \"nodes\" must be a list");
         return nullptr;
     }
-
     bool is_done = false;
     std::string name = "";
     for (size_t i = 1; i < chunks.size(); i++)
@@ -488,18 +482,10 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         PyList_Append(nodes, PyLong_FromLong(id));
     }
-    // std::cout << "3\n";
-
     // Build return tuple
-    // std::cout << nodes << "\n"
-    //  << is_done << "\n\""
-    //  << name << "\"\n";
-    // std::cout << PyList_Check(nodes) << "\n";
     for (Py_ssize_t i = 0; i < PyList_Size(nodes); i++)
     {
         PyObject *item = PyList_GetItem(nodes, i);
-
-        // std::cout << "  " << PyLong_AsLong(item) << "\n";
         Py_DecRef(item);
     }
     return Py_BuildValue("ONs", nodes, PyBool_FromLong(is_done), name);
