@@ -1,12 +1,12 @@
 """Python versions of the objects represented by the 2DM mesh."""
 
 import abc
+from py2dm.errors import CardError, CustomFormatIgnored, FormatError
 import warnings
-from typing import ClassVar, List, Optional, Sequence, Tuple, Type, TypeVar
+from typing import Any, ClassVar, List, Optional, Tuple, Type, TypeVar
 
-from .errors import CardError, CustomFormatIgnored, FormatError
 from .types import MaterialIndex
-from .utils import cast_matid, format_float, format_matid
+from .utils import format_float, format_matid
 
 try:
     from ._cparser import parse_element, parse_node, parse_node_string
@@ -106,22 +106,12 @@ class Node(Entity):
 
     @classmethod
     def parse_line(cls, line: str, **kwargs: Any) -> 'Node':
-        if len(line[1:]) != 4:
-            if len(line[1:]) < 4:
-                raise CardError(f'Found {len(line)-1} fields, expected '
-                                'exactly 4: id, x, y, z',
-                                'TODO', -1, cls.card)
-            else:
-                warnings.warn(f'Ignored {len(line[1:])-4} unexpected fields',
-                              CustomFormatIgnored)
-        id_ = int(line[1])
-        if line[0] != cls.card:
-            raise CardError(f'Expected {cls.card} card, got {line[0]}',
-                            'TODO', -1, cls.card)
-        if id_ < 0:
-            raise CardError('Negative ID encountered', 'TODO', -1, cls.card)
-        pos: Tuple[float, float, float] = tuple(
-            float(f) for f in line[2:5])  # type: ignore
+        try:
+            id_, *pos = parse_node(line, **kwargs)
+        except ValueError as err:
+            raise FormatError(*err.args) from err
+        if len(line.split()) > 5:
+            warnings.warn('unexpected node fields', CustomFormatIgnored)
         return cls(id_, *pos)
 
     def to_list(self) -> List[str]:
@@ -169,30 +159,20 @@ class Element(Entity):
 
     @classmethod
     def parse_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
-                   allow_float_materials: bool = True) -> ElementT:
-        if len(line) < cls.num_nodes + 2:
-            raise CardError(line[0], 'TODO', -1, cls.card)
-        if not line[0] == cls.card:
-            raise CardError(f'Expected {cls.card}, got {line[2]}',
-                            'TODO', -1, cls.card)
-        id_ = int(line[1])
-        if id_ < 0:
-            raise CardError('Negative Element IDs are not allowed',
-                            'TODO', -1, cls.card)
-        nodes = [int(n) for n in line[2: cls.num_nodes+2]]
-        if len(nodes) < cls.num_nodes:
-            raise CardError(f'Expected {cls.num_nodes} for {cls.card} card, '
-                            f'got {len(nodes)}', 'TODO', -1, cls.card)
-        for node_id in nodes:
-            if node_id < 0:
-                raise CardError('Negative Element IDs are not allowed',
-                                'TODO', -1, cls.card)
-        materials = tuple(cast_matid(m) for m in line[cls.num_nodes+2:])
-        for mat in materials:
-            if isinstance(mat, float) and not allow_float_materials:
-                warnings.warn(f'Ignoring float MATID for element {id_}',
-                              CustomFormatIgnored)
+        if not line.startswith(cls.card):
+            raise CardError('Bad card', line.split(maxsplit=1)[0])
+        flag = kwargs.pop('allow_float_matid', True)
+        try:
+            id_, nodes, materials = parse_element(
+                line, allow_float_matid=True, **kwargs)
+        except ValueError as err:
+            raise CardError(*err.args, None) from err
 
+        for matid in materials:
+            if isinstance(matid, float) and not flag:
+                warnings.warn('float materials removed', CustomFormatIgnored)
+        materials = tuple(
+            filter(lambda m: flag or not isinstance(m, float), materials))
         return cls(id_, *nodes, materials=materials)
 
     def to_list(self) -> List[str]:
@@ -397,22 +377,19 @@ class NodeString:
         :return: The created node string and the final flag
         :rtype: Tuple[:class:`NodeString`, bool]
         """
+        nodes: List[int] = [] if node_string is None else list(
+            node_string.nodes)
+        allow_zero_index = bool(kwargs.pop('allow_zero_index', False))
+        try:
+            nodes, is_done, name = parse_node_string(
+                line, allow_zero_index=allow_zero_index, nodes=nodes)
+        except ValueError as err:
+            raise FormatError(*err.args) from err
         if node_string is None:
-            node_string = cls()
-        nodes: List[int] = []
-        is_done = True
-        for index, field in enumerate(line[1:]):
-            id_ = int(field)
-            if id_ < 0:
-                nodes.append(-id_)
-                if len(line) > index+2:
-                    node_string.name = line[index+2].strip('"')
-                break
-            nodes.append(id_)
-        else:
-            is_done = False
-        # Update NodeString instance
-        node_string.nodes = (*node_string.nodes, *nodes)
+            node_string = NodeString()
+        node_string.nodes = tuple(nodes)
+        if name:
+            node_string.name = name.strip('"')
         return node_string, is_done
 
     def to_list(self) -> List[str]:
