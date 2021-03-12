@@ -8,7 +8,6 @@ in a cPython extension.
 
 #include "Python.h"
 #include "assert.h"
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -190,6 +189,36 @@ string_to_double(const std::string s, bool *err)
 }
 
 /* -------------------------------------------------------------------------- */
+/*                              Custom exceptions                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @brief Get a custom exception object from the py2dm.errors submodule.
+ * 
+ * @param name The name of the object to retrieve.
+ * @return The custom Exception matching the given name.
+ */
+static PyObject *
+get_error(const std::string name)
+{
+    static PyObject *mod = PyImport_ImportModule("py2dm.errors");
+    if (!mod)
+    {
+        return NULL;
+    }
+    static PyObject *mod_dict = PyModule_GetDict(mod);
+    Py_DecRef(mod);
+    PyObject *key = PyUnicode_FromString(name.c_str());
+    PyObject *exc = PyDict_GetItemWithError(mod_dict, key);
+    Py_DecRef(key);
+    if (!exc)
+    {
+        return PyExc_Exception;
+    }
+    return exc;
+}
+
+/* -------------------------------------------------------------------------- */
 /*                              2DM card parsers                              */
 /* -------------------------------------------------------------------------- */
 
@@ -221,7 +250,7 @@ py2dm_parse_node(PyObject *self, PyObject *args, PyObject *kwargs)
     // Length
     if (chunks.size() < 5)
     {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(get_error("CardError"),
                      "Node definitions require at least 4 fields "
                      "(id, x, y, z), got %d",
                      chunks.size() - 1);
@@ -230,8 +259,9 @@ py2dm_parse_node(PyObject *self, PyObject *args, PyObject *kwargs)
     // 2DM card
     if (chunks[0] != "ND")
     {
-        /** TODO: Implement CardError */
-        PyErr_Format(PyExc_ValueError, "Invalid node card \"%s\"", chunks[0]);
+        PyErr_Format(get_error("CardError"),
+                     "Invalid node card \"%s\"",
+                     chunks[0]);
         return nullptr;
     }
     // Node ID
@@ -243,7 +273,7 @@ py2dm_parse_node(PyObject *self, PyObject *args, PyObject *kwargs)
     }
     if (id <= 0 && !(id == 0 && allow_zero_index))
     {
-        PyErr_Format(PyExc_ValueError, "Invalid node ID: %d", id);
+        PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", id);
         return nullptr;
     }
     // Coordinates
@@ -301,7 +331,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
     // Length (generic)
     if (chunks.size() < 4)
     {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(get_error("CardError"),
                      "Element definitions require at least 3 fields "
                      "(id, node_1, node_2), got %d",
                      chunks.size() - 1);
@@ -311,8 +341,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
     const std::string card = chunks[0];
     if (!card_is_element(card))
     {
-        /** TODO: Implement CardError */
-        PyErr_Format(PyExc_ValueError, "Invalid element card \"%s\"", card);
+        PyErr_Format(get_error("CardError"), "Invalid element card \"%s\"", card);
         return nullptr;
     }
     // Length (card known)
@@ -320,7 +349,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
     assert(num_nodes > 0);
     if (chunks.size() < num_nodes + 2)
     {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(get_error("CardError"),
                      "%s element definition requires at least %d fields "
                      "(id, node_1, ..., node_%d), got %d",
                      card, num_nodes - 1, num_nodes - 1, chunks.size() - 1);
@@ -335,7 +364,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
     }
     if (id <= 0 && !(id == 0 && allow_zero_index))
     {
-        PyErr_Format(PyExc_ValueError, "Invalid element ID: %d", id);
+        PyErr_Format(get_error("FormatError"), "Invalid element ID: %d", id);
         return nullptr;
     }
     // Node IDs
@@ -350,7 +379,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         if (node_id <= 0 && !(node_id == 0 && allow_zero_index))
         {
-            PyErr_Format(PyExc_ValueError, "Invalid node ID: %d", node_id);
+            PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", node_id);
             Py_DecRef(nodes);
             return nullptr;
         }
@@ -431,7 +460,7 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
     // Length
     if (chunks.size() < 2)
     {
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(get_error("CardError"),
                      "Node string definitions require at least 1 field "
                      "(node_id), got %d",
                      chunks.size() - 1);
@@ -439,8 +468,7 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
     // 2DM card
     if (chunks[0] != "NS")
     {
-        /** TODO: Implement CardError */
-        PyErr_Format(PyExc_ValueError,
+        PyErr_Format(get_error("CardError"),
                      "Invalid node string card \"%s\"",
                      chunks[0]);
         return nullptr;
@@ -464,7 +492,7 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         if (id == 0 && !allow_zero_index)
         {
-            PyErr_Format(PyExc_ValueError, "Invalid node ID: %d", id);
+            PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", id);
             Py_DecRef(nodes);
             return nullptr;
         }
