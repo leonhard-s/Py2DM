@@ -53,21 +53,14 @@ class MissingCardError(ReadError):
     """
 
 
-class FormatError(ReadError):
+class FormatError(Py2DMError):
     """Base exception type for errors encountered while parsing a mesh.
 
     This includes unknown or invalid tags, missing file headers or
     unsupported ID orderings.
 
-    This is a subclass of :class:`ReadError`.
-
-    :param filename: Name of the file being read
-    :param line: The line of the file in which the error occurred
+    This is a subclass of :class:`Py2DMError`.
     """
-
-    def __init__(self, message: str, filename: str, line: int) -> None:
-        super().__init__(message, filename)
-        self.line = line
 
 
 class CardError(FormatError):
@@ -78,16 +71,7 @@ class CardError(FormatError):
     This exception is used for any unresolvable format violations for a
     given 2DM card. This includes the number of fields, their type, or
     the card identifier itself not being recognized.
-
-    :param filename: Name of the file being read
-    :param line: The line of the file in which the error occurred
-    :param card: The 2DM card of the line that caused the error
     """
-
-    def __init__(self, message: str, filename: str,
-                 line: int, card: str) -> None:
-        super().__init__(message, filename, line)
-        self.card = card
 
 
 class WriteError(Py2DMError):
