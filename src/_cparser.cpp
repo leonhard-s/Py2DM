@@ -201,12 +201,12 @@ string_to_double(const std::string s, bool *err)
 static PyObject *
 get_error(const std::string name)
 {
-    static PyObject *mod = PyImport_ImportModule("py2dm.errors");
+    PyObject *mod = PyImport_ImportModule("py2dm.errors");
     if (!mod)
     {
         return NULL;
     }
-    static PyObject *mod_dict = PyModule_GetDict(mod);
+    PyObject *mod_dict = PyModule_GetDict(mod);
     Py_DecRef(mod);
     PyObject *key = PyUnicode_FromString(name.c_str());
     PyObject *exc = PyDict_GetItemWithError(mod_dict, key);
