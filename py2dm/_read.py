@@ -136,12 +136,13 @@ class Reader:
             # Create a cache of all
             # Load all searchable entities into memory
             self._cache_nodes: List[Node] = [
-                Node.parse_line(l, allow_extra=True)
+                Node.parse_line(l, allow_zero_index=self._zero_index)
                 for l in self._filter_lines('ND')]
 
             self._cache_elements: List[Element] = [
-                _element_factory(l[0]).parse_line(
-                    l, allow_float_materials=True)
+                _element_factory(l).parse_line(
+                    l, allow_float_matid=True,
+                    allow_zero_index=self._zero_index)
                 for l in self._filter_lines(*_ELEMENTS)]
 
         # Node strings are special and require multiline parsing
@@ -526,7 +527,7 @@ class Reader:
             else:
                 return iter(self._cache_node_strings[start:end])
 
-    def _filter_lines(self, card: str, *args: str) -> Iterator[List[str]]:
+    def _filter_lines(self, card: str, *args: str) -> Iterator[str]:
         """Filter the mesh's lines by their card.
 
         This iterates over the entire file, returning only those lines
@@ -541,7 +542,7 @@ class Reader:
             *args: Additional cards whos lines will be returned.
 
         Yields:
-            A list of whitespace-separated words of the matching line.
+            A line matching the given card descriptor.
 
         """
         valid_cards = card, *args
@@ -549,7 +550,7 @@ class Reader:
             for line in file_:
                 if line.startswith(valid_cards):
                     line, *_ = line.split('#', maxsplit=1)
-                    yield line.split()
+                    yield line
 
     def _parse_metadata(self) -> _Metadata:
         """Parse the file for metadata.
@@ -615,11 +616,11 @@ class Reader:
                          num_materials_per_elem)
 
 
-def _element_factory(card: str) -> Type[Element]:
+def _element_factory(line: str) -> Type[Element]:
     """Return a :class:`py2dm.Element` subclass by card.
 
     Arguments:
-        card: The card to look up
+        line: The line to create an element for.
 
     Raises:
         ValueError: Raised if the given card doesn't match any subclass
@@ -630,6 +631,7 @@ def _element_factory(card: str) -> Type[Element]:
     """
     for element_group in Element.__subclasses__():
         for subclass in element_group.__subclasses__():
-            if subclass.card == card:
+            if line.startswith(subclass.card):
                 return subclass
+    card = line.split(maxsplit=1)[0]
     raise NotImplementedError(f'Unsupported card name \'{card}\'')
