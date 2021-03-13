@@ -1,6 +1,6 @@
 """Python implementation of the 2DM card parser."""
 
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from .errors import CardError, FormatError
 
@@ -85,7 +85,8 @@ def parse_node(line: str, allow_zero_index: bool = False
 
 
 def parse_node_string(line: str,   allow_zero_index: bool = False,
-                      nodes: List[int] = None) -> Tuple[List[int], bool, str]:
+                      nodes: Optional[List[int]] = None
+                      ) -> Tuple[List[int], bool, str]:
     """Parse a string into a node string.
 
     This converts a valid node string definition string into a tuple

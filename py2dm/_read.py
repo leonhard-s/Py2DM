@@ -79,7 +79,7 @@ class Reader:
     """
 
     def __init__(self, filepath: str, lazy: bool = False,
-                 materials: int = None, **kwargs: Any) -> None:
+                 materials: Optional[int] = None, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
