@@ -2,6 +2,8 @@
 
 from typing import List, Tuple, Union
 
+from .errors import CardError, FormatError
+
 
 def parse_element(line: str, allow_float_matid: bool = True,
                   allow_zero_index: bool = False
@@ -16,30 +18,29 @@ def parse_element(line: str, allow_float_matid: bool = True,
     chunks = line.split('#', maxsplit=1)[0].split()
     # Length (generic)
     if len(chunks) < 4:
-        raise ValueError('Element definitions require at least 3 fields '
-                         f'(id, node_1, node_2), got {len(chunks)-1}')
+        raise CardError('Element definitions require at least 3 fields '
+                        f'(id, node_1, node_2), got {len(chunks)-1}')
     # 2DM card
     card = chunks[0]
     if not _card_is_element(card):
-        # TODO: Implement CardError
-        raise ValueError(f'Invalid element card "{card}"')
+        raise CardError(f'Invalid element card "{card}"')
     # Length (card known)
     num_nodes = _nodes_per_element(card)
     assert num_nodes > 0
     if len(chunks) < num_nodes + 2:
-        raise ValueError(
+        raise CardError(
             f'{card} element definition requires at least {num_nodes-1} '
             f'fields (id, node_1, ..., node_{num_nodes-1}), got {len(chunks)-1}')
     # Element ID
     id_ = int(chunks[1])
     if id_ <= 0 and not (id_ == 0 and allow_zero_index):
-        raise ValueError(f'Invalid element ID: {id_}')
+        raise FormatError(f'Invalid element ID: {id_}')
     # Node IDs
     nodes: List[int] = []
     for node_str in chunks[2:num_nodes+2]:
         node_id = int(node_str)
         if node_id < 0 and not (node_id == 0 and allow_zero_index):
-            raise ValueError(f'Invalid node ID: {node_id}')
+            raise FormatError(f'Invalid node ID: {node_id}')
         nodes.append(node_id)
     # Material IDs
     materials: List[Union[int, float]] = []
@@ -67,26 +68,24 @@ def parse_node(line: str, allow_zero_index: bool = False
     chunks = line.split('#', maxsplit=1)[0].split()
     # Length
     if len(chunks) < 5:
-        raise ValueError(f'Node definitions require at least 4 fields '
-                         f'(id, x, y, z), got {len(chunks)-1}')
+        raise CardError(f'Node definitions require at least 4 fields '
+                        f'(id, x, y, z), got {len(chunks)-1}')
     # 2DM card
     card = chunks[0]
     if card != "ND":
-        # TODO: Implement CardError
-        raise ValueError(f'Invalid node card "{card}"')
+        raise CardError(f'Invalid node card "{card}"')
     # Node ID
     id_ = int(chunks[1])
     if id_ <= 0 and not (id_ == 0 and allow_zero_index):
-        raise ValueError(f'Invalid node ID: {id_}')
+        raise FormatError(f'Invalid node ID: {id_}')
     # Coordinates
     pos_x, pos_y, pos_z = tuple((float(s) for s in chunks[2:5]))
     # TODO: Warn about unused fields
     return id_, pos_x, pos_y, pos_z
 
 
-def parse_node_string(line: str, nodes: List[int],
-                      allow_zero_index: bool = False
-                      ) -> Tuple[List[int], bool, str]:
+def parse_node_string(line: str,   allow_zero_index: bool = False,
+                      nodes: List[int] = None) -> Tuple[List[int], bool, str]:
     """Parse a string into a node string.
 
     This converts a valid node string definition string into a tuple
@@ -97,24 +96,26 @@ def parse_node_string(line: str, nodes: List[int],
     be created once the `done` flag (second entry in the returned
     tuple) is set to True.
     """
+    # Set default value
+    if nodes is None:
+        nodes = []
     # Parse line
     chunks = line.split('#', maxsplit=1)[0].split()
     # Length
     if len(chunks) < 2:
-        raise ValueError('Node string definitions require at least 1 field '
-                         f'(node_id), got {len(chunks)-1}')
+        raise CardError('Node string definitions require at least 1 field '
+                        f'(node_id), got {len(chunks)-1}')
     # 2DM card
     card = chunks[0]
     if card != 'NS':
-        # TODO: Implement CardError
-        raise ValueError(f'Invalid node string card "{card}"')
+        raise CardError(f'Invalid node string card "{card}"')
     # Node IDs
     is_done: bool = False
     name = ''
     for index, node_str in enumerate(chunks[1:]):
         node_id = int(node_str)
         if node_id == 0 and not allow_zero_index:
-            raise ValueError(f'Invalid node ID: {node_id}')
+            raise FormatError(f'Invalid node ID: {node_id}')
         if node_id < 0:
             # End of node string
             is_done = True
