@@ -121,8 +121,8 @@ def parse_node_string(line: str,   allow_zero_index: bool = False,
             is_done = True
             nodes.append(abs(node_id))
             # Check final identifier
-            if index+1 < len(chunks):
-                name = chunks[index+1]
+            if index+2 < len(chunks):
+                name = chunks[index+2]
             break
         nodes.append(node_id)
     return nodes, is_done, name
