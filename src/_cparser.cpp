@@ -317,7 +317,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *line;
     bool allow_float_matid = true;
-    bool allow_zero_index = true;
+    bool allow_zero_index = false;
     static char *keywords[] = {
         "line", "allow_zero_index", "allow_float_matid", NULL};
     if (!PyArg_ParseTupleAndKeywords(
@@ -403,7 +403,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
         {
             return nullptr;
         }
-        // Try convertin to double instead
+        // Try converting to double instead
         PyErr_Clear();
         err = false;
         double matid_double = string_to_double(chunks[i], &err);
@@ -451,9 +451,6 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
     if (nodes == nullptr)
     {
         nodes = PyList_New(0);
-    }
-    else
-    {
     }
     // Parse line
     const std::vector<std::string> chunks = chunks_from_line(line);
@@ -511,11 +508,6 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         PyList_Append(nodes, PyLong_FromLong(id));
     }
     // Build return tuple
-    for (Py_ssize_t i = 0; i < PyList_Size(nodes); i++)
-    {
-        PyObject *item = PyList_GetItem(nodes, i);
-        Py_DecRef(item);
-    }
     return Py_BuildValue("ONs", nodes, PyBool_FromLong(is_done), name);
 }
 
