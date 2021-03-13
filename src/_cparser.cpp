@@ -21,8 +21,7 @@ in a cPython extension.
  * @param s The 2DM card to check.
  * @return true if it is an element, otherwise false.
  */
-static bool
-card_is_element(const std::string s)
+bool card_is_element(const std::string s)
 {
     return s == "E2L" ||
            s == "E3L" ||
@@ -43,7 +42,7 @@ card_is_element(const std::string s)
  * @return The number of nodes as a positive integer, or -1 if the
  * given card is not a known element.
  */
-static size_t
+size_t
 nodes_per_element(const std::string s)
 {
     if (s == "E2L")
@@ -88,7 +87,7 @@ nodes_per_element(const std::string s)
  * @param maxsplit The maximum number of splits performed.
  * @return A vector of substrings split at the given delimiter.
  */
-static std::vector<std::string>
+std::vector<std::string>
 split(const std::string s, const std::string d, const Py_ssize_t maxsplit)
 {
     PyObject *py_s = PyUnicode_FromString(s.c_str());
@@ -106,11 +105,9 @@ split(const std::string s, const std::string d, const Py_ssize_t maxsplit)
     }
     Py_ssize_t n = PyList_Size(py_l);
     std::vector<std::string> chunks(n);
-    PyObject *py_i;
     for (Py_ssize_t i = 0; i < n; i++)
     {
-        py_i = PyList_GetItem(py_l, i);
-        assert(PyUnicode_Check(py_i));
+        PyObject *py_i = PyList_GetItem(py_l, i);
         chunks[i] = PyUnicode_AsUTF8(py_i);
         Py_DecRef(py_i);
     }
@@ -127,8 +124,8 @@ split(const std::string s, const std::string d, const Py_ssize_t maxsplit)
  * @param line The line to parse.
  * @return A vector of data chunks in the given line.
  */
-static std::vector<std::string>
-chunks_from_line(char *line)
+std::vector<std::string>
+chunks_from_line(const char *line)
 {
     const std::string trimmed = split(line, "#", 1)[0];
     return split(trimmed, "", -1);
@@ -146,17 +143,21 @@ chunks_from_line(char *line)
  * @param err Error flag. Set to true on error
  * @return Converted long or NULL on error.
  */
-static long
-string_to_long(const std::string s, bool *err)
+long string_to_long(const std::string s, bool *err)
 {
     PyObject *py_l = PyLong_FromString(s.c_str(), nullptr, 10);
     if (PyErr_Occurred())
     {
         *err = true;
-        return NULL;
+        return -1;
     }
     long l = PyLong_AsLong(py_l);
     Py_DecRef(py_l);
+    if (PyErr_Occurred())
+    {
+        *err = true;
+        return -1;
+    }
     return l;
 }
 
@@ -181,10 +182,15 @@ string_to_double(const std::string s, bool *err)
     if (PyErr_Occurred())
     {
         *err = true;
-        return NULL;
+        return -1.0;
     }
     double d = PyFloat_AsDouble(py_d);
     Py_DecRef(py_d);
+    if (PyErr_Occurred())
+    {
+        *err = true;
+        return -1.0;
+    }
     return d;
 }
 
@@ -198,13 +204,13 @@ string_to_double(const std::string s, bool *err)
  * @param name The name of the object to retrieve.
  * @return The custom Exception matching the given name.
  */
-static PyObject *
+PyObject *
 get_error(const std::string name)
 {
     PyObject *mod = PyImport_ImportModule("py2dm.errors");
     if (!mod)
     {
-        return NULL;
+        return nullptr;
     }
     PyObject *mod_dict = PyModule_GetDict(mod);
     Py_DecRef(mod);
@@ -235,7 +241,7 @@ get_error(const std::string name)
  * position), or nullptr on error.
  */
 static PyObject *
-py2dm_parse_node(PyObject *self, PyObject *args, PyObject *kwargs)
+py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
     bool allow_zero_index = false;
@@ -313,7 +319,7 @@ py2dm_parse_node(PyObject *self, PyObject *args, PyObject *kwargs)
  * material IDs.
  */
 static PyObject *
-py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
+py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
     bool allow_float_matid = true;
@@ -436,7 +442,7 @@ py2dm_parse_element(PyObject *self, PyObject *args, PyObject *kwargs)
  * reached, and an optional name or identifier string.
  */
 static PyObject *
-py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
+py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
     PyObject *nodes = nullptr;
@@ -448,23 +454,31 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         return nullptr;
     }
     // Set default value
-    if (nodes == nullptr)
+    if (!PyList_Check(nodes))
     {
+        if (nodes == Py_None)
+        {
+            Py_DecRef(Py_None);
+        }
         nodes = PyList_New(0);
     }
+    Py_IncRef(nodes);
     // Parse line
     const std::vector<std::string> chunks = chunks_from_line(line);
     // Length
     if (chunks.size() < 2)
     {
+        Py_DecRef(nodes);
         PyErr_Format(get_error("CardError"),
                      "Node string definitions require at least 1 field "
                      "(node_id), got %d",
                      chunks.size() - 1);
+        return nullptr;
     }
     // 2DM card
     if (chunks[0] != "NS")
     {
+        Py_DecRef(nodes);
         PyErr_Format(get_error("CardError"),
                      "Invalid node string card \"%s\"",
                      chunks[0]);
@@ -473,6 +487,7 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
     // Node IDs
     if (!PyList_Check(nodes))
     {
+        Py_DecRef(nodes);
         PyErr_SetString(PyExc_TypeError, "Argument \"nodes\" must be a list");
         return nullptr;
     }
@@ -489,8 +504,8 @@ py2dm_parse_node_string(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         if (id == 0 && !allow_zero_index)
         {
-            PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", id);
             Py_DecRef(nodes);
+            PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", id);
             return nullptr;
         }
         if (id < 0)
