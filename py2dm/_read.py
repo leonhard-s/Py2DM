@@ -150,7 +150,7 @@ class Reader:
         with open(self._filepath, 'r') as file_:
             for line in iter(file_):
                 if line.startswith('NS'):
-                    node_string, is_done = NodeString.parse_line(line.split())
+                    node_string, is_done = NodeString.parse_line(line)
                     if is_done:
                         self._cache_node_strings.append(node_string)
 
