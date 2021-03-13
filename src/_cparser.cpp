@@ -245,7 +245,10 @@ py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
     bool allow_zero_index = false;
-    static char *keywords[] = {"line", "allow_zero_index", NULL};
+    static char *keywords[] = {
+        (char *)"line",
+        (char *)"allow_zero_index",
+        nullptr};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|p", keywords,
                                      &line, &allow_zero_index))
     {
@@ -325,7 +328,10 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
     bool allow_float_matid = true;
     bool allow_zero_index = false;
     static char *keywords[] = {
-        "line", "allow_zero_index", "allow_float_matid", NULL};
+        (char *)"line",
+        (char *)"allow_zero_index",
+        (char *)"allow_float_matid",
+        nullptr};
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "s|pp", keywords,
             &line, &allow_zero_index, &allow_float_matid))
@@ -447,7 +453,11 @@ py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
     char *line;
     PyObject *nodes = nullptr;
     bool allow_zero_index = false;
-    static char *keywords[] = {"line", "allow_zero_index", "nodes", NULL};
+    static char *keywords[] = {
+        (char *)"line",
+        (char *)"allow_zero_index",
+        (char *)"nodes",
+        nullptr};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|pO", keywords,
                                      &line, &allow_zero_index, &nodes))
     {
