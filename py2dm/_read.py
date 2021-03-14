@@ -15,12 +15,9 @@ from .errors import FormatError, ReadError
 
 try:
     from typing import Literal
-except ModuleNotFoundError as err:  # pragma: no cover
+except ImportError:  # pragma: no cover
     # Required for compatibilty with Python 3.7 (used in QGIS 3)
-    try:
-        from typing_extensions import Literal  # type: ignore
-    except ModuleNotFoundError:
-        raise err from err
+    from typing_extensions import Literal  # type: ignore
 
 __all__ = [
     'Reader'

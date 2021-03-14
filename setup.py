@@ -10,7 +10,7 @@ with open(os.path.join(readme_dir, 'README.md')) as readme:
 
 # Create C extension
 c_parser = setuptools.Extension(
-    "py2dm._cparser", ["src/_cparser.cpp"], optional=True)
+    'py2dm._cparser', ['src/_cparser.cpp'], optional=True)
 
 setuptools.setup(name='py2dm',
                  version='0.1.1',
@@ -23,7 +23,7 @@ setuptools.setup(name='py2dm',
                               'Intended Audience :: Developers',
                               'License :: OSI Approved :: MIT License',
                               'Programming Language :: Python :: 3',
-                              'Programming Language :: Python :: 3.7',
+                              'Programming Language :: Python :: 3.6',
                               'Programming Language :: Python :: 3 :: Only'],
                  packages=['py2dm'],
                  package_data={'py2dm': ['py.typed']},
