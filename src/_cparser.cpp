@@ -387,6 +387,7 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         long node_id = string_to_long(chunks[i], &err);
         if (err)
         {
+            Py_DecRef(nodes);
             return nullptr;
         }
         if (node_id <= 0 && !(node_id == 0 && allow_zero_index))
@@ -413,6 +414,8 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         // Conversion failed
         if (!allow_float_matid)
         {
+            Py_DecRef(nodes);
+            Py_DecRef(materials);
             return nullptr;
         }
         // Try converting to double instead
@@ -421,6 +424,8 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         double matid_double = string_to_double(chunks[i], &err);
         if (err)
         {
+            Py_DecRef(nodes);
+            Py_DecRef(materials);
             return nullptr;
         }
         PyTuple_SetItem(
