@@ -243,7 +243,7 @@ get_error(const std::string name)
 static PyObject *
 py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 {
-    char *line;
+    const char *line;
     bool allow_zero_index = false;
     static char *keywords[] = {
         (char *)"line",
@@ -324,7 +324,7 @@ py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 static PyObject *
 py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
 {
-    char *line;
+    const char *line;
     bool allow_float_matid = true;
     bool allow_zero_index = false;
     static char *keywords[] = {
@@ -455,7 +455,7 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
 static PyObject *
 py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
 {
-    char *line;
+    const char *line;
     PyObject *nodes = nullptr;
     bool allow_zero_index = false;
     static char *keywords[] = {
