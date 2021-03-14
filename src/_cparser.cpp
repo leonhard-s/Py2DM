@@ -125,7 +125,7 @@ split(const std::string s, const std::string d, const Py_ssize_t maxsplit)
  * @return A vector of data chunks in the given line.
  */
 std::vector<std::string>
-chunks_from_line(const char *line)
+chunks_from_line(const std::string line)
 {
     const std::string trimmed = split(line, "#", 1)[0];
     return split(trimmed, "", -1);
@@ -140,8 +140,8 @@ chunks_from_line(const char *line)
  * Raises a Python ValueError if conversion is not possible.
  * 
  * @param s The string to convert.
- * @param err Error flag. Set to true on error
- * @return Converted long or NULL on error.
+ * @param err Error flag. Set to true on error.
+ * @return Converted long or -1 on error.
  */
 long string_to_long(const std::string s, bool *err)
 {
@@ -170,8 +170,8 @@ long string_to_long(const std::string s, bool *err)
  * Raises a Python ValueError if conversion is not possible.
  * 
  * @param s The string to convert.
- * @param err Error flag. Set to true on rrror.
- * @return Converted double or NULL on error.
+ * @param err Error flag. Set to true on error.
+ * @return Converted double or -1.0 on error.
  */
 double
 string_to_double(const std::string s, bool *err)
