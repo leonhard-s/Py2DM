@@ -77,39 +77,55 @@ nodes_per_element(const std::string s)
 /* -------------------------------------------------------------------------- */
 
 /**
- * @brief C string version of Python's `str.split()`.
+ * @brief Split a C++ string at a delimiter substring.
  * 
- * This method uses the Python implementation internally and shares its
- * behaviour.
+ * This function emulates the Python `str.split()` implementation, but
+ * utilises C++ strings to avoid the Python object overhead.
  * 
  * @param s The input string to split.
- * @param d The delimiter to split at.
- * @param maxsplit The maximum number of splits performed.
- * @return A vector of substrings split at the given delimiter.
+ * @param d The delimiter to split at. If empty, string will not be
+ * split.
+ * @param maxsplit The maximum number of splits allowed. If set to a
+ * negative value, s will be split at every delimiter occurrence.
+ * @return A vector of substrings extracted between delimiter
+ * occurrences.
  */
 std::vector<std::string>
-split(const std::string s, const std::string d, const Py_ssize_t maxsplit)
+split(const std::string s, std::string d, const size_t maxsplit)
 {
-    PyObject *py_s = PyUnicode_FromString(s.c_str());
-    PyObject *py_d = PyUnicode_FromString(d.c_str());
-    if (!PyUnicode_GetLength(py_d))
+    size_t num_splits = 0;
+    std::vector<std::string> chunks;
+    size_t start;
+    size_t end = 0;
+
+    // Check for empty string or delimiter
+    if (s.length() == 0)
     {
-        Py_DecRef(py_d);
-        py_d = nullptr;
+        return chunks;
     }
-    PyObject *py_l = PyUnicode_Split(py_s, py_d, maxsplit);
-    Py_DecRef(py_s);
-    if (py_d != nullptr)
+    if (d.length() == 0)
     {
-        Py_DecRef(py_d);
+        /** FIXME: Dummy version; must be replaced with proper whitespace
+         * check */
+        d = " ";
     }
-    Py_ssize_t n = PyList_Size(py_l);
-    std::vector<std::string> chunks(n);
-    for (Py_ssize_t i = 0; i < n; i++)
+
+    // Split limit not reached OR not enforced
+    while (num_splits < maxsplit || maxsplit < 0)
     {
-        PyObject *py_i = PyList_GetItem(py_l, i);
-        chunks[i] = PyUnicode_AsUTF8(py_i);
-        Py_DecRef(py_i);
+        // Get position of first non-delimiter character at or after `end`
+        start = s.find_first_not_of(d, end);
+
+        // No match found
+        if (start == std::string::npos)
+        {
+            break;
+        }
+
+        // Match found, find next delimiter
+        end = s.find(d, start);
+        chunks.push_back(s.substr(start, end - start));
+        num_splits++;
     }
     return chunks;
 }
