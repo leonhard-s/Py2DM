@@ -183,12 +183,6 @@ split(const std::string s, std::string d, const size_t maxsplit)
     size_t start;
     size_t end = 0;
 
-    // Check for empty string
-    if (s.length() == 0)
-    {
-        return chunks;
-    }
-
     // Split limit not reached OR not enforced
     while (num_splits < maxsplit || maxsplit < 0)
     {
