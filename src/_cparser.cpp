@@ -111,14 +111,10 @@ bool is_whitespace(const char c)
 std::vector<std::string>
 split_any_whitespace(const std::string s, const size_t maxsplit)
 {
-    size_t start;
-    size_t end = 0;
-    size_t len = s.length();
     std::vector<std::string> chunks;
-    size_t num_splits = 0;
-    while (num_splits < maxsplit || maxsplit < 0)
+    size_t start, end = 0, len = s.length();
+    for (size_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
-        // Scan for the next delimiter
         start = std::string::npos;
         for (size_t i = end; i < len; i++)
         {
@@ -128,14 +124,6 @@ split_any_whitespace(const std::string s, const size_t maxsplit)
                 break;
             }
         }
-
-        // No match found
-        if (start == std::string::npos)
-        {
-            break;
-        }
-
-        // Match found, find next delimiter
         end = std::string::npos;
         for (size_t i = start; i < len; i++)
         {
@@ -145,9 +133,7 @@ split_any_whitespace(const std::string s, const size_t maxsplit)
                 break;
             }
         }
-
         chunks.push_back(s.substr(start, end - start));
-        num_splits++;
     }
     return chunks;
 }
@@ -173,32 +159,17 @@ split(const std::string s, std::string d, const size_t maxsplit)
      * if no delimiter is specified. Since this requires checking for
      * multiple delimiters, this functionality is implemented
      * separately. */
-    if (d.length() == 0)
+    if (d.empty())
     {
         return split_any_whitespace(s, maxsplit);
     }
-
-    size_t num_splits = 0;
     std::vector<std::string> chunks;
-    size_t start;
-    size_t end = 0;
-
-    // Split limit not reached OR not enforced
-    while (num_splits < maxsplit || maxsplit < 0)
+    size_t start, end = 0;
+    for (size_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
-        // Get position of first non-delimiter character at or after `end`
         start = s.find_first_not_of(d, end);
-
-        // No match found
-        if (start == std::string::npos)
-        {
-            break;
-        }
-
-        // Match found, find next delimiter
         end = s.find(d, start);
         chunks.push_back(s.substr(start, end - start));
-        num_splits++;
     }
     return chunks;
 }
