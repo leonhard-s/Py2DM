@@ -77,6 +77,82 @@ nodes_per_element(const std::string s)
 /* -------------------------------------------------------------------------- */
 
 /**
+ * @brief Return whether the given character represents whitespace.
+ * 
+ * The characters considered whitespace are the ones from the
+ * `string.whitespace` constant in Python 3.8.5.
+ * 
+ * @param c The character to check.
+ * @return True if Python considers the given character to be
+ * whitespace, otherwise false.
+ */
+bool is_whitespace(const char c)
+{
+    return (c == ' ' ||    // Space
+            c == '\t' ||   // Tab
+            c == '\n' ||   // Linefeed
+            c == '\r' ||   // Return
+            c == '\x0b' || // Formfeed
+            c == '\x0c');  // Vertical tab
+}
+
+/**
+ * @brief Whitespace-only implementation of Python's `str.split()`.
+ * 
+ * This function is not intended to be called directly, please call
+ * `split()` with an empty delimiter string instead.
+ * 
+ * @param s The input string to split.
+ * @param maxsplit The maximum number of splits allowed. If set to a
+ * negative value, s will be split at every delimiter occurrence.
+ * @return A vector of substrings extracted between delimiter
+ * occurrences.
+ */
+std::vector<std::string>
+split_any_whitespace(const std::string s, const size_t maxsplit)
+{
+    size_t start;
+    size_t end = 0;
+    size_t len = s.length();
+    std::vector<std::string> chunks;
+    size_t num_splits = 0;
+    while (num_splits < maxsplit || maxsplit < 0)
+    {
+        // Scan for the next delimiter
+        start = std::string::npos;
+        for (size_t i = end; i < len; i++)
+        {
+            if (!is_whitespace(s[i]))
+            {
+                start = i;
+                break;
+            }
+        }
+
+        // No match found
+        if (start == std::string::npos)
+        {
+            break;
+        }
+
+        // Match found, find next delimiter
+        end = std::string::npos;
+        for (size_t i = start; i < len; i++)
+        {
+            if (is_whitespace(s[i]))
+            {
+                end = i;
+                break;
+            }
+        }
+
+        chunks.push_back(s.substr(start, end - start));
+        num_splits++;
+    }
+    return chunks;
+}
+
+/**
  * @brief Split a C++ string at a delimiter substring.
  * 
  * This function emulates the Python `str.split()` implementation, but
@@ -93,21 +169,24 @@ nodes_per_element(const std::string s)
 std::vector<std::string>
 split(const std::string s, std::string d, const size_t maxsplit)
 {
+    /** NOTE: Python's `str.split()` splits on any whitespace character
+     * if no delimiter is specified. Since this requires checking for
+     * multiple delimiters, this functionality is implemented
+     * separately. */
+    if (d.length() == 0)
+    {
+        return split_any_whitespace(s, maxsplit);
+    }
+
     size_t num_splits = 0;
     std::vector<std::string> chunks;
     size_t start;
     size_t end = 0;
 
-    // Check for empty string or delimiter
+    // Check for empty string
     if (s.length() == 0)
     {
         return chunks;
-    }
-    if (d.length() == 0)
-    {
-        /** FIXME: Dummy version; must be replaced with proper whitespace
-         * check */
-        d = " ";
     }
 
     // Split limit not reached OR not enforced
