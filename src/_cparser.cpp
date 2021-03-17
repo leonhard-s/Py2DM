@@ -124,6 +124,10 @@ split_any_whitespace(const std::string s, const ssize_t maxsplit)
                 break;
             }
         }
+        if (start == std::string::npos)
+        {
+            break;
+        }
         end = std::string::npos;
         for (size_t i = start; i < len; i++)
         {
