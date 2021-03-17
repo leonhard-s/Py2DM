@@ -39,7 +39,7 @@ bool card_is_element(const std::string s)
  * in addition to their defining nodes.
  * 
  * @param s The 2DM card of the element to return.
- * @return The number of nodes as a positive integer, or -1 if the
+ * @return The number of nodes as a positive integer, or 0 if the
  * given card is not a known element.
  */
 size_t
@@ -69,7 +69,7 @@ nodes_per_element(const std::string s)
     {
         return 9;
     }
-    return -1;
+    return 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -109,11 +109,11 @@ bool is_whitespace(const char c)
  * occurrences.
  */
 std::vector<std::string>
-split_any_whitespace(const std::string s, const size_t maxsplit)
+split_any_whitespace(const std::string s, const ssize_t maxsplit)
 {
     std::vector<std::string> chunks;
     size_t start, end = 0, len = s.length();
-    for (size_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
+    for (ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
         start = std::string::npos;
         for (size_t i = end; i < len; i++)
@@ -153,7 +153,7 @@ split_any_whitespace(const std::string s, const size_t maxsplit)
  * occurrences.
  */
 std::vector<std::string>
-split(const std::string s, std::string d, const size_t maxsplit)
+split(const std::string s, std::string d, const ssize_t maxsplit)
 {
     /** NOTE: Python's `str.split()` splits on any whitespace character
      * if no delimiter is specified. Since this requires checking for
@@ -165,7 +165,7 @@ split(const std::string s, std::string d, const size_t maxsplit)
     }
     std::vector<std::string> chunks;
     size_t start, end = 0;
-    for (size_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
+    for (ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
         start = s.find_first_not_of(d, end);
         end = s.find(d, start);
@@ -330,7 +330,7 @@ py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
     {
         PyErr_Format(get_error("CardError"),
                      "Invalid node card \"%s\"",
-                     chunks[0]);
+                     chunks[0].c_str());
         return nullptr;
     }
     // Node ID
@@ -413,18 +413,21 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
     const std::string card = chunks[0];
     if (!card_is_element(card))
     {
-        PyErr_Format(get_error("CardError"), "Invalid element card \"%s\"", card);
+        PyErr_Format(get_error("CardError"),
+                     "Invalid element card \"%s\"",
+                     card.c_str());
         return nullptr;
     }
     // Length (card known)
     size_t num_nodes = nodes_per_element(card);
-    assert(num_nodes > 0);
+    assert(num_nodes < PY_SSIZE_T_MAX);
     if (chunks.size() < num_nodes + 2)
     {
         PyErr_Format(get_error("CardError"),
                      "%s element definition requires at least %d fields "
                      "(id, node_1, ..., node_%d), got %d",
-                     card, num_nodes - 1, num_nodes - 1, chunks.size() - 1);
+                     card.c_str(), num_nodes - 1,
+                     num_nodes - 1, chunks.size() - 1);
         return nullptr;
     }
     // Element ID
@@ -440,7 +443,8 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         return nullptr;
     }
     // Node IDs
-    PyObject *nodes = PyTuple_New(num_nodes);
+    assert(num_nodes < PY_SSIZE_T_MAX);
+    PyObject *nodes = PyTuple_New((Py_ssize_t)num_nodes);
     for (size_t i = 2; i < num_nodes + 2; i++)
     {
         err = false;
@@ -452,14 +456,20 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         }
         if (node_id <= 0 && !(node_id == 0 && allow_zero_index))
         {
-            PyErr_Format(get_error("FormatError"), "Invalid node ID: %d", node_id);
+            PyErr_Format(
+                get_error("FormatError"),
+                "Invalid node ID: %d",
+                node_id);
             Py_DecRef(nodes);
             return nullptr;
         }
-        PyTuple_SetItem(nodes, i - 2, PyLong_FromLong(node_id));
+        assert((i - 2) < PY_SSIZE_T_MAX);
+        PyTuple_SetItem(nodes, (Py_ssize_t)(i - 2), PyLong_FromLong(node_id));
     }
     // Material IDs
-    PyObject *materials = PyTuple_New(chunks.size() - num_nodes - 2);
+    assert((chunks.size() - num_nodes - 2) < PY_SSIZE_T_MAX);
+    PyObject *materials = PyTuple_New(
+        (Py_ssize_t)(chunks.size() - num_nodes - 2));
     for (size_t i = num_nodes + 2; i < chunks.size(); i++)
     {
         err = false;
@@ -467,8 +477,9 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         if (!err)
         {
             // Conversion successful
-            PyTuple_SetItem(
-                materials, i - num_nodes - 2, PyLong_FromLong(matid_int));
+            assert((i - num_nodes - 2) < PY_SSIZE_T_MAX);
+            PyTuple_SetItem(materials, (Py_ssize_t)(i - num_nodes - 2),
+                            PyLong_FromLong(matid_int));
             continue;
         }
         // Conversion failed
@@ -488,8 +499,9 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
             Py_DecRef(materials);
             return nullptr;
         }
-        PyTuple_SetItem(
-            materials, i - num_nodes - 2, PyFloat_FromDouble(matid_double));
+        assert((i - num_nodes - 2) < PY_SSIZE_T_MAX);
+        PyTuple_SetItem(materials, (Py_ssize_t)(i - num_nodes - 2),
+                        PyFloat_FromDouble(matid_double));
     }
     // Build return tuple
     PyObject *r = Py_BuildValue("iOO", id, nodes, materials);
@@ -556,7 +568,7 @@ py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
         Py_DecRef(nodes);
         PyErr_Format(get_error("CardError"),
                      "Invalid node string card \"%s\"",
-                     chunks[0]);
+                     chunks[0].c_str());
         return nullptr;
     }
     // Node IDs
@@ -598,7 +610,7 @@ py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
         PyList_Append(nodes, PyLong_FromLong(id));
     }
     // Build return tuple
-    return Py_BuildValue("ONs", nodes, PyBool_FromLong(is_done), name);
+    return Py_BuildValue("ONs", nodes, PyBool_FromLong(is_done), name.c_str());
 }
 
 /* -------------------------------------------------------------------------- */
