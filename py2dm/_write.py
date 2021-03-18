@@ -3,10 +3,15 @@
 import math
 from types import TracebackType
 from typing import IO, List, Optional, Tuple, Type
-from typing_extensions import Literal
 
 from ._entities import Element, Node, NodeString
 from .types import MaterialIndex
+
+try:
+    from typing import Literal
+except ImportError:  # pragma: no cover
+    # Required for compatibilty with Python 3.7 (used in QGIS 3)
+    from typing_extensions import Literal  # type: ignore
 
 
 class Writer:
