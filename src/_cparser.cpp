@@ -172,6 +172,10 @@ split(const std::string s, std::string d, const ssize_t maxsplit)
     for (ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
         start = s.find_first_not_of(d, end);
+        if (start == std::string::npos)
+        {
+            break;
+        }
         end = s.find(d, start);
         chunks.push_back(s.substr(start, end - start));
     }
