@@ -312,7 +312,7 @@ static PyObject *
 py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
-    bool allow_zero_index = false;
+    int allow_zero_index = false;
     static char *keywords[] = {
         (char *)"line",
         (char *)"allow_zero_index",
@@ -393,8 +393,8 @@ static PyObject *
 py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
-    bool allow_float_matid = true;
-    bool allow_zero_index = false;
+    int allow_float_matid = true;
+    int allow_zero_index = false;
     static char *keywords[] = {
         (char *)"line",
         (char *)"allow_zero_index",
@@ -537,7 +537,7 @@ py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
 {
     char *line;
     PyObject *nodes = nullptr;
-    bool allow_zero_index = false;
+    int allow_zero_index = false;
     static char *keywords[] = {
         (char *)"line",
         (char *)"allow_zero_index",
