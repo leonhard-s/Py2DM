@@ -7,8 +7,9 @@ for details.
 
 """
 
+import abc
 from types import TracebackType
-from typing import Any, Iterator, List, NamedTuple, Optional, Tuple, Type
+from typing import Any, Iterator, List, Optional, Tuple, Type, TypeVar
 
 from ._entities import Element, Node, NodeString
 from .errors import FormatError, ReadError
@@ -20,9 +21,11 @@ except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
 
 __all__ = [
-    'Reader'
+    'Reader',
+    'ReaderBase'
 ]
 
+T = TypeVar('T')
 
 # A list of all tags that are considered elements
 _ELEMENTS = [
@@ -36,47 +39,15 @@ _ELEMENTS = [
 ]
 
 
-class _Metadata(NamedTuple):
-    """Container for mesh metadata."""
+class ReaderBase(abc.ABCMeta):
+    """Abstract class interface definition for 2DM reader classes.
 
-    num_nodes: int
-    num_elements: int
-    num_node_strings: int
-    name: Optional[str] = None
-    num_materials_per_elem: Optional[int] = None
-
-
-class Reader:
-    """Py2DM reader class used to parse and validate 2DM files.
-
-    This class wraps the underlying mesh file and provides getters and
-    iterators to access its contents. The preferred way to use it is
-    via the context manger interface. This ensures the underlying file
-    is closed properly after access.
-
-    Py2DM supports two different read modes depending on the use case.
-    By default, the entire file is parsed and read into memory upon
-    initialisation of the reader. This is the faster option for most
-    use cases, but may cause issues with very large meshes with
-    millions of elements or multiple Gigabytes in file size.
-
-    Alternatively, passing `lazy=True` into the :class:`Reader` class's
-    initialiser will switch to a different implementation. In this
-    mode, the file is parsed once to provide metadata like element or
-    node count, but nodes and elements will not be read into memory to
-    save space in exchange for higher access latency.
-
-    In lazy read mode, file iterators are used for sequential access
-    like :meth:`Reader.iter_nodes`, while random ID-based getters like
-    :meth:`Reader.node` use a binary search to identify the requested
-    element instead.
-
-    For more information on the lazy read mode, refer to the `Py2DM
-    documentation <https://py2dm.readthedocs.io/en/latest/>`_.
+    This ABC defines the endpoints to be implemented by readers. Use
+    this as the type definition for any code meant to work with Py2DM
+    readers.
     """
 
-    def __init__(self, filepath: str, lazy: bool = False,
-                 materials: Optional[int] = None, **kwargs: Any) -> None:
+    def __init__(self, filepath: str, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -84,8 +55,6 @@ class Reader:
 
         :param filepath: Path to the mesh file to open
         :type filepath: :class:`str`
-        :param lazy: Disables preloading of node and element data. Use this
-            setting to reduce memory usage with large meshes
         :type lazy: :class:`bool`
         """
         self.materials_per_element = int(kwargs.get('materials', 0))
@@ -102,7 +71,6 @@ class Reader:
 
         :type: :class:`int`
         """
-        # TODO: Add MATERIALS_PER_ELEM parser
         self.name = 'Unnamed mesh'
         """Display name of the mesh.
 
@@ -113,45 +81,14 @@ class Reader:
 
         :type: :class:`str`
         """
-        # TODO: Add MESHNAME and GM parsers
+
+        self._extent: Optional[Tuple[float, float, float, float]] = None
         self._filepath = filepath
-        self._lazy = lazy
+        self._metadata: Any
+        self._num_materials = int(kwargs.get('materials', 0))
         self._zero_index = bool(kwargs.get('zero_index', False))
 
-        # Parse metadata
-        data = self._parse_metadata()
-        self.name = data.name
-        self.materials_per_element = data.num_materials_per_elem
-        if materials is not None:
-            self.materials_per_element = int(materials)
-        self._num_elements = data.num_elements
-        self._num_nodes = data.num_nodes
-        self._num_node_strings = data.num_node_strings
-
-        if not lazy:
-
-            # Create a cache of all
-            # Load all searchable entities into memory
-            self._cache_nodes: List[Node] = [
-                Node.parse_line(l, allow_zero_index=self._zero_index)
-                for l in self._filter_lines('ND')]
-
-            self._cache_elements: List[Element] = [
-                _element_factory(l).parse_line(
-                    l, allow_float_matid=True,
-                    allow_zero_index=self._zero_index)
-                for l in self._filter_lines(*_ELEMENTS)]
-
-        # Node strings are special and require multiline parsing
-        self._cache_node_strings: List[NodeString] = []
-        with open(self._filepath, 'r') as file_:
-            for line in iter(file_):
-                if line.startswith('NS'):
-                    node_string, is_done = NodeString.parse_line(line)
-                    if is_done:
-                        self._cache_node_strings.append(node_string)
-
-    def __enter__(self) -> 'Reader':
+    def __enter__(self: T) -> T:
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
@@ -166,15 +103,6 @@ class Reader:
                 f'\t{self.num_nodes} nodes\n'
                 f'\t{self.num_elements} elements\n'
                 f'\t{self.num_node_strings} node strings')
-
-    @property
-    def bbox(self) -> Tuple[float, float, float, float]:
-        """Alias for :attr:`Reader.extent`.
-
-        :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
-            :class:`float`, :class:`float`]
-        """
-        return self.extent
 
     @property
     def extent(self) -> Tuple[float, float, float, float]:
@@ -198,26 +126,302 @@ class Reader:
             :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
                 :class:`float`, :class:`float`]
         """
-        iterator = iter(self.iter_nodes())
-        # Get initial node for base values
-        try:
-            node = next(iterator)
-        except StopIteration:
-            # Mesh is empty/contains no nodes
-            return float('nan'), float('nan'), float('nan'), float('nan')
-        min_x = max_x = node.x
-        min_y = max_y = node.y
-        # Update value
-        for node in self.iter_nodes():
-            if node.x < min_x:
-                min_x = node.x
-            elif node.x > max_x:
-                max_x = node.x
-            if node.y < min_y:
-                min_y = node.y
-            elif node.y > max_y:
-                max_y = node.y
-        return min_x, max_x, min_y, max_y
+        if self._extent is None:
+            iterator = iter(self.iter_nodes())
+            # Get initial node for base values
+            try:
+                node = next(iterator)
+            except StopIteration:
+                # Mesh is empty/contains no nodes
+                return float('nan'), float('nan'), float('nan'), float('nan')
+            min_x = max_x = node.x
+            min_y = max_y = node.y
+            # Update value
+            for node in self.iter_nodes():
+                if node.x < min_x:
+                    min_x = node.x
+                elif node.x > max_x:
+                    max_x = node.x
+                if node.y < min_y:
+                    min_y = node.y
+                elif node.y > max_y:
+                    max_y = node.y
+            self._extent = min_x, max_x, min_y, max_y
+        assert self._extent is not None
+        return self._extent
+
+    @property
+    @abc.abstractmethod
+    def elements(self) -> Iterator[Element]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def nodes(self) -> Iterator[Node]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def node_strings(self) -> Iterator[NodeString]:
+        pass
+
+    @property
+    def num_elements(self) -> int:
+        """Return the number of elements in the mesh.
+
+        :type: :class:`int`
+        """
+        return self._metadata._num_elements
+
+    @property
+    def num_nodes(self) -> int:
+        """Return the number of nodes in the mesh.
+
+        :type: :class:`int`
+        """
+        return self._metadata._num_nodes
+
+    @property
+    def num_node_strings(self) -> int:
+        """Return the number of node strings in the mesh.
+
+        :type: :class:`int`
+        """
+        return self._metadata._num_node_strings
+
+    def close(self) -> None:
+        """Close the mesh reader.
+
+        This closes the underlying text file and discards any cached
+        objects or metadata. The instance will become unusable after
+        this call.
+
+        .. note::
+
+            This method is called automatically when using the class
+            via the context manager.
+
+        """
+        _ = self
+
+    @abc.abstractmethod
+    def element(self, id_: int) -> Element:
+        """Return a mesh element by its unique ID.
+
+        :param id_: The ID of the element to return.
+        :type id_: :class:`int`
+        :raises KeyError: Raised if the given `id_` is invalid.
+        :return: The element matching the given ID.
+        :rtype: :class:`py2dm.Element`
+        """
+
+    @abc.abstractmethod
+    def node(self, id_: int) -> Node:
+        """Return a mesh node by its unique ID.
+
+        :param id_: The ID of the node to return.
+        :type id_: :class:`int`
+        :raises KeyError: Raised if the given `id_` is invalid.
+        :return: The node matching the given ID.
+        :rtype: :class:`py2dm.Node`
+        """
+
+    @abc.abstractmethod
+    def node_string(self, name: str) -> NodeString:
+        """Return a node string by its unique name.
+
+        This is only available if the node strings define a name. For
+        meshes whose node strings are not named, convert
+        :meth:`Reader.iter_node_strings` to a :class:`list` and access
+        the node strings by index.
+
+        .. code-block:: python3
+
+            with py2dm.Reader('my-mesh.2dm') as mesh:
+                node_strings = list(mesh.iter_node_strings())
+                node_string_two = node_strings[1]
+
+        :param name: Unique name of the node string
+        :raises KeyError: Raised if no node string of the given name
+            exists
+        :return: The node string of the given name, if any.
+        :rtype: :class:`py2dm.NodeString`
+        """
+
+    @abc.abstractmethod
+    def iter_elements(self, start: int = -1,
+                      end: int = -1) -> Iterator[Element]:
+        """Iterator over the mesh elements.
+
+        :param start: The starting element ID. If not specified, the
+            first node in the mesh is used as the starting point.
+        :type start: :class:`int`
+        :param end: The end element ID (excluding the `end` ID). If
+            negative, the entire range of elements is yielded.
+        :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``1``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs exceeds the number of
+            elements in the mesh.
+        :yield: Mesh elements from the given range of IDs.
+        :type: :class:`py2dm.Element`
+        """
+
+    @abc.abstractmethod
+    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
+        """Iterator over the mesh nodes.
+
+        :param start: The starting node ID. If not specified, the
+            first node in the mesh is used as the starting point.
+        :type start: :class:`int`
+        :param end: The end node ID (excluding the `end` ID). If
+            negative, the entire range of nodes is yielded.
+        :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``1``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs exceeds the number of
+            nodes in the mesh.
+        :yield: Mesh nodes from the given range of IDs.
+        :type: :class:`py2dm.Node`
+        """
+
+    @abc.abstractmethod
+    def iter_node_strings(self, start: int = 0,
+                          end: int = -1) -> Iterator[NodeString]:
+        """Iterator over the mesh's node strings.
+
+        .. note::
+
+            Unlike :meth:`Reader.iter_elements` or
+            :meth:`Reader.iter_nodes`, this method uses Python slicing
+            notation for its ranges due to node strings not having
+            explicit IDs.
+
+            Even if the mesh is using one-indexed IDs, starting
+            iteration on the second node string still requires setting
+            `start` to ``1`` when using this function.
+
+        :param start: Starting offset for the iterator.
+        :type start: :class:`int`
+        :param end: End index for the node strings (exclusive).
+        :type end: :class:`int`
+        :raises IndexError: Raised if the `start` ID is less than
+            ``0``, or if the `end` ID is less than or equal to the
+            `start` ID, or if either of the IDs reaches the number of
+            node strings in the mesh.
+        :yield: Mesh node strings in order of definition.
+        :type: :class:`py2dm.NodeString`
+        """
+
+    def _parse_metadata(self) -> Any:
+        """Parse the file for metadata.
+
+        This method is only intended to be called as part of the
+        initialiser and should not be called by other functions.
+        """
+        num_materials_per_elem: Optional[int] = None
+        name: Optional[str] = None
+        num_nodes = 0
+        num_elements = 0
+        num_node_strings = 0
+        mesh2d_found: bool = False
+        last_node = -1
+        last_element = -1
+        with open(self._filepath) as file_:
+            for index, line in enumerate(file_):
+                if not mesh2d_found and line.split('#', maxsplit=1)[0].strip():
+                    if line.startswith('MESH2D'):
+                        mesh2d_found = True
+                    else:
+                        raise ReadError(
+                            'File is not a 2DM mesh file', self._filepath)
+                if line.startswith('NUM_MATERIALS_PER_ELEM'):
+                    chunks = line.split('#', maxsplit=1)[0].split(maxsplit=2)
+                    num_materials_per_elem = int(chunks[1])
+                elif line.startswith('MESHNAME') or line.startswith('GM'):
+                    # NOTE: This fails for meshes with double quotes in their
+                    # mesh name, but that is an unreasonable thing to want to
+                    # do anyway. "We'll fix it later" (tm)
+                    chunks = line.split('"', maxsplit=2)
+                    if len(chunks) < 2:
+                        chunks = line.split(maxsplit=2)
+                    name = chunks[1]
+                elif line.startswith('ND'):
+                    id_ = int(line.split(maxsplit=2)[1])
+                    if id_ == 0 and not self._zero_index:
+                        raise FormatError(
+                            'Zero index encountered in non-zero-indexed file',
+                            self._filepath, index+1)
+                    num_nodes += 1
+                    if last_node != -1 and last_node+1 != id_:
+                        raise FormatError('Node IDs have holes',
+                                          self._filepath, index+1)
+                    last_node = id_
+                elif (line.startswith('NS')
+                        and '-' in line.split('#', maxsplit=1)[0]):
+                    num_node_strings += 1
+                elif line.split(maxsplit=1)[0] in _ELEMENTS:
+                    id_ = int(line.split(maxsplit=2)[1])
+                    if id_ == 0 and not self._zero_index:
+                        raise FormatError(
+                            'Zero index encountered in non-zero-indexed file',
+                            self._filepath, index+1)
+                    num_elements += 1
+                    if last_element != -1 and last_element+1 != id_:
+                        raise FormatError('Element IDs have holes',
+                                          self._filepath, index+1)
+                    last_element = id_
+        if not mesh2d_found:
+            raise ReadError('MESH2D tag not found', self._filepath)
+        return (num_nodes, num_elements, num_node_strings, name,
+                num_materials_per_elem)
+
+
+class Reader(ReaderBase):
+    """Default Py2DM reader class used to parse and validate 2DM files.
+
+    This reader loads the entire mesh file into memory, allowing for
+    fast ID-based access and iteration without needing to wait for the
+    storage medium.
+
+    Do note that this implementation also keeps the Python
+    representation of all mesh entities in memory until the instance
+    is destroyed, which can consume a significant amount of memory for
+    very large meshes.
+    """
+
+    def __init__(self, filepath: str, **kwargs: Any) -> None:
+        super().__init__(filepath, **kwargs)
+
+        self._cache_nodes: List[Node] = []
+        self._cache_elements: List[Element] = []
+        self._cache_node_strings: List[NodeString] = []
+        # Parse and load the entire file
+        with open(filepath) as file_:
+            # Nodes
+            file_.seek(self._metadata.pos_node_start)
+            for line in file_:
+                node = Node.parse_line(line)
+                self._cache_nodes.append(node)
+                if node.id >= self.num_nodes:
+                    break
+            # Elements
+            file_.seek(self._metadata.pos_element_start)
+            for line in file_:
+                element = _element_factory(line).parse_line(line)
+                self._cache_elements.append(element)
+                if element.id >= self.num_elements:
+                    break
+            # Node strings
+            file_.seek(self._metadata.pos_node_strings_start)
+            node_string: Optional[NodeString] = None
+            for line in file_:
+                if line.startswith('NS'):
+                    node_string, is_done = NodeString.parse_line(
+                        line, node_string)
+                    if is_done:
+                        self._cache_node_strings.append(node_string)
+                        node_string = None
 
     @property
     def elements(self) -> Iterator[Element]:
@@ -237,8 +441,7 @@ class Reader:
         :yield: Elements from the mesh in order.
         :type: :class:`py2dm.Element`
         """
-        for element in self.iter_elements():
-            yield element
+        return iter(self._cache_elements)
 
     @property
     def nodes(self) -> Iterator[Node]:
@@ -258,8 +461,7 @@ class Reader:
         :yield: Nodes from the mesh in order.
         :type: :class:`py2dm.Node`
         """
-        for node in self.iter_nodes():
-            yield node
+        return iter(self._cache_nodes)
 
     @property
     def node_strings(self) -> Iterator[NodeString]:
@@ -280,47 +482,7 @@ class Reader:
         :yield: Node strings from the mesh in order.
         :type: :class:`py2dm.NodeString`
         """
-        for node_string in self.iter_node_strings():
-            yield node_string
-
-    @property
-    def num_elements(self) -> int:
-        """Return the number of elements in the mesh.
-
-        :type: :class:`int`
-        """
-        return self._num_elements
-
-    @property
-    def num_nodes(self) -> int:
-        """Return the number of nodes in the mesh.
-
-        :type: :class:`int`
-        """
-        return self._num_nodes
-
-    @property
-    def num_node_strings(self) -> int:
-        """Return the number of node strings in the mesh.
-
-        :type: :class:`int`
-        """
-        return self._num_node_strings
-
-    def close(self) -> None:
-        """Close the mesh reader.
-
-        This closes the underlying text file and discards any cached
-        objects or metadata. The instance will become unusable after
-        this call.
-
-        .. note::
-
-            This method is called automatically when using the class
-            via the context manager.
-
-        """
-        _ = self
+        return iter(self._cache_node_strings)
 
     def element(self, id_: int) -> Element:
         """Return a mesh element by its unique ID.
@@ -340,14 +502,7 @@ class Reader:
                 self.num_elements-1 if self._zero_index else self.num_elements)
             raise KeyError(f'Invalid element ID {id_}, element IDs must be '
                            f'between {id_min} and {id_max}')
-        if self._lazy:
-            # TODO: Check if element is contained in cached blocks
-            # TODO: Get block containing this element
-            # TODO: Resolve and add block to cache
-            # TODO: Return element
-            raise NotImplementedError()
-        else:
-            return self._cache_elements[id_conf-1]
+        return self._cache_elements[id_conf-1]
 
     def node(self, id_: int) -> Node:
         """Return a mesh node by its unique ID.
@@ -366,14 +521,7 @@ class Reader:
             id_max = self.num_nodes-1 if self._zero_index else self.num_nodes
             raise KeyError(f'Invalid node ID {id_}, node IDs must be between '
                            f'{id_min} and {id_max}')
-        if self._lazy:
-            # TODO: Check if node is contained in a cached block
-            # TODO: Get block containing this node
-            # TODO: Resolve and add block to cache
-            # TODO: Return element
-            raise NotImplementedError()
-        else:
-            return self._cache_nodes[id_conf-1]
+        return self._cache_nodes[id_conf-1]
 
     def node_string(self, name: str) -> NodeString:
         """Return a node string by its unique name.
@@ -436,16 +584,12 @@ class Reader:
         if end > id_max:
             raise IndexError('End element ID must be less than or equal to '
                              f'{id_max} ({end})')
-        if self._lazy:
-            # TODO: Implement lazy iterator
-            raise NotImplementedError()
-        else:
-            offset = int(self._zero_index)
-            for index, element in enumerate(
-                    self._cache_elements[start-offset:end-offset]):
-                if index == 0 and element.id != int(self._zero_index):
-                    raise FormatError('idk', 'idk', 1)
-                yield element
+        offset = int(self._zero_index)
+        for index, element in enumerate(
+                self._cache_elements[start-offset:end-offset]):
+            if index == 0 and element.id != int(self._zero_index):
+                raise FormatError('idk', 'idk', 1)
+            yield element
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
@@ -482,12 +626,8 @@ class Reader:
         if end > id_max:
             raise IndexError('End node ID must be less than or equal to '
                              f'{id_max} ({end})')
-        if self._lazy:
-            # TODO: Implement lazy iterator
-            raise NotImplementedError()
-        else:
-            offset = int(self._zero_index)
-            return iter(self._cache_nodes[start-offset:end-offset])
+        offset = int(self._zero_index)
+        return iter(self._cache_nodes[start-offset:end-offset])
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
@@ -517,102 +657,10 @@ class Reader:
         """
         if self.num_node_strings < 1:
             return iter(())
-        if self._lazy:
-            # TODO: Implement lazy iterator
-            raise NotImplementedError()
+        if end < 0:
+            return iter(self._cache_node_strings[start:])
         else:
-            if end < 0:
-                return iter(self._cache_node_strings[start:])
-            else:
-                return iter(self._cache_node_strings[start:end])
-
-    def _filter_lines(self, card: str, *args: str) -> Iterator[str]:
-        """Filter the mesh's lines by their card.
-
-        This iterates over the entire file, returning only those lines
-        matching the given card.
-
-        This also filters out any comments appended to the end of a
-        line.
-
-        Arguments:
-            card: The card to match lines against.
-
-            *args: Additional cards whos lines will be returned.
-
-        Yields:
-            A line matching the given card descriptor.
-
-        """
-        valid_cards = card, *args
-        with open(self._filepath, 'r') as file_:
-            for line in file_:
-                if line.startswith(valid_cards):
-                    line, *_ = line.split('#', maxsplit=1)
-                    yield line
-
-    def _parse_metadata(self) -> _Metadata:
-        """Parse the file for metadata.
-
-        This method is only intended to be called as part of the
-        initialiser and should not be called by other functions.
-        """
-        num_materials_per_elem: Optional[int] = None
-        name: Optional[str] = None
-        num_nodes = 0
-        num_elements = 0
-        num_node_strings = 0
-        mesh2d_found: bool = False
-        last_node = -1
-        last_element = -1
-        with open(self._filepath) as file_:
-            for index, line in enumerate(file_):
-                if not mesh2d_found and line.split('#', maxsplit=1)[0].strip():
-                    if line.startswith('MESH2D'):
-                        mesh2d_found = True
-                    else:
-                        raise ReadError(
-                            'File is not a 2DM mesh file', self._filepath)
-                if line.startswith('NUM_MATERIALS_PER_ELEM'):
-                    chunks = line.split('#', maxsplit=1)[0].split(maxsplit=2)
-                    num_materials_per_elem = int(chunks[1])
-                elif line.startswith('MESHNAME') or line.startswith('GM'):
-                    # NOTE: This fails for meshes with double quotes in their
-                    # mesh name, but that is an unreasonable thing to want to
-                    # do anyway. "We'll fix it later" (tm)
-                    chunks = line.split('"', maxsplit=2)
-                    if len(chunks) < 2:
-                        chunks = line.split(maxsplit=2)
-                    name = chunks[1]
-                elif line.startswith('ND'):
-                    id_ = int(line.split(maxsplit=2)[1])
-                    if id_ == 0 and not self._zero_index:
-                        raise FormatError(
-                            'Zero index encountered in non-zero-indexed file',
-                            self._filepath, index+1)
-                    num_nodes += 1
-                    if last_node != -1 and last_node+1 != id_:
-                        raise FormatError('Node IDs have holes',
-                                          self._filepath, index+1)
-                    last_node = id_
-                elif (line.startswith('NS')
-                        and '-' in line.split('#', maxsplit=1)[0]):
-                    num_node_strings += 1
-                elif line.split(maxsplit=1)[0] in _ELEMENTS:
-                    id_ = int(line.split(maxsplit=2)[1])
-                    if id_ == 0 and not self._zero_index:
-                        raise FormatError(
-                            'Zero index encountered in non-zero-indexed file',
-                            self._filepath, index+1)
-                    num_elements += 1
-                    if last_element != -1 and last_element+1 != id_:
-                        raise FormatError('Element IDs have holes',
-                                          self._filepath, index+1)
-                    last_element = id_
-        if not mesh2d_found:
-            raise ReadError('MESH2D tag not found', self._filepath)
-        return _Metadata(num_nodes, num_elements, num_node_strings, name,
-                         num_materials_per_elem)
+            return iter(self._cache_node_strings[start:end])
 
 
 def _element_factory(line: str) -> Type[Element]:
