@@ -83,32 +83,32 @@ class TestReadPedantic(unittest.TestCase):
         """Test the ND card, used for nodes."""
         # Known good
         line = 'ND 1 12 34 56'
-        node = py2dm.Node.parse_line(line.split())
+        node = py2dm.Node.parse_line(line)
         self.assertEqual(node.id, 1)
         self.assertTupleEqual(node.pos, (12.0, 34.0, 56.0))
         self.assertSequenceEqual(str(node), f'Node #1: (12.0, 34.0, 56.0)')
         # Bad card
         line = 'NE 1 1.0 2.0 3.0'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Node.parse_line(line.split())
+            _ = py2dm.Node.parse_line(line)
         # Invalid node (too few coordinates: error)
         line = 'ND 2 21 43'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Node.parse_line(line.split())
+            _ = py2dm.Node.parse_line(line)
         # Invalid node (negative node ID: error)
         line = 'ND -3 21 43'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Node.parse_line(line.split())
+            _ = py2dm.Node.parse_line(line)
         # "Strange" node (too many coordinates: generic warning)
         line = 'ND 4 11 22 33 44'
         with self.assertWarns(py2dm.errors.CustomFormatIgnored):
-            node = py2dm.Node.parse_line(line.split())
+            node = py2dm.Node.parse_line(line)
         self.assertEqual(node.id, 4)
         self.assertTupleEqual(node.pos, (11.0, 22.0, 33.0))
         # "Strange" TUFLOW-specific node (extra data ignored: specific warning)
         line = 'ND 5 1.0 2.0 3.0 2 0. 0. 0.'
         with self.assertWarns(py2dm.errors.CustomFormatIgnored):
-            node = py2dm.Node.parse_line(line.split())
+            node = py2dm.Node.parse_line(line)
         self.assertEqual(node.id, 5)
         self.assertTupleEqual(node.pos, (1.0, 2.0, 3.0))
 
@@ -116,7 +116,7 @@ class TestReadPedantic(unittest.TestCase):
         """Test the E2L card, used for simple linear elements."""
         # Known good
         line = 'E2L 1 2 3'
-        element = py2dm.Element2L.parse_line(line.split())
+        element = py2dm.Element2L.parse_line(line)
         self.assertIsInstance(element, py2dm.Element2L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
@@ -124,7 +124,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E2L 2 3 4 5 6'
-        element = py2dm.Element2L.parse_line(line.split())
+        element = py2dm.Element2L.parse_line(line)
         self.assertIsInstance(element, py2dm.Element2L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertEqual(len(element.materials), 2)
@@ -133,25 +133,25 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E3L 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element2L.parse_line(line.split())
+            _ = py2dm.Element2L.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E2L -4 5 6'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element2L.parse_line(line.split())
+            _ = py2dm.Element2L.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E2L 5 -6 7'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element2L.parse_line(line.split())
+            _ = py2dm.Element2L.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E2L 4 5'
-        with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element2L.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.CardError):
+            _ = py2dm.Element2L.parse_line(line)
 
     def test_e3l(self) -> None:
         """Test the E3L card, used for quadratic linear elements."""
         # Known good
         line = 'E3L 1 2 3 4'
-        element = py2dm.Element3L.parse_line(line.split())
+        element = py2dm.Element3L.parse_line(line)
         self.assertIsInstance(element, py2dm.Element3L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
@@ -159,7 +159,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3L 2 3 4 5 6 7'
-        element = py2dm.Element3L.parse_line(line.split())
+        element = py2dm.Element3L.parse_line(line)
         self.assertIsInstance(element, py2dm.Element3L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertEqual(len(element.materials), 2)
@@ -168,25 +168,25 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E2L 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element3L.parse_line(line.split())
+            _ = py2dm.Element3L.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E3L -4 5 6 7'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element3L.parse_line(line.split())
+            _ = py2dm.Element3L.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E3L 5 -6 7 8'
         with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element3L.parse_line(line.split())
+            _ = py2dm.Element3L.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E3L 6 7 8'
-        with self.assertRaises(py2dm.errors.FormatError):
-            _ = py2dm.Element3L.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.CardError):
+            _ = py2dm.Element3L.parse_line(line)
 
     def test_e3t(self) -> None:
         """Test the E3T card, used for simple triangular elements."""
         # Known good
         line = 'E3T 1 2 3 4'
-        element = py2dm.Element3T.parse_line(line.split())
+        element = py2dm.Element3T.parse_line(line)
         self.assertIsInstance(element, py2dm.Element3T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
@@ -194,7 +194,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3T 1 2 3 4 5 6'
-        element = py2dm.Element3T.parse_line(line.split())
+        element = py2dm.Element3T.parse_line(line)
         self.assertIsInstance(element, py2dm.Element3T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertEqual(len(element.materials), 2)
@@ -203,19 +203,19 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E3L 1 2 3 4'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element3T.parse_line(line.split())
+            _ = py2dm.Element3T.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E3T -2 3 4 5'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element3T.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element3T.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E3T 3 -4 5 6'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element3T.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element3T.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E3T 4 5 6'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element3T.parse_line(line.split())
+            _ = py2dm.Element3T.parse_line(line)
 
         # NOTE: The BASEMENT-specific element format is supported for all
         # elements, but only tested for E3T as that is the only type of element
@@ -224,11 +224,9 @@ class TestReadPedantic(unittest.TestCase):
         # BASEMENT-specific element format (float material: warning or ignored)
         line = 'E3T 5 6 7 8 9.5'
         with self.assertWarns(py2dm.errors.CustomFormatIgnored):
-            _ = py2dm.Element3T.parse_line(
-                line.split(), allow_float_materials=False)
+            _ = py2dm.Element3T.parse_line(line, allow_float_matid=False)
         with warnings.catch_warnings(record=True) as warnings_:
-            _ = py2dm.Element3T.parse_line(
-                line.split(), allow_float_materials=True)
+            _ = py2dm.Element3T.parse_line(line, allow_float_matid=True)
             if warnings_:
                 self.fail('Custom format warning not suppressed')
 
@@ -236,7 +234,7 @@ class TestReadPedantic(unittest.TestCase):
         """Test the E6T card, used for quadratic triangular elements."""
         # Known good
         line = 'E6T 1 2 3 4 5 6 7'
-        element = py2dm.Element6T.parse_line(line.split())
+        element = py2dm.Element6T.parse_line(line)
         self.assertIsInstance(element, py2dm.Element6T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
@@ -244,7 +242,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E6T 1 2 3 4 5 6 7 8 9'
-        element = py2dm.Element6T.parse_line(line.split())
+        element = py2dm.Element6T.parse_line(line)
         self.assertIsInstance(element, py2dm.Element6T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertEqual(len(element.materials), 2)
@@ -253,25 +251,25 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E3T 1 2 3 4 5 6 7'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element6T.parse_line(line.split())
+            _ = py2dm.Element6T.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E6T -2 3 4 5 6 7 8'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element6T.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element6T.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E6T 3 -4 5 6 7 8 9'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element6T.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element6T.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E6T 4 5 6 7 8 9'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element6T.parse_line(line.split())
+            _ = py2dm.Element6T.parse_line(line)
 
     def test_e4q(self) -> None:
         """Test the E4Q card, used for simple quadrilateral elements."""
         # Known good
         line = 'E4Q 1 2 3 4 5'
-        element = py2dm.Element4Q.parse_line(line.split())
+        element = py2dm.Element4Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element4Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(
@@ -279,7 +277,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E4Q 1 2 3 4 5 6 7'
-        element = py2dm.Element4Q.parse_line(line.split())
+        element = py2dm.Element4Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element4Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
@@ -288,25 +286,25 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E3Q 1 2 3 4 5'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element4Q.parse_line(line.split())
+            _ = py2dm.Element4Q.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E4Q -2 3 4 5 6'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element4Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element4Q.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E4Q 3 -4 5 6 7'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element4Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element4Q.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E4Q 4 5 6 7'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element4Q.parse_line(line.split())
+            _ = py2dm.Element4Q.parse_line(line)
 
     def test_e8q(self) -> None:
         """Test the E8Q card, used for quadratic quadrilateral elements."""
         # Known good
         line = 'E8Q 1 2 3 4 5 6 7 8 9'
-        element = py2dm.Element8Q.parse_line(line.split())
+        element = py2dm.Element8Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element8Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(str(element), 'Element #1 [E8Q]: Node IDs '
@@ -314,7 +312,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E8Q 1 2 3 4 5 6 7 8 9 10 11'
-        element = py2dm.Element8Q.parse_line(line.split())
+        element = py2dm.Element8Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element8Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
@@ -323,19 +321,19 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E6Q 1 2 3 4 5 6 7 8 9'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element8Q.parse_line(line.split())
+            _ = py2dm.Element8Q.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E8Q -2 3 4 5 6 7 8 9 10'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element8Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element8Q.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E8Q 3 -4 5 6 7 8 9 10 11'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element8Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element8Q.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E8Q 4 5 6 7 8 9 10 11'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element8Q.parse_line(line.split())
+            _ = py2dm.Element8Q.parse_line(line)
 
     def test_e9q(self) -> None:
         """Test the E9Q card, used for quadratic quadrilateral elements.
@@ -344,7 +342,7 @@ class TestReadPedantic(unittest.TestCase):
         """
         # Known good
         line = 'E9Q 1 2 3 4 5 6 7 8 9 10'
-        element = py2dm.Element9Q.parse_line(line.split())
+        element = py2dm.Element9Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element9Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(str(element), 'Element #1 [E9Q]: Node IDs '
@@ -352,7 +350,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E9Q 1 2 3 4 5 6 7 8 9 10 11 12'
-        element = py2dm.Element9Q.parse_line(line.split())
+        element = py2dm.Element9Q.parse_line(line)
         self.assertIsInstance(element, py2dm.Element9Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertEqual(len(element.materials), 2)
@@ -361,25 +359,25 @@ class TestReadPedantic(unittest.TestCase):
         # Bad card
         line = 'E6Q 1 2 3 4 5 6 7 8 9 10'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element9Q.parse_line(line.split())
+            _ = py2dm.Element9Q.parse_line(line)
         # Invalid element (negative element ID: error)
         line = 'E9Q -2 3 4 5 6 7 8 9 10 11'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element9Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element9Q.parse_line(line)
         # Invalid element (negative node ID: error)
         line = 'E9Q 3 -4 5 6 7 8 9 10 11 12'
-        with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element9Q.parse_line(line.split())
+        with self.assertRaises(py2dm.errors.FormatError):
+            _ = py2dm.Element9Q.parse_line(line)
         # Invalid elements (too few node IDs: error)
         line = 'E9Q 4 5 6 7 8 9 10 11 12'
         with self.assertRaises(py2dm.errors.CardError):
-            _ = py2dm.Element9Q.parse_line(line.split())
+            _ = py2dm.Element9Q.parse_line(line)
 
     def test_ns(self) -> None:
         """Test the node string parser."""
         # Single line test
         line = 'NS 1 2 3 4 5 -6'
-        string, flag = py2dm.NodeString.parse_line(line.split())
+        string, flag = py2dm.NodeString.parse_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 6)
         self.assertIsNone(string.name)
@@ -389,23 +387,23 @@ class TestReadPedantic(unittest.TestCase):
         line_1 = 'NS 1 2 3 4 5 6 7 8 9 10'
         line_2 = 'NS 11 12 13 14 15 16 17 18 19 20'
         line_3 = 'NS 21 22 23 24 25 26 27 28 29 -30'
-        string, flag = py2dm.NodeString.parse_line(line_1.split())
+        string, flag = py2dm.NodeString.parse_line(line_1)
         self.assertFalse(flag)
-        string, flag = py2dm.NodeString.parse_line(line_2.split(), string)
+        string, flag = py2dm.NodeString.parse_line(line_2, string)
         self.assertFalse(flag)
-        string, flag = py2dm.NodeString.parse_line(line_3.split(), string)
+        string, flag = py2dm.NodeString.parse_line(line_3, string)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 30)
         self.assertIsNone(string.name)
         # Long line test
         line = 'NS 1 2 3 4 5 6 7 8 9 10 11 12 13 14 -15'
-        string, flag = py2dm.NodeString.parse_line(line.split())
+        string, flag = py2dm.NodeString.parse_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 15)
         self.assertIsNone(string.name)
         # Test numerical ID (as used by TUFLOW)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 11'
-        string, flag = py2dm.NodeString.parse_line(line.split())
+        string, flag = py2dm.NodeString.parse_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 10)
         self.assertEqual(string.name, '11')
@@ -413,7 +411,7 @@ class TestReadPedantic(unittest.TestCase):
             str(string), 'NodeString "11": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)')
         # Test raw string ID (as used by BASEMENT)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 string1'
-        string, flag = py2dm.NodeString.parse_line(line.split())
+        string, flag = py2dm.NodeString.parse_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 10)
         self.assertEqual(string.name, 'string1')
@@ -421,7 +419,7 @@ class TestReadPedantic(unittest.TestCase):
                                  '(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)')
         # Test quoted string ID (no known users but most sensible)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 "string4"'
-        string, flag = py2dm.NodeString.parse_line(line.split())
+        string, flag = py2dm.NodeString.parse_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 10)
         self.assertEqual(string.name, 'string4')
@@ -514,7 +512,7 @@ class TestReadMDAL(unittest.TestCase):
     def test_unordered_ids(self) -> None:
         path = 'tests/data/external/mdal/unordered_ids.2dm'
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path, materials=1) as mesh:
+            with py2dm.Reader(path, materials=1):
                 # TODO: Add info text about how to renumber a mesh
                 pass
 
@@ -542,7 +540,7 @@ class TestReadRealistic(unittest.TestCase):
         # Py2DM. Once the converter/conformer has been added, it should be
         # enabled here.
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path, materials=1) as mesh:
+            with py2dm.Reader(path, materials=1):
                 pass
 
     def test_tm_forum_two(self) -> None:

@@ -15,12 +15,9 @@ from .errors import FormatError, ReadError
 
 try:
     from typing import Literal
-except ModuleNotFoundError as err:  # pragma: no cover
+except ImportError:  # pragma: no cover
     # Required for compatibilty with Python 3.7 (used in QGIS 3)
-    try:
-        from typing_extensions import Literal  # type: ignore
-    except ModuleNotFoundError:
-        raise err from err
+    from typing_extensions import Literal  # type: ignore
 
 __all__ = [
     'Reader'
@@ -79,7 +76,7 @@ class Reader:
     """
 
     def __init__(self, filepath: str, lazy: bool = False,
-                 materials: int = None, **kwargs: Any) -> None:
+                 materials: Optional[int] = None, **kwargs: Any) -> None:
         """Initialise the mesh reader.
 
         This opens the underlying file and preloads metadata for the
@@ -136,12 +133,13 @@ class Reader:
             # Create a cache of all
             # Load all searchable entities into memory
             self._cache_nodes: List[Node] = [
-                Node.parse_line(l, allow_extra=True)
+                Node.parse_line(l, allow_zero_index=self._zero_index)
                 for l in self._filter_lines('ND')]
 
             self._cache_elements: List[Element] = [
-                _element_factory(l[0]).parse_line(
-                    l, allow_float_materials=True)
+                _element_factory(l).parse_line(
+                    l, allow_float_matid=True,
+                    allow_zero_index=self._zero_index)
                 for l in self._filter_lines(*_ELEMENTS)]
 
         # Node strings are special and require multiline parsing
@@ -149,7 +147,7 @@ class Reader:
         with open(self._filepath, 'r') as file_:
             for line in iter(file_):
                 if line.startswith('NS'):
-                    node_string, is_done = NodeString.parse_line(line.split())
+                    node_string, is_done = NodeString.parse_line(line)
                     if is_done:
                         self._cache_node_strings.append(node_string)
 
@@ -206,19 +204,20 @@ class Reader:
             node = next(iterator)
         except StopIteration:
             # Mesh is empty/contains no nodes
-            return (float('nan'),) * 4
-        minX, maxX, minY, maxY = (*node.x, *node.y)
+            return float('nan'), float('nan'), float('nan'), float('nan')
+        min_x = max_x = node.x
+        min_y = max_y = node.y
         # Update value
         for node in self.iter_nodes():
-            if node.x < minX:
-                minX = node.x
-            elif node.x > maxX:
-                maxX = node.x
-            if node.y < minY:
-                minY = node.y
-            elif node.y > maxY:
-                maxY = node.y
-        return minX, maxX, minY, maxY
+            if node.x < min_x:
+                min_x = node.x
+            elif node.x > max_x:
+                max_x = node.x
+            if node.y < min_y:
+                min_y = node.y
+            elif node.y > max_y:
+                max_y = node.y
+        return min_x, max_x, min_y, max_y
 
     @property
     def elements(self) -> Iterator[Element]:
@@ -419,7 +418,7 @@ class Reader:
         :type: :class:`py2dm.Element`
         """
         if self.num_elements < 1:
-            return ()
+            return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
         id_max = self.num_elements+1 if self._zero_index else self.num_elements
@@ -446,6 +445,7 @@ class Reader:
                     self._cache_elements[start-offset:end-offset]):
                 if index == 0 and element.id != int(self._zero_index):
                     raise FormatError('idk', 'idk', 1)
+                yield element
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
@@ -464,7 +464,7 @@ class Reader:
         :type: :class:`py2dm.Node`
         """
         if self.num_nodes < 1:
-            return ()
+            return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
         id_max = self.num_nodes+1 if self._zero_index else self.num_nodes
@@ -516,7 +516,7 @@ class Reader:
         :type: :class:`py2dm.NodeString`
         """
         if self.num_node_strings < 1:
-            return ()
+            return iter(())
         if self._lazy:
             # TODO: Implement lazy iterator
             raise NotImplementedError()
@@ -526,7 +526,7 @@ class Reader:
             else:
                 return iter(self._cache_node_strings[start:end])
 
-    def _filter_lines(self, card: str, *args: str) -> Iterator[List[str]]:
+    def _filter_lines(self, card: str, *args: str) -> Iterator[str]:
         """Filter the mesh's lines by their card.
 
         This iterates over the entire file, returning only those lines
@@ -541,7 +541,7 @@ class Reader:
             *args: Additional cards whos lines will be returned.
 
         Yields:
-            A list of whitespace-separated words of the matching line.
+            A line matching the given card descriptor.
 
         """
         valid_cards = card, *args
@@ -549,7 +549,7 @@ class Reader:
             for line in file_:
                 if line.startswith(valid_cards):
                     line, *_ = line.split('#', maxsplit=1)
-                    yield line.split()
+                    yield line
 
     def _parse_metadata(self) -> _Metadata:
         """Parse the file for metadata.
@@ -592,7 +592,7 @@ class Reader:
                             self._filepath, index+1)
                     num_nodes += 1
                     if last_node != -1 and last_node+1 != id_:
-                        raise FormatError('Node IDs are have holes',
+                        raise FormatError('Node IDs have holes',
                                           self._filepath, index+1)
                     last_node = id_
                 elif (line.startswith('NS')
@@ -606,7 +606,7 @@ class Reader:
                             self._filepath, index+1)
                     num_elements += 1
                     if last_element != -1 and last_element+1 != id_:
-                        raise FormatError('Element IDs are have holes',
+                        raise FormatError('Element IDs have holes',
                                           self._filepath, index+1)
                     last_element = id_
         if not mesh2d_found:
@@ -615,11 +615,11 @@ class Reader:
                          num_materials_per_elem)
 
 
-def _element_factory(card: str) -> Type[Element]:
+def _element_factory(line: str) -> Type[Element]:
     """Return a :class:`py2dm.Element` subclass by card.
 
     Arguments:
-        card: The card to look up
+        line: The line to create an element for.
 
     Raises:
         ValueError: Raised if the given card doesn't match any subclass
@@ -630,6 +630,7 @@ def _element_factory(card: str) -> Type[Element]:
     """
     for element_group in Element.__subclasses__():
         for subclass in element_group.__subclasses__():
-            if subclass.card == card:
+            if line.startswith(subclass.card):
                 return subclass
+    card = line.split(maxsplit=1)[0]
     raise NotImplementedError(f'Unsupported card name \'{card}\'')

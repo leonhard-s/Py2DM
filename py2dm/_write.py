@@ -3,10 +3,15 @@
 import math
 from types import TracebackType
 from typing import IO, List, Optional, Tuple, Type
-from typing_extensions import Literal
 
 from ._entities import Element, Node, NodeString
 from .types import MaterialIndex
+
+try:
+    from typing import Literal
+except ImportError:  # pragma: no cover
+    # Required for compatibilty with Python 3.7 (used in QGIS 3)
+    from typing_extensions import Literal  # type: ignore
 
 
 class Writer:
@@ -187,12 +192,13 @@ class Writer:
         """Write all elements registered."""
         node_col = int(math.log10(len(self.nodes))) + 1
         ele_col = int(math.log10(len(self.elements))) + 1
+        matid_col = 0
         if self._nmpe > 0:
             matid_col = int(math.log10(self._nmpe)) + 1
         for element in self.elements:
             columns = (3, ele_col, *(node_col,)*element.num_nodes)
             if self._nmpe > 0:
-                columns = *columns, *(matid_col,)*self._nmpe
+                columns = (*columns, *(matid_col,)*self._nmpe)
             self._write_line(element.to_list(), columns=columns)
 
     def write_header(self) -> None:
