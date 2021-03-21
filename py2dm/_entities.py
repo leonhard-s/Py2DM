@@ -13,7 +13,7 @@ try:
 except ImportError:
     from ._parser import parse_element, parse_node, parse_node_string
     import platform
-    if platform.python_implementation == 'CPython':
+    if platform.python_implementation() == 'CPython':
         warnings.warn('C parser not found, using Python implementation')
 
 __all__ = ['Entity', 'Element', 'Element2L', 'Element3L', 'Element3T',
