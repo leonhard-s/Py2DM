@@ -543,8 +543,9 @@ py2dm_parse_node_string(PyObject *, PyObject *args, PyObject *kwargs)
         (char *)"allow_zero_index",
         (char *)"nodes",
         nullptr};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|pO", keywords,
-                                     &line, &allow_zero_index, &nodes))
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "s|pO!", keywords,
+            &line, &allow_zero_index, &PyList_Type, &nodes))
     {
         return nullptr;
     }
