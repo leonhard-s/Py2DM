@@ -31,7 +31,7 @@ class Entity(metaclass=abc.ABCMeta):
     :class:`Element`.
 
     This is an abstract class, subclasses must implement the
-    :meth:`parse_line` and :meth:`to_list` methods.
+    :meth:`from_line` and :meth:`to_list` methods.
 
     """
 
@@ -40,7 +40,7 @@ class Entity(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def parse_line(cls: Type[EntityT], line: str) -> EntityT:
+    def from_line(cls: Type[EntityT], line: str, **kwargs: Any) -> EntityT:
         """Create a new instance from the given line.
 
         The line passed will start with the entity's tag and have
@@ -105,7 +105,7 @@ class Node(Entity):
         return self.x, self.y, self.z
 
     @classmethod
-    def parse_line(cls, line: str, **kwargs: Any) -> 'Node':
+    def from_line(cls, line: str, **kwargs: Any) -> 'Node':
         try:
             id_, *pos = parse_node(line, **kwargs)
         except ValueError as err:
@@ -158,7 +158,7 @@ class Element(Entity):
         return len(self.materials)
 
     @classmethod
-    def parse_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
+    def from_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
         if not line.startswith(cls.card):
             raise CardError('Bad card', line.split(maxsplit=1)[0])
         flag = kwargs.pop('allow_float_matid', True)
@@ -327,7 +327,7 @@ class NodeString:
     r"""A polyline represented by a string of nodes.
 
     This mostly satisfies the interface laid out by the :class:`Entity`
-    ABC, except that the :meth:`parse_line` method features an optional
+    ABC, except that the :meth:`from_line` method features an optional
     parameter that allows specification of an existing node string.
 
     This is necessary as node strings may be split across multiple

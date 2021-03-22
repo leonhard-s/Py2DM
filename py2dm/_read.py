@@ -401,14 +401,14 @@ class Reader(ReaderBase):
             # Nodes
             file_.seek(self._metadata.pos_node_start)
             for line in file_:
-                node = Node.parse_line(line)
+                node = Node.from_line(line)
                 self._cache_nodes.append(node)
                 if node.id >= self.num_nodes:
                     break
             # Elements
             file_.seek(self._metadata.pos_element_start)
             for line in file_:
-                element = _element_factory(line).parse_line(line)
+                element = _element_factory(line).from_line(line)
                 self._cache_elements.append(element)
                 if element.id >= self.num_elements:
                     break
@@ -417,7 +417,7 @@ class Reader(ReaderBase):
             node_string: Optional[NodeString] = None
             for line in file_:
                 if line.startswith('NS'):
-                    node_string, is_done = NodeString.parse_line(
+                    node_string, is_done = NodeString.from_line(
                         line, node_string)
                     if is_done:
                         self._cache_node_strings.append(node_string)
