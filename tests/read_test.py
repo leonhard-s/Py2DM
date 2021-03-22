@@ -86,7 +86,7 @@ class TestReadPedantic(unittest.TestCase):
         node = py2dm.Node.from_line(line)
         self.assertEqual(node.id, 1)
         self.assertTupleEqual(node.pos, (12.0, 34.0, 56.0))
-        self.assertSequenceEqual(str(node), f'Node #1: (12.0, 34.0, 56.0)')
+        self.assertSequenceEqual(str(node), f'<Node #1: (12.0, 34.0, 56.0)>')
         # Bad card
         line = 'NE 1 1.0 2.0 3.0'
         with self.assertRaises(py2dm.errors.CardError):
@@ -120,7 +120,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.Element2L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
-            str(element), 'Element #1 [E2L]: Node IDs (2, 3)')
+            str(element), '<Element #1 [E2L]: Node IDs (2, 3)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E2L 2 3 4 5 6'
@@ -155,7 +155,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.Element3L)
         self.assertIsInstance(element, py2dm.LinearElement)
         self.assertSequenceEqual(
-            str(element), 'Element #1 [E3L]: Node IDs (2, 3, 4)')
+            str(element), '<Element #1 [E3L]: Node IDs (2, 3, 4)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3L 2 3 4 5 6 7'
@@ -190,7 +190,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.Element3T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
-            str(element), 'Element #1 [E3T]: Node IDs (2, 3, 4)')
+            str(element), '<Element #1 [E3T]: Node IDs (2, 3, 4)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E3T 1 2 3 4 5 6'
@@ -238,7 +238,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.Element6T)
         self.assertIsInstance(element, py2dm.TriangularElement)
         self.assertSequenceEqual(
-            str(element), 'Element #1 [E6T]: Node IDs (2, 3, 4, 5, 6, 7)')
+            str(element), '<Element #1 [E6T]: Node IDs (2, 3, 4, 5, 6, 7)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E6T 1 2 3 4 5 6 7 8 9'
@@ -273,7 +273,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertIsInstance(element, py2dm.Element4Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
         self.assertSequenceEqual(
-            str(element), 'Element #1 [E4Q]: Node IDs (2, 3, 4, 5)')
+            str(element), '<Element #1 [E4Q]: Node IDs (2, 3, 4, 5)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E4Q 1 2 3 4 5 6 7'
@@ -307,8 +307,8 @@ class TestReadPedantic(unittest.TestCase):
         element = py2dm.Element8Q.from_line(line)
         self.assertIsInstance(element, py2dm.Element8Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
-        self.assertSequenceEqual(str(element), 'Element #1 [E8Q]: Node IDs '
-                                 '(2, 3, 4, 5, 6, 7, 8, 9)')
+        self.assertSequenceEqual(str(element), '<Element #1 [E8Q]: Node IDs '
+                                 '(2, 3, 4, 5, 6, 7, 8, 9)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E8Q 1 2 3 4 5 6 7 8 9 10 11'
@@ -345,8 +345,8 @@ class TestReadPedantic(unittest.TestCase):
         element = py2dm.Element9Q.from_line(line)
         self.assertIsInstance(element, py2dm.Element9Q)
         self.assertIsInstance(element, py2dm.QuadrilateralElement)
-        self.assertSequenceEqual(str(element), 'Element #1 [E9Q]: Node IDs '
-                                 '(2, 3, 4, 5, 6, 7, 8, 9, 10)')
+        self.assertSequenceEqual(str(element), '<Element #1 [E9Q]: Node IDs '
+                                 '(2, 3, 4, 5, 6, 7, 8, 9, 10)>')
         self.assertEqual(element.num_materials, 0)
         # Known good (plus two materials)
         line = 'E9Q 1 2 3 4 5 6 7 8 9 10 11 12'
@@ -382,7 +382,7 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(string.num_nodes, 6)
         self.assertIsNone(string.name)
         self.assertSequenceEqual(
-            str(string), 'Unnamed NodeString: (1, 2, 3, 4, 5, 6)')
+            str(string), '<Unnamed NodeString: (1, 2, 3, 4, 5, 6)>')
         # Multiline test
         line_1 = 'NS 1 2 3 4 5 6 7 8 9 10'
         line_2 = 'NS 11 12 13 14 15 16 17 18 19 20'
@@ -408,15 +408,15 @@ class TestReadPedantic(unittest.TestCase):
         self.assertEqual(string.num_nodes, 10)
         self.assertEqual(string.name, '11')
         self.assertSequenceEqual(
-            str(string), 'NodeString "11": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)')
+            str(string), '<NodeString "11": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)>')
         # Test raw string ID (as used by BASEMENT)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 string1'
         string, flag = py2dm.NodeString.from_line(line)
         self.assertTrue(flag)
         self.assertEqual(string.num_nodes, 10)
         self.assertEqual(string.name, 'string1')
-        self.assertSequenceEqual(str(string), 'NodeString "string1": '
-                                 '(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)')
+        self.assertSequenceEqual(str(string), '<NodeString "string1": '
+                                 '(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)>')
         # Test quoted string ID (no known users but most sensible)
         line = 'NS 1 2 3 4 5 6 7 8 9 -10 "string4"'
         string, flag = py2dm.NodeString.from_line(line)

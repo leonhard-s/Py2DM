@@ -97,7 +97,7 @@ class Node(Entity):
         self.z = z  #: The Z position of the node
 
     def __repr__(self) -> str:
-        return f'Node #{self.id}: {self.pos}'
+        return f'<Node #{self.id}: {self.pos}>'
 
     @property
     def pos(self) -> Tuple[float, float, float]:
@@ -150,7 +150,7 @@ class Element(Entity):
         self.nodes = tuple(nodes)  #: The nodes making up the element
 
     def __repr__(self) -> str:
-        return f'Element #{self.id} [{self.card}]: Node IDs {self.nodes}'
+        return f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}>'
 
     @property
     def num_materials(self) -> int:
@@ -351,8 +351,8 @@ class NodeString:
 
     def __repr__(self) -> str:
         if self.name is not None:
-            return f'NodeString "{self.name}": {self.nodes}'
-        return f'Unnamed NodeString: {self.nodes}'
+            return f'<NodeString "{self.name}": {self.nodes}>'
+        return f'<Unnamed NodeString: {self.nodes}>'
 
     @property
     def num_nodes(self) -> int:
