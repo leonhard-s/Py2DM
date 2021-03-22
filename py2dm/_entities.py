@@ -16,42 +16,57 @@ except ImportError:
     if platform.python_implementation() == 'CPython':
         warnings.warn('C parser not found, using Python implementation')
 
-__all__ = ['Entity', 'Element', 'Element2L', 'Element3L', 'Element3T',
-           'Element4Q', 'Element6T', 'Element8Q', 'Element9Q', 'LinearElement',
-           'Node', 'NodeString', 'QuadrilateralElement', 'TriangularElement']
+__all__ = [
+    'Entity',
+    'Element',
+    'Element2L',
+    'Element3L',
+    'Element3T',
+    'Element4Q',
+    'Element6T',
+    'Element8Q',
+    'Element9Q',
+    'LinearElement',
+    'Node',
+    'NodeString',
+    'QuadrilateralElement',
+    'TriangularElement'
+]
 
 EntityT = TypeVar('EntityT', bound='Entity')
 ElementT = TypeVar('ElementT', bound='Element')
 
 
 class Entity(metaclass=abc.ABCMeta):
-    """Base class for all entities defined in a 2DM file.
+    """Base class for geometries defined in the 2DM specification.
 
     This includes :class:`Node`, :class:`NodeString`, and
-    :class:`Element`.
+    the subclasses of :class:`Element`.
 
     This is an abstract class, subclasses must implement the
-    :meth:`from_line` and :meth:`to_list` methods.
-
+    :meth:`from_line` and :meth:`to_list` methods, as well as provide
+    a :attr:`card` class attribute associating it with its 2DM card.
     """
 
     __slots__: List[str] = []
-    card: ClassVar[str]  #: The 2DM card representing this type
+    card: ClassVar[str]
+    """The 2DM card associated with this geometry."""
 
     @classmethod
     @abc.abstractmethod
     def from_line(cls: Type[EntityT], line: str, **kwargs: Any) -> EntityT:
         """Create a new instance from the given line.
 
-        The line passed will start with the entity's tag and have
-        already been split in to chunks/words.
+        Lines passed into this element must start with the appropriate
+        card identifier; trailing whitespace is allowed.
 
         If any bad data is encountered, a
-        :class:`~py2dm.errors.FormatError` should be raised.
+        :class:`~py2dm.errors.FormatError` should be raised by the
+        implementation.
 
-        :param line: The line to parse
-        :type line: str
-        :return: The instance described by the given line
+        :param line: The line to parse.
+        :type line: :class:`str`
+        :return: An instance as described by the provided `line`.
         :rtype: :class:`Entity`
         """
 
@@ -59,11 +74,11 @@ class Entity(metaclass=abc.ABCMeta):
     def to_list(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
-        It is returned as a list of strings to facilitate formatting
-        into constant-width columns.
+        The line is returned as a list of strings to facilitate
+        formatting into constant-width columns if requested.
 
-        :return: A list of words to write to disk
-        :rtype: List[str]
+        :return: A list of words to write to disk.
+        :rtype: :obj:`typing.List` [:class:`str`]
         """
 
 
@@ -74,16 +89,16 @@ class Node(Entity):
 
     Nodes are the only geometries that define position in a mesh. Other
     objects like elements or node strings reference them by ID to
-    position themselves in space.
+    position themselves.
 
-    :param id_: The unique ID of the node
-    :type id_: int
-    :param x: X position of the node
-    :type x: float
-    :param y: Y position of the node
-    :type y: float
-    :param z: Z position of the node
-    :type z: float
+    :param id_: The unique ID of the node. Always positive or zero.
+    :type id_: :class:`int`
+    :param x: X position of the node.
+    :type x: :class:`float`
+    :param y: Y position of the node.
+    :type y: :class:`float`
+    :param z: Z position of the node.
+    :type z: :class:`float`
     """
 
     __slots__ = ['id', 'x', 'y', 'z']
@@ -91,21 +106,67 @@ class Node(Entity):
 
     # pylint: disable=invalid-name
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
-        self.id = id_  #: The unique ID of the noe
-        self.x = x  #: The X position of the node
-        self.y = y  #: The Y position of the node
-        self.z = z  #: The Z position of the node
+        self.id = id_
+        """Unique identifier of the node.
+        
+        :type: :class:`int`
+        """
+        self.x = x
+        """X coordinate of the node.
+        
+        :type: :class:`float`
+
+        .. seealso::
+        
+            :attr:`pos` -- A tuple of floats representing the X, Y, and
+            Z coordinate of the node.
+        """
+        self.y = y
+        """Y coordinate of the node.
+                
+        :type: :class:`float`
+
+        .. seealso::
+        
+            :attr:`pos` -- A tuple of floats representing the X, Y, and
+            Z coordinate of the node.
+        """
+        self.z = z
+        """Z coordinate of the node.
+                
+        :type: :class:`float`
+
+        .. seealso::
+        
+            :attr:`pos` -- A tuple of floats representing the X, Y, and
+            Z coordinate of the node.
+        """
 
     def __repr__(self) -> str:
         return f'<Node #{self.id}: {self.pos}>'
 
     @property
     def pos(self) -> Tuple[float, float, float]:
-        """The 3D position of the node as a tuple of floats."""
+        """The 3D position of the node as a tuple of three floats.
+
+        :type: :obj:`typing.Tuple` [
+            :class:`float`, :class:`float`, :class:`float`]
+        """
         return self.x, self.y, self.z
 
     @classmethod
     def from_line(cls, line: str, **kwargs: Any) -> 'Node':
+        """Instantiate a new :class:`Node` from the given line.
+
+        Any extraneous keyword arguments are silently ignored.
+
+        :param line: The line to parse.
+        :type line: :class:`str`
+        :param allow_zero_index: Whether to allow a node ID of zero.
+        :type allow_zero_index: :class:`bool`, optional
+        :return: A node representing the given line.
+        :rtype: :class:`Node`
+        """
         try:
             id_, *pos = parse_node(line, **kwargs)
         except ValueError as err:
@@ -115,6 +176,14 @@ class Node(Entity):
         return cls(id_, *pos)
 
     def to_list(self, **kwargs: Any) -> List[str]:
+        """Generate the canonical 2DM representation of this entity.
+
+        This is returned as a list of strings to facilitate formatting
+        into constant-width columns.
+
+        :return: A list of words to write to disk.
+        :rtype: :class:`typing.List` [:class:`str`]
+        """
         list_ = [self.card, str(self.id)]
         list_.extend((str(format_float(x)) for x in (self.x, self.y, self.z)))
         return list_
@@ -130,36 +199,69 @@ class Element(Entity):
     specify the 2DM card and number of nodes.
 
     :param id_: The unique ID of the element
-    :type id_: int
+    :type id_: :class:`int`
     :param \*nodes: Any number of nodes making up the element
-    :type \*nodes: int
+    :type \*nodes: :class:`int`
     :param materials: Any number of material IDs for the element,
         defaults to ``None``
-    :type materials: Tuple[Union[int, float], ...], optional
+    :type materials: :obj:`typing.Tuple` [
+        :obj:`typing.Union` [:class:`int`, :class:`float`]], optional
     """
 
     # pylint: disable=invalid-name
     __slots__ = ['id', 'materials', 'nodes']
     card: ClassVar[str]
-    num_nodes: ClassVar[int]  #: The number of nodes of the element
+    num_nodes: ClassVar[int]
+    """The number of nodes of this element."""
 
     def __init__(self, id_: int, *nodes: int,
                  materials: Optional[Tuple[MaterialIndex, ...]] = None
                  ) -> None:
-        self.id = id_  #: The unique ID of the element
-        self.materials = materials or ()  #: The material IDs of the element
-        self.nodes = tuple(nodes)  #: The nodes making up the element
+        self.id = id_
+        """The unique ID of the element.
+        
+        :type: :class:`int`
+        """
+        self.materials = materials or ()
+        """Material IDs assigned to this element.
+
+        Depending on the 2DM-like format used, this could be a floating
+        point value used to store e.g. element centroid elevation.
+
+        :type: :obj:`typing.Optional` [:obj:`typing.Tuple` [
+            :obj:`typing.Union` [:class:`int`, :class:`float`]]]
+        """
+        self.nodes = tuple(nodes)
+        """The defining nodes for this element.
+        
+        :type: :obj:`typing.Tuple` [
+            :class:`int`, :class:`int`, :class:`int`]
+        """
 
     def __repr__(self) -> str:
         return f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}>'
 
     @property
     def num_materials(self) -> int:
-        """The number of materials for this element."""
+        """The number of materials defined for this element.
+
+        :type: :class:`int`
+        """
         return len(self.materials)
 
     @classmethod
     def from_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
+        """Create a new instance from the given line.
+
+        :param line: The line to parse.
+        :type line: :class:`str`
+        :param allow_float_matid: Whether to allow floating point
+            values as material indices. This is used by BASEMENT 3.x to
+            store element centroid elevation.
+        :type allow_float_matid: :class:`bool`, optional
+        :param allow_zero_index: Whether to allow a node ID of zero.
+        :type allow_zero_index: :class:`bool`, optional
+        """
         if not line.startswith(cls.card):
             raise CardError('Bad card', line.split(maxsplit=1)[0])
         try:
@@ -175,7 +277,14 @@ class Element(Entity):
         return cls(id_, *nodes, materials=materials)
 
     def to_list(self, **kwargs: Any) -> List[str]:
-        """Return the 2DM list representation of this element."""
+        """Generate the canonical 2DM representation of this entity.
+
+        This is returned as a list of strings to facilitate formatting
+        into constant-width columns.
+
+        :return: A list of words to write to disk.
+        :rtype: :class:`typing.List` [:class:`str`]
+        """
         out = [self.card, str(self.id)]
         out.extend((str(n) for n in self.nodes))
         # Discard floating point material indices if disallowed
@@ -238,12 +347,9 @@ class QuadrilateralElement(Element):
 
 
 class Element2L(LinearElement):
-    """Two-noded, linear element.
-
-    This type's card tag is ``E2L``.
+    """Two-noded, linear element (E2L).
 
     This is a subclass of :class:`LinearElement`.
-
     """
 
     card: ClassVar[str] = 'E2L'
@@ -251,12 +357,9 @@ class Element2L(LinearElement):
 
 
 class Element3L(LinearElement):
-    """Three-noded, linear element.
-
-    This type's card tag is ``E3L``.
+    """Three-noded, linear element (E3L).
 
     This is a subclass of :class:`LinearElement`.
-
     """
 
     card: ClassVar[str] = 'E3L'
@@ -264,12 +367,9 @@ class Element3L(LinearElement):
 
 
 class Element3T(TriangularElement):
-    """Three-noded, triangular mesh element.
-
-    This type's card tag is ``E3T``.
+    """Three-noded, triangular mesh element (E3T).
 
     This is a subclass of :class:`TriangularElement`.
-
     """
 
     card: ClassVar[str] = 'E3T'
@@ -277,12 +377,9 @@ class Element3T(TriangularElement):
 
 
 class Element6T(TriangularElement):
-    """Six-noded, triangular mesh element.
-
-    This type's card tag is ``E6T``.
+    """Six-noded, triangular mesh element (E6T).
 
     This is a subclass of :class:`TriangularElement`.
-
     """
 
     card: ClassVar[str] = 'E6T'
@@ -290,12 +387,9 @@ class Element6T(TriangularElement):
 
 
 class Element4Q(QuadrilateralElement):
-    """Four-noded, quadrilateral mesh element.
-
-    This type's card tag is ``E4Q``.
+    """Four-noded, quadrilateral mesh element (E4Q).
 
     This is a subclass of :class:`QuadrilateralElement`.
-
     """
 
     card: ClassVar[str] = 'E4Q'
@@ -303,12 +397,9 @@ class Element4Q(QuadrilateralElement):
 
 
 class Element8Q(QuadrilateralElement):
-    """Eight-noded, quadrilateral mesh element.
-
-    This type's card tag is ``E8Q``.
+    """Eight-noded, quadrilateral mesh element (E8Q).
 
     This is a subclass of :class:`QuadrilateralElement`.
-
     """
 
     card: ClassVar[str] = 'E8Q'
@@ -316,12 +407,9 @@ class Element8Q(QuadrilateralElement):
 
 
 class Element9Q(QuadrilateralElement):
-    """Nine-noded, quadrilateral mesh element.
-
-    This type's card tag is ``E9Q``.
+    """Nine-noded, quadrilateral mesh element (E9Q).
 
     This is a subclass of :class:`QuadrilateralElement`.
-
     """
 
     card: ClassVar[str] = 'E9Q'
@@ -329,30 +417,36 @@ class Element9Q(QuadrilateralElement):
 
 
 class NodeString:
-    r"""A polyline represented by a string of nodes.
+    r"""A polyline represented by a string of nodes (NS).
 
     This mostly satisfies the interface laid out by the :class:`Entity`
     ABC, except that the :meth:`from_line` method features an optional
     parameter that allows specification of an existing node string.
 
     This is necessary as node strings may be split across multiple
-    lines in a 2DM.
-
-    This type's card tag is ``NS``.
+    lines in a 2DM file as lines may not exceed 10 tags.
 
     :param \*nodes: A list of node IDs making up the node string
-    :type \*nodes: int
+    :type \*nodes: :class:`int`
     :param name: An optional name to give to a particular node string,
         defaults to ``None``
-    :type name: str, optional
+    :type name: :class:`str`, optional
     """
 
     __slots__ = ['name', 'nodes']
-    card: ClassVar[str] = 'NS'  #: The 2DM card representing this type
+    card: ClassVar[str] = 'NS'
 
     def __init__(self, *nodes: int, name: Optional[str] = None) -> None:
         self.name = name
+        """An optional name used to identify the node string.
+
+        :type: :obj:`typing.Optional` [:class:`str`]
+        """
         self.nodes = tuple(nodes)
+        """The defining nodes of the node strings.
+
+        :type: :obj:`typing.Tuple` [:class:`int`]
+        """
 
     def __repr__(self) -> str:
         if self.name is not None:
@@ -361,7 +455,10 @@ class NodeString:
 
     @property
     def num_nodes(self) -> int:
-        """Return the number of nodes in the node string."""
+        """Return the number of nodes in the node string.
+
+        :type: :class:`int`
+        """
         return len(self.nodes)
 
     @classmethod
@@ -375,12 +472,13 @@ class NodeString:
         ID.
 
         :param line: The line to parse
-        :type lint: str
+        :type lint: :class:`str`
         :param node_string: An existing node string to append, defaults
             to ``None``
         :type node_string: :class:`NodeString`, optional
         :return: The created node string and the final flag
-        :rtype: Tuple[:class:`NodeString`, bool]
+        :rtype: :obj:`typing.Tuple` [
+            :class:`NodeString`, :class:`bool`]
         """
         nodes: List[int] = (
             [] if node_string is None else list(node_string.nodes))
@@ -403,7 +501,7 @@ class NodeString:
         into constant-width columns.
 
         :return: A list of words to write to disk
-        :rtype: List[str]
+        :rtype: :obj:`typing.List` [:class:`str`]
         """
         list_ = [self.card]
         list_.extend((str(n) for n in self.nodes))
