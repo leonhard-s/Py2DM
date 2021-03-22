@@ -39,7 +39,7 @@ _ELEMENTS = [
 ]
 
 
-class ReaderBase(abc.ABCMeta):
+class ReaderBase(metaclass=abc.ABCMeta):
     """Abstract class interface definition for 2DM reader classes.
 
     This ABC defines the endpoints to be implemented by readers. Use
