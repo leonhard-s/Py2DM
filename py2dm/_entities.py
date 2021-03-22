@@ -3,7 +3,7 @@
 import abc
 from py2dm.errors import CardError, CustomFormatIgnored, FormatError
 import warnings
-from typing import Any, ClassVar, List, Optional, Tuple, Type, TypeVar
+from typing import Any, ClassVar, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from .types import MaterialIndex
 from .utils import format_float, format_matid
@@ -56,7 +56,7 @@ class Entity(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def to_list(self) -> List[str]:
+    def to_list(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         It is returned as a list of strings to facilitate formatting
@@ -114,9 +114,10 @@ class Node(Entity):
             warnings.warn('unexpected node fields', CustomFormatIgnored)
         return cls(id_, *pos)
 
-    def to_list(self) -> List[str]:
-        coords = [format_float(v) for v in (self.x, self.y, self.z)]
-        return [self.card, *(str(x) for x in (self.id, *coords))]
+    def to_list(self, **kwargs: Any) -> List[str]:
+        list_ = [self.card, str(self.id)]
+        list_.extend((str(format_float(x)) for x in (self.x, self.y, self.z)))
+        return list_
 
 
 class Element(Entity):
@@ -161,13 +162,11 @@ class Element(Entity):
     def from_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
         if not line.startswith(cls.card):
             raise CardError('Bad card', line.split(maxsplit=1)[0])
-        flag = kwargs.pop('allow_float_matid', True)
         try:
-            id_, nodes, materials = parse_element(
-                line, allow_float_matid=True, **kwargs)
+            id_, nodes, materials = parse_element(line, **kwargs)
         except ValueError as err:
             raise CardError(*err.args, None) from err
-
+        flag = kwargs.get('allow_float_matid', True)
         for matid in materials:
             if isinstance(matid, float) and not flag:
                 warnings.warn('float materials removed', CustomFormatIgnored)
@@ -175,10 +174,16 @@ class Element(Entity):
             filter(lambda m: flag or not isinstance(m, float), materials))
         return cls(id_, *nodes, materials=materials)
 
-    def to_list(self) -> List[str]:
-        nodes = [str(n) for n in self.nodes]
-        materials = [format_matid(m) for m in self.materials]
-        return [self.card, str(self.id), *nodes, *materials]
+    def to_list(self, **kwargs: Any) -> List[str]:
+        """Return the 2DM list representation of this element."""
+        out = [self.card, str(self.id)]
+        out.extend((str(n) for n in self.nodes))
+        # Discard floating point material indices if disallowed
+        matids: Iterable[MaterialIndex] = self.materials
+        if not kwargs.get('allow_float_matid', True):
+            matids = filter(lambda m: isinstance(m, int), self.materials)
+        out.extend((format_matid(m) for m in matids))
+        return out
 
 
 class LinearElement(Element):
@@ -360,8 +365,8 @@ class NodeString:
         return len(self.nodes)
 
     @classmethod
-    def parse_line(cls, line: str, node_string: Optional['NodeString'] = None,
-                   **kwargs: Any) -> Tuple['NodeString', bool]:
+    def from_line(cls, line: str, node_string: Optional['NodeString'] = None,
+                  **kwargs: Any) -> Tuple['NodeString', bool]:
         """Create a new instance from the given line.
 
         This returns a tuple consisting of the :class:`NodeString`
@@ -377,12 +382,11 @@ class NodeString:
         :return: The created node string and the final flag
         :rtype: Tuple[:class:`NodeString`, bool]
         """
-        nodes: List[int] = [] if node_string is None else list(
-            node_string.nodes)
-        allow_zero_index = bool(kwargs.pop('allow_zero_index', False))
+        nodes: List[int] = (
+            [] if node_string is None else list(node_string.nodes))
         try:
             nodes, is_done, name = parse_node_string(
-                line, allow_zero_index=allow_zero_index, nodes=nodes)
+                line, nodes=nodes, **kwargs)
         except ValueError as err:
             raise FormatError(*err.args) from err
         if node_string is None:
@@ -392,7 +396,7 @@ class NodeString:
             node_string.name = name.strip('"')
         return node_string, is_done
 
-    def to_list(self) -> List[str]:
+    def to_list(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         It is returned as a list of strings to facilitate formatting
@@ -401,8 +405,10 @@ class NodeString:
         :return: A list of words to write to disk
         :rtype: List[str]
         """
-        list_ = [self.card, *[str(n) for n in self.nodes]]
+        list_ = [self.card]
+        list_.extend((str(n) for n in self.nodes))
+        # Flip last node ID to signify the end of the node sign
         list_[-1] = f'-{list_[-1]}'
-        if self.name is not None:
+        if self.name is not None and kwargs.get('include_name', True):
             list_.append(self.name)
         return list_
