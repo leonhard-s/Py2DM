@@ -1,10 +1,9 @@
 """Implementation of the mesh reading interface.
 
-This module defines the :class:`py2dm.Reader` interface, as well as
+This module defines the :class:`py2dm.ReaderBase` interface, as well as
 subclasses implementing this interface to provide variations optimised
-for specific use-cases. Refer to the :class:`py2dm.ReadMode` enumerator
-for details.
-
+for specific use-cases. Refer to the implementation classes
+:class:`py2dm.Reader` and :class:`py2dm.LazyReader for details.
 """
 
 import abc
@@ -28,7 +27,7 @@ __all__ = [
 
 T = TypeVar('T')
 
-# A list of all tags that are considered elements
+# A list of all 2DM cards that are considered elements
 _ELEMENT_CARDS = [
     'E2L',
     'E3L',
@@ -63,25 +62,18 @@ class ReaderBase(metaclass=abc.ABCMeta):
     This ABC defines the endpoints to be implemented by readers. Use
     this as the type definition for any code meant to work with Py2DM
     readers.
+
+    :param filepath: Path to the mesh file to open.
+    :type filepath: :class:`str`
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        """Initialise the mesh reader.
-
-        This opens the underlying file and preloads metadata for the
-        mesh.
-
-        :param filepath: Path to the mesh file to open
-        :type filepath: :class:`str`
-        :type lazy: :class:`bool`
-        """
         self.materials_per_element = int(kwargs.get('materials', 0))
         """Number of materials per element.
 
         This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
         card. Alternatively, the user may specify the number of
-        materials to use via the `materials` argument of the
-        :class:`Reader` class.
+        materials to use via the `materials` keyword argument.
 
         If the number of materials is not specified in the file or via
         the `materials` argument, the number of elements will default
@@ -141,8 +133,8 @@ class ReaderBase(metaclass=abc.ABCMeta):
             Any successive calls will re-use this value.
 
 
-            :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
-                :class:`float`, :class:`float`]
+        :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
+            :class:`float`, :class:`float`]
         """
         if self._extent is None:
             iterator = iter(self.iter_nodes())
@@ -171,17 +163,63 @@ class ReaderBase(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def elements(self) -> Iterator[Element]:
-        pass
+        """Return an iterator over all elements in the mesh.
+
+        This is synonymous to calling
+        :meth:`py2dm.Reader.iter_elements()` with default arguments.
+
+        If you prefer a list of elements, cast this iterator to
+        :class:`list`.
+
+        .. code-block:: python
+
+            with py2dm.Reader('mesh.2dm') as mesh:
+                elements = list(mesh.elements)
+
+        :yield: Elements from the mesh in order.
+        :type: :class:`py2dm.Element`
+        """
 
     @property
     @abc.abstractmethod
     def nodes(self) -> Iterator[Node]:
-        pass
+        """Return an iterator over all nodes in the mesh.
+
+        This is synonymous to calling :meth:`py2dm.Reader.iter_nodes()`
+        with default arguments.
+
+        If you prefer a list of nodes, cast this iterator to
+        :class:`list`.
+
+        .. code-block:: python
+
+            with py2dm.Reader('mesh.2dm') as mesh:
+                nodes = list(mesh.nodes)
+
+        :yield: Nodes from the mesh in order.
+        :type: :class:`py2dm.Node`
+        """
 
     @property
     @abc.abstractmethod
     def node_strings(self) -> Iterator[NodeString]:
-        pass
+        """Iterate over the node strings in the mesh.
+
+        This is synonymous to calling
+        :meth:`py2dm.Reader.iter_node_strings()` with default
+        arguments.
+
+        If you prefer a list of node strings instead, pass this
+        iterator into the ``list()`` constructor instead:
+
+        .. code-block:: python
+
+            with py2dm.Reader('mesh.2dm') as mesh:
+                nodes = list(mesh.nodes)
+
+        :yield: Node strings from the mesh in order.
+        :type: :class:`py2dm.NodeString`
+        """
 
     @property
     def num_elements(self) -> int:
@@ -218,7 +256,6 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
             This method is called automatically when using the class
             via the context manager.
-
         """
         _ = self
 
@@ -388,74 +425,17 @@ class Reader(ReaderBase):
 
     @property
     def elements(self) -> Iterator[Element]:
-        """Return an iterator over all elements in the mesh.
-
-        This is synonymous to calling
-        :meth:`py2dm.Reader.iter_elements()` with default arguments.
-
-        If you prefer a list of elements, cast this iterator to
-        :class:`list`.
-
-        .. code-block:: python
-
-            with py2dm.Reader('mesh.2dm') as mesh:
-                elements = list(mesh.elements)
-
-        :yield: Elements from the mesh in order.
-        :type: :class:`py2dm.Element`
-        """
         return iter(self._cache_elements)
 
     @property
     def nodes(self) -> Iterator[Node]:
-        """Return an iterator over all nodes in the mesh.
-
-        This is synonymous to calling :meth:`py2dm.Reader.iter_nodes()`
-        with default arguments.
-
-        If you prefer a list of nodes, cast this iterator to
-        :class:`list`.
-
-        .. code-block:: python
-
-            with py2dm.Reader('mesh.2dm') as mesh:
-                nodes = list(mesh.nodes)
-
-        :yield: Nodes from the mesh in order.
-        :type: :class:`py2dm.Node`
-        """
         return iter(self._cache_nodes)
 
     @property
     def node_strings(self) -> Iterator[NodeString]:
-        """Iterate over the node strings in the mesh.
-
-        This is synonymous to calling
-        :meth:`py2dm.Reader.iter_node_strings()` with default
-        arguments.
-
-        If you prefer a list of node strings instead, pass this
-        iterator into the ``list()`` constructor instead:
-
-        .. code-block:: python
-
-            with py2dm.Reader('mesh.2dm') as mesh:
-                nodes = list(mesh.nodes)
-
-        :yield: Node strings from the mesh in order.
-        :type: :class:`py2dm.NodeString`
-        """
         return iter(self._cache_node_strings)
 
     def element(self, id_: int) -> Element:
-        """Return a mesh element by its unique ID.
-
-        :param id_: The ID of the element to return.
-        :type id_: :class:`int`
-        :raises KeyError: Raised if the given `id_` is invalid.
-        :return: The element matching the given ID.
-        :rtype: :class:`py2dm.Element`
-        """
         # Conform ID to always be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -468,14 +448,6 @@ class Reader(ReaderBase):
         return self._cache_elements[id_conf-1]
 
     def node(self, id_: int) -> Node:
-        """Return a mesh node by its unique ID.
-
-        :param id_: The ID of the node to return.
-        :type id_: :class:`int`
-        :raises KeyError: Raised if the given `id_` is invalid.
-        :return: The node matching the given ID.
-        :rtype: :class:`py2dm.Node`
-        """
         # Conform ID to alwasy be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -487,25 +459,6 @@ class Reader(ReaderBase):
         return self._cache_nodes[id_conf-1]
 
     def node_string(self, name: str) -> NodeString:
-        """Return a node string by its unique name.
-
-        This is only available if the node strings define a name. For
-        meshes whose node strings are not named, convert
-        :meth:`Reader.iter_node_strings` to a :class:`list` and access
-        the node strings by index.
-
-        .. code-block:: python3
-
-            with py2dm.Reader('my-mesh.2dm') as mesh:
-                node_strings = list(mesh.iter_node_strings())
-                node_string_two = node_strings[1]
-
-        :param name: Unique name of the node string
-        :raises KeyError: Raised if no node string of the given name
-            exists
-        :return: The node string of the given name, if any.
-        :rtype: :class:`py2dm.NodeString`
-        """
         for node_string in self.iter_node_strings():
             if node_string.name == name:
                 return node_string
@@ -513,21 +466,6 @@ class Reader(ReaderBase):
 
     def iter_elements(self, start: int = -1,
                       end: int = -1) -> Iterator[Element]:
-        """Iterator over the mesh elements.
-
-        :param start: The starting element ID. If not specified, the
-            first node in the mesh is used as the starting point.
-        :type start: :class:`int`
-        :param end: The end element ID (excluding the `end` ID). If
-            negative, the entire range of elements is yielded.
-        :type end: :class:`int`
-        :raises IndexError: Raised if the `start` ID is less than
-            ``1``, or if the `end` ID is less than or equal to the
-            `start` ID, or if either of the IDs exceeds the number of
-            elements in the mesh.
-        :yield: Mesh elements from the given range of IDs.
-        :type: :class:`py2dm.Element`
-        """
         if self.num_elements < 1:
             return iter(())
         # Get defaults
@@ -555,21 +493,6 @@ class Reader(ReaderBase):
             yield element
 
     def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
-        """Iterator over the mesh nodes.
-
-        :param start: The starting node ID. If not specified, the
-            first node in the mesh is used as the starting point.
-        :type start: :class:`int`
-        :param end: The end node ID (excluding the `end` ID). If
-            negative, the entire range of nodes is yielded.
-        :type end: :class:`int`
-        :raises IndexError: Raised if the `start` ID is less than
-            ``1``, or if the `end` ID is less than or equal to the
-            `start` ID, or if either of the IDs exceeds the number of
-            nodes in the mesh.
-        :yield: Mesh nodes from the given range of IDs.
-        :type: :class:`py2dm.Node`
-        """
         if self.num_nodes < 1:
             return iter(())
         # Get defaults
@@ -594,30 +517,6 @@ class Reader(ReaderBase):
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
-        """Iterator over the mesh's node strings.
-
-        .. note::
-
-            Unlike :meth:`Reader.iter_elements` or
-            :meth:`Reader.iter_nodes`, this method uses Python slicing
-            notation for its ranges due to node strings not having
-            explicit IDs.
-
-            Even if the mesh is using one-indexed IDs, starting
-            iteration on the second node string still requires setting
-            `start` to ``1`` when using this function.
-
-        :param start: Starting offset for the iterator.
-        :type start: :class:`int`
-        :param end: End index for the node strings (exclusive).
-        :type end: :class:`int`
-        :raises IndexError: Raised if the `start` ID is less than
-            ``0``, or if the `end` ID is less than or equal to the
-            `start` ID, or if either of the IDs reaches the number of
-            node strings in the mesh.
-        :yield: Mesh node strings in order of definition.
-        :type: :class:`py2dm.NodeString`
-        """
         if self.num_node_strings < 1:
             return iter(())
         if end < 0:
