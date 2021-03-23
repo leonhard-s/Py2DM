@@ -9,7 +9,8 @@ for details.
 
 import abc
 from types import TracebackType
-from typing import Any, Iterator, List, Optional, Tuple, Type, TypeVar
+from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
+                    TypeVar)
 
 from ._entities import Element, Node, NodeString
 from .errors import FormatError, ReadError
@@ -28,7 +29,7 @@ __all__ = [
 T = TypeVar('T')
 
 # A list of all tags that are considered elements
-_ELEMENTS = [
+_ELEMENT_CARDS = [
     'E2L',
     'E3L',
     'E3T',
@@ -37,6 +38,23 @@ _ELEMENTS = [
     'E8Q',
     'E9Q'
 ]
+
+
+class _Metadata(NamedTuple):
+    """Typed named tuple containing mesh metadata."""
+
+    num_nodes: int
+    num_elements: int
+    num_node_strings: int
+    name: Optional[str]
+    num_materials_per_elem: int
+    # File seek offsets
+    pos_nodes_start: int
+    pos_nodes_end: int
+    pos_elements_start: int
+    pos_elements_end: int
+    pos_node_strings_start: int
+    pos_node_strings_end: int
 
 
 class ReaderBase(metaclass=abc.ABCMeta):
@@ -84,7 +102,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         self._extent: Optional[Tuple[float, float, float, float]] = None
         self._filepath = filepath
-        self._metadata: Any
+        self._metadata = self._parse_metadata()
         self._num_materials = int(kwargs.get('materials', 0))
         self._zero_index = bool(kwargs.get('zero_index', False))
 
@@ -171,7 +189,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
-        return self._metadata._num_elements
+        return self._metadata.num_elements
 
     @property
     def num_nodes(self) -> int:
@@ -179,7 +197,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
-        return self._metadata._num_nodes
+        return self._metadata.num_nodes
 
     @property
     def num_node_strings(self) -> int:
@@ -187,7 +205,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
-        return self._metadata._num_node_strings
+        return self._metadata.num_node_strings
 
     def close(self) -> None:
         """Close the mesh reader.
@@ -319,62 +337,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         This method is only intended to be called as part of the
         initialiser and should not be called by other functions.
         """
-        num_materials_per_elem: Optional[int] = None
-        name: Optional[str] = None
-        num_nodes = 0
-        num_elements = 0
-        num_node_strings = 0
-        mesh2d_found: bool = False
-        last_node = -1
-        last_element = -1
-        with open(self._filepath) as file_:
-            for index, line in enumerate(file_):
-                if not mesh2d_found and line.split('#', maxsplit=1)[0].strip():
-                    if line.startswith('MESH2D'):
-                        mesh2d_found = True
-                    else:
-                        raise ReadError(
-                            'File is not a 2DM mesh file', self._filepath)
-                if line.startswith('NUM_MATERIALS_PER_ELEM'):
-                    chunks = line.split('#', maxsplit=1)[0].split(maxsplit=2)
-                    num_materials_per_elem = int(chunks[1])
-                elif line.startswith('MESHNAME') or line.startswith('GM'):
-                    # NOTE: This fails for meshes with double quotes in their
-                    # mesh name, but that is an unreasonable thing to want to
-                    # do anyway. "We'll fix it later" (tm)
-                    chunks = line.split('"', maxsplit=2)
-                    if len(chunks) < 2:
-                        chunks = line.split(maxsplit=2)
-                    name = chunks[1]
-                elif line.startswith('ND'):
-                    id_ = int(line.split(maxsplit=2)[1])
-                    if id_ == 0 and not self._zero_index:
-                        raise FormatError(
-                            'Zero index encountered in non-zero-indexed file',
-                            self._filepath, index+1)
-                    num_nodes += 1
-                    if last_node != -1 and last_node+1 != id_:
-                        raise FormatError('Node IDs have holes',
-                                          self._filepath, index+1)
-                    last_node = id_
-                elif (line.startswith('NS')
-                        and '-' in line.split('#', maxsplit=1)[0]):
-                    num_node_strings += 1
-                elif line.split(maxsplit=1)[0] in _ELEMENTS:
-                    id_ = int(line.split(maxsplit=2)[1])
-                    if id_ == 0 and not self._zero_index:
-                        raise FormatError(
-                            'Zero index encountered in non-zero-indexed file',
-                            self._filepath, index+1)
-                    num_elements += 1
-                    if last_element != -1 and last_element+1 != id_:
-                        raise FormatError('Element IDs have holes',
-                                          self._filepath, index+1)
-                    last_element = id_
-        if not mesh2d_found:
-            raise ReadError('MESH2D tag not found', self._filepath)
-        return (num_nodes, num_elements, num_node_strings, name,
-                num_materials_per_elem)
+        # TODO: Rewrite metadata parser (C?)
 
 
 class Reader(ReaderBase):
@@ -399,14 +362,14 @@ class Reader(ReaderBase):
         # Parse and load the entire file
         with open(filepath) as file_:
             # Nodes
-            file_.seek(self._metadata.pos_node_start)
+            file_.seek(self._metadata.pos_nodes_start)
             for line in file_:
                 node = Node.from_line(line)
                 self._cache_nodes.append(node)
                 if node.id >= self.num_nodes:
                     break
             # Elements
-            file_.seek(self._metadata.pos_element_start)
+            file_.seek(self._metadata.pos_elements_start)
             for line in file_:
                 element = _element_factory(line).from_line(line)
                 self._cache_elements.append(element)
