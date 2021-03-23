@@ -7,6 +7,7 @@ for specific use-cases. Refer to the implementation classes
 """
 
 import abc
+import functools
 from types import TracebackType
 from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
@@ -92,7 +93,6 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :class:`str`
         """
 
-        self._extent: Optional[Tuple[float, float, float, float]] = None
         self._filepath = filepath
         self._metadata = self._parse_metadata()
         self._num_materials = int(kwargs.get('materials', 0))
@@ -114,7 +114,8 @@ class ReaderBase(metaclass=abc.ABCMeta):
                 f'\t{self.num_elements} elements\n'
                 f'\t{self.num_node_strings} node strings')
 
-    @property
+    @property  # type: ignore
+    @functools.lru_cache(1)
     def extent(self) -> Tuple[float, float, float, float]:
         """Return the extents of the mesh as a tuple of four floats.
 
@@ -132,33 +133,29 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
             Any successive calls will re-use this value.
 
-
         :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
             :class:`float`, :class:`float`]
         """
-        if self._extent is None:
-            iterator = iter(self.iter_nodes())
-            # Get initial node for base values
-            try:
-                node = next(iterator)
-            except StopIteration:
-                # Mesh is empty/contains no nodes
-                return float('nan'), float('nan'), float('nan'), float('nan')
-            min_x = max_x = node.x
-            min_y = max_y = node.y
-            # Update value
-            for node in self.iter_nodes():
-                if node.x < min_x:
-                    min_x = node.x
-                elif node.x > max_x:
-                    max_x = node.x
-                if node.y < min_y:
-                    min_y = node.y
-                elif node.y > max_y:
-                    max_y = node.y
-            self._extent = min_x, max_x, min_y, max_y
-        assert self._extent is not None
-        return self._extent
+        iterator = iter(self.iter_nodes())
+        # Get initial node for base values
+        try:
+            node = next(iterator)
+        except StopIteration:
+            # Mesh is empty/contains no nodes
+            return float('nan'), float('nan'), float('nan'), float('nan')
+        min_x = max_x = node.x
+        min_y = max_y = node.y
+        # Update value
+        for node in self.iter_nodes():
+            if node.x < min_x:
+                min_x = node.x
+            elif node.x > max_x:
+                max_x = node.x
+            if node.y < min_y:
+                min_y = node.y
+            elif node.y > max_y:
+                max_y = node.y
+        return min_x, max_x, min_y, max_y
 
     @property
     @abc.abstractmethod
@@ -525,6 +522,7 @@ class Reader(ReaderBase):
             return iter(self._cache_node_strings[start:end])
 
 
+@functools.lru_cache(None)
 def _element_factory(line: str) -> Type[Element]:
     """Return a :class:`py2dm.Element` subclass by card.
 
