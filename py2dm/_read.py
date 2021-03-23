@@ -13,7 +13,7 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
 
 from ._entities import Element, Node, NodeString
-from .errors import FormatError, ReadError
+from .errors import FormatError
 
 try:
     from typing import Literal
@@ -21,23 +21,14 @@ except ImportError:  # pragma: no cover
     # Required for compatibilty with Python 3.7 (used in QGIS 3)
     from typing_extensions import Literal  # type: ignore
 
+from ._parser import scan_metadata
+
 __all__ = [
     'Reader',
     'ReaderBase'
 ]
 
 T = TypeVar('T')
-
-# A list of all 2DM cards that are considered elements
-_ELEMENT_CARDS = [
-    'E2L',
-    'E3L',
-    'E3T',
-    'E6T',
-    'E4Q',
-    'E8Q',
-    'E9Q'
-]
 
 
 class _Metadata(NamedTuple):
@@ -47,14 +38,11 @@ class _Metadata(NamedTuple):
     num_elements: int
     num_node_strings: int
     name: Optional[str]
-    num_materials_per_elem: int
+    num_materials_per_elem: Optional[int]
     # File seek offsets
-    pos_nodes_start: int
-    pos_nodes_end: int
-    pos_elements_start: int
-    pos_elements_end: int
-    pos_node_strings_start: int
-    pos_node_strings_end: int
+    pos_nodes: int
+    pos_elements: int
+    pos_node_strings: int
 
 
 class ReaderBase(metaclass=abc.ABCMeta):
@@ -94,9 +82,16 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
 
         self._filepath = filepath
-        self._metadata = self._parse_metadata()
         self._num_materials = int(kwargs.get('materials', 0))
+        self._float_materials = bool(kwargs.get('allow_float_matid', True))
         self._zero_index = bool(kwargs.get('zero_index', False))
+        with open(filepath) as file_:
+            self._metadata = _Metadata(
+                *scan_metadata(file_, filepath, self._zero_index))
+        if self._metadata.name is not None:
+            self.name = self._metadata.name
+        if self._metadata.num_materials_per_elem is not None:
+            self.materials_per_element = self._metadata.num_materials_per_elem
 
     def __enter__(self: T) -> T:
         return self
@@ -396,21 +391,31 @@ class Reader(ReaderBase):
         # Parse and load the entire file
         with open(filepath) as file_:
             # Nodes
-            file_.seek(self._metadata.pos_nodes_start)
-            for line in file_:
-                node = Node.from_line(line)
-                self._cache_nodes.append(node)
-                if node.id >= self.num_nodes:
-                    break
+            if self.num_nodes > 0:
+                file_.seek(self._metadata.pos_nodes)
+                for line in file_:
+                    if not line.startswith('ND'):
+                        continue
+                    node = Node.from_line(
+                        line, allow_zero_index=self._zero_index)
+                    self._cache_nodes.append(node)
+                    if node.id >= self.num_nodes:
+                        break
             # Elements
-            file_.seek(self._metadata.pos_elements_start)
-            for line in file_:
-                element = _element_factory(line).from_line(line)
-                self._cache_elements.append(element)
-                if element.id >= self.num_elements:
-                    break
+            if self.num_elements > 0:
+                file_.seek(self._metadata.pos_elements)
+                for line in file_:
+                    try:
+                        element = _element_factory(line).from_line(
+                            line, allow_zero_index=self._zero_index,
+                            allow_float_matid=self._float_materials)
+                    except ValueError:
+                        continue
+                    self._cache_elements.append(element)
+                    if element.id >= self.num_elements:
+                        break
             # Node strings
-            file_.seek(self._metadata.pos_node_strings_start)
+            file_.seek(self._metadata.pos_node_strings)
             node_string: Optional[NodeString] = None
             for line in file_:
                 if line.startswith('NS'):
@@ -540,5 +545,7 @@ def _element_factory(line: str) -> Type[Element]:
         for subclass in element_group.__subclasses__():
             if line.startswith(subclass.card):
                 return subclass
+    if not line.split() or not line.split('#')[0].split():
+        raise ValueError('Line is blank')
     card = line.split(maxsplit=1)[0]
     raise NotImplementedError(f'Unsupported card name \'{card}\'')

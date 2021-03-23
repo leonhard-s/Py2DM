@@ -1,8 +1,28 @@
 """Python implementation of the 2DM card parser."""
 
-from typing import List, Optional, Tuple, Union
+from typing import IO, List, Optional, Tuple, Union
 
-from .errors import CardError, FormatError
+from .errors import CardError, FormatError, ReadError
+
+_MetadataArgs = Tuple[
+    int,  # num_nodes
+    int,  # num_elements
+    int,  # num_node_strings
+    Optional[str],  # name
+    Optional[int],  # num_materials_per_elem
+    int,  # nodes start
+    int,  # elements start
+    int]  # node strings start
+
+_ELEMENT_CARDS = [
+    'E2L',
+    'E3L',
+    'E3T',
+    'E4Q',
+    'E6T',
+    'E8Q',
+    'E9Q'
+]
 
 
 def parse_element(line: str, allow_float_matid: bool = True,
@@ -127,6 +147,85 @@ def parse_node_string(line: str,   allow_zero_index: bool = False,
             break
         nodes.append(node_id)
     return nodes, is_done, name
+
+
+def scan_metadata(file_: IO[str], filename: str,
+                  allow_zero_index: bool = False) -> _MetadataArgs:
+    num_materials_per_elem: Optional[int] = None
+    name: Optional[str] = None
+    num_nodes = 0
+    num_elements = 0
+    num_node_strings = 0
+    mesh2d_found: bool = False
+    # Consecutive numbering validation
+    last_node = -1
+    last_element = -1
+    # File seek offsets
+    nodes_start = 0
+    elements_start = 0
+    node_strings_start = 0
+
+    file_.seek(0)
+    for index, line_raw in enumerate(iter(file_.readline, '')):
+        # Skip blank lines
+        line = line_raw.split('#', maxsplit=1)[0].strip()
+        if not line:
+            continue
+        if not mesh2d_found:
+            if line.startswith('MESH2D'):
+                mesh2d_found = True
+            else:
+                raise ReadError(
+                    'File is not a 2DM mesh file', filename)
+        if line.startswith('ND'):
+            id_ = int(line.split(maxsplit=2)[1])
+            if id_ == 0 and not allow_zero_index:
+                raise FormatError(
+                    'Zero index encountered in non-zero-indexed file',
+                    filename, index+1)
+            num_nodes += 1
+            if last_node != -1 and last_node+1 != id_:
+                raise FormatError('Node IDs have holes',
+                                  filename, index+1)
+            last_node = id_
+            if nodes_start == 0:
+                nodes_start = file_.tell() - len(line_raw) - 1
+            continue
+        if line.split(maxsplit=1)[0] in _ELEMENT_CARDS:
+            id_ = int(line.split(maxsplit=2)[1])
+            if id_ == 0 and not allow_zero_index:
+                raise FormatError(
+                    'Zero index encountered in non-zero-indexed file',
+                    filename, index+1)
+            num_elements += 1
+            if last_element != -1 and last_element+1 != id_:
+                raise FormatError('Element IDs have holes',
+                                  filename, index+1)
+            last_element = id_
+            if elements_start == 0:
+                elements_start = file_.tell() - len(line_raw) - 1
+            continue
+        if (line.startswith('NS')
+                and '-' in line.split('#', maxsplit=1)[0]):
+            num_node_strings += 1
+            num_materials_per_elem = int(line.split(maxsplit=2)[1])
+            if node_strings_start == 0:
+                node_strings_start = file_.tell() - len(line_raw) - 1
+        elif line.startswith('MESHNAME') or line.startswith('GM'):
+            # NOTE: This fails for meshes with double quotes in their
+            # mesh name, but that is an unreasonable thing to want to
+            # do anyway. "We'll fix it later" (tm)
+            chunks = line.split('"', maxsplit=2)
+            if len(chunks) < 2:
+                chunks = line.split(maxsplit=2)
+            name = chunks[1]
+        elif line.startswith('NUM_MATERIALS_PER_ELEM'):
+            num_materials_per_elem = int(line.split(maxsplit=2)[1])
+    if not mesh2d_found:
+        raise ReadError('MESH2D tag not found', filename)
+    return (num_nodes, num_elements, num_node_strings, name,
+            num_materials_per_elem, nodes_start, elements_start,
+            node_strings_start)
 
 
 def _card_is_element(card: str) -> bool:
