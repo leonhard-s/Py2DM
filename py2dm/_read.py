@@ -522,8 +522,7 @@ class Reader(ReaderBase):
             return iter(())
         if end < 0:
             return iter(self._cache_node_strings[start:])
-        else:
-            return iter(self._cache_node_strings[start:end])
+        return iter(self._cache_node_strings[start:end])
 
 
 @functools.lru_cache(None)
