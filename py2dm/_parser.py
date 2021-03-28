@@ -27,7 +27,7 @@ _ELEMENT_CARDS = [
 
 def parse_element(line: str, allow_float_matid: bool = True,
                   allow_zero_index: bool = False
-                  ) -> Tuple[int, Tuple[int, ...], Tuple[Union[float, int]]]:
+                  ) -> Tuple[int, Tuple[int, ...], Tuple[Union[int, float], ...]]:
     """Parse a string into an element.
 
     This converts a valid element definition string into a tuple that

@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 
 def parse_element(line: str, allow_float_matid: bool = ...,
                   allow_zero_index: bool = ...
-                  ) -> Tuple[int, Tuple[int, ...], Tuple[Union[int, float]]]:
+                  ) -> Tuple[int, Tuple[int, ...], Tuple[Union[int, float], ...]]:
     """Parse a 2DM element definition."""
     ...
 
