@@ -167,10 +167,7 @@ class Node(Entity):
         :return: A node representing the given line.
         :rtype: :class:`Node`
         """
-        try:
-            id_, *pos = parse_node(line, **kwargs)
-        except ValueError as err:
-            raise FormatError(*err.args) from err
+        id_, *pos = parse_node(line, **kwargs)
         if len(line.split()) > 5 and len(line.split('#')[0].split()) > 5:
             warnings.warn('unexpected node fields', CustomFormatIgnored)
         return cls(id_, *pos)
@@ -265,11 +262,8 @@ class Element(Entity):
         if not line.startswith(cls.card):
             raise CardError('Bad card', line.split(maxsplit=1)[0])
         flag = kwargs.pop('allow_float_matid', True)
-        try:
-            id_, nodes, materials = parse_element(
-                line, allow_float_matid=True, **kwargs)
-        except ValueError as err:
-            raise CardError(*err.args, None) from err
+        id_, nodes, materials = parse_element(
+            line, allow_float_matid=True, **kwargs)
         for matid in materials:
             if isinstance(matid, float) and not flag:
                 warnings.warn('float materials removed', CustomFormatIgnored)
@@ -483,11 +477,7 @@ class NodeString:
         """
         nodes: List[int] = (
             [] if node_string is None else list(node_string.nodes))
-        try:
-            nodes, is_done, name = parse_node_string(
-                line, nodes=nodes, **kwargs)
-        except ValueError as err:
-            raise FormatError(*err.args) from err
+        nodes, is_done, name = parse_node_string(line, nodes=nodes, **kwargs)
         if node_string is None:
             node_string = NodeString()
         node_string.nodes = tuple(nodes)
