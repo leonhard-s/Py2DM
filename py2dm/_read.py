@@ -28,7 +28,7 @@ __all__ = [
     'ReaderBase'
 ]
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 
 class _Metadata(NamedTuple):
@@ -93,7 +93,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         if self._metadata.num_materials_per_elem is not None:
             self.materials_per_element = self._metadata.num_materials_per_elem
 
-    def __enter__(self: T) -> T:
+    def __enter__(self: _T) -> _T:
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],

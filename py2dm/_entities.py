@@ -33,8 +33,8 @@ __all__ = [
 ]
 
 _Material = Union[int, float]
-EntityT = TypeVar('EntityT', bound='Entity')
-ElementT = TypeVar('ElementT', bound='Element')
+_EntityT = TypeVar('_EntityT', bound='Entity')
+_ElementT = TypeVar('_ElementT', bound='Element')
 
 
 class Entity(metaclass=abc.ABCMeta):
@@ -54,7 +54,7 @@ class Entity(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
-    def from_line(cls: Type[EntityT], line: str, **kwargs: Any) -> EntityT:
+    def from_line(cls: Type[_EntityT], line: str, **kwargs: Any) -> _EntityT:
         """Create a new instance from the given line.
 
         Lines passed into this element must start with the appropriate
@@ -246,7 +246,7 @@ class Element(Entity):
         return len(self.materials)
 
     @classmethod
-    def from_line(cls: Type[ElementT], line: str, **kwargs: Any) -> ElementT:
+    def from_line(cls: Type[_ElementT], line: str, **kwargs: Any) -> _ElementT:
         """Create a new instance from the given line.
 
         :param line: The line to parse.
