@@ -52,6 +52,9 @@ class Entity(metaclass=abc.ABCMeta):
     card: ClassVar[str]
     """The 2DM card associated with this geometry."""
 
+    def __eq__(self, other: Any) -> bool:
+        return type(self) == type(other) and self.card == other.card
+
     @classmethod
     @abc.abstractmethod
     def from_line(cls: Type[_EntityT], line: str, **kwargs: Any) -> _EntityT:
@@ -100,11 +103,11 @@ class Node(Entity):
     :param z: Z position of the node.
     :type z: :class:`float`
     """
+    # pylint: disable=invalid-name
 
     __slots__ = ['id', 'x', 'y', 'z']
     card: ClassVar[str] = 'ND'
 
-    # pylint: disable=invalid-name
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
         self.id = id_
         """Unique identifier of the node.
@@ -141,6 +144,11 @@ class Node(Entity):
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
+
+    def __eq__(self, other: Any) -> bool:
+        if not super().__eq__(other):
+            return False
+        return self.id == other.id and self.pos == other.pos
 
     def __repr__(self) -> str:
         return f'<Node #{self.id}: {self.pos}>'
@@ -204,8 +212,8 @@ class Element(Entity):
     :type materials: :obj:`typing.Tuple` [
         :obj:`typing.Union` [:class:`int`, :class:`float`]], optional
     """
-
     # pylint: disable=invalid-name
+
     __slots__ = ['id', 'materials', 'nodes']
     card: ClassVar[str]
     num_nodes: ClassVar[int]
@@ -233,6 +241,13 @@ class Element(Entity):
         :type: :obj:`typing.Tuple` [
             :class:`int`, :class:`int`, :class:`int`]
         """
+
+    def __eq__(self, other: Any) -> bool:
+        if not super().__eq__(other):
+            return False
+        return (self.id == other.id and
+                self.nodes == other.nodes and
+                self.materials == other.materials)
 
     def __repr__(self) -> str:
         return f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}>'
@@ -441,6 +456,11 @@ class NodeString:
 
         :type: :obj:`typing.Tuple` [:class:`int`]
         """
+
+    def __eq__(self, other: Any) -> bool:
+        if not super().__eq__(other):
+            return False
+        return self.nodes == other.nodes and self.name == other.name
 
     def __repr__(self) -> str:
         if self.name is not None:
