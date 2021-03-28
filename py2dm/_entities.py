@@ -10,7 +10,7 @@ from .utils import format_float, format_matid
 
 try:
     from ._cparser import parse_element, parse_node, parse_node_string
-except ImportError:
+except ImportError:  # pragma: no cover
     from ._parser import parse_element, parse_node, parse_node_string
     import platform
     if platform.python_implementation() == 'CPython':
