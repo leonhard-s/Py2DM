@@ -1,12 +1,12 @@
 """Python versions of the objects represented by the 2DM mesh."""
 
 import abc
-from py2dm.errors import CardError, CustomFormatIgnored, FormatError
 import warnings
-from typing import Any, ClassVar, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import (Any, ClassVar, Iterable, List, Optional, SupportsFloat,
+                    Tuple, Type, TypeVar)
 
+from .errors import CardError, CustomFormatIgnored
 from .types import MaterialIndex
-from .utils import format_float, format_matid
 
 try:
     from ._cparser import parse_element, parse_node, parse_node_string
@@ -182,7 +182,7 @@ class Node(Entity):
         :rtype: :class:`typing.List` [:class:`str`]
         """
         list_ = [self.card, str(self.id)]
-        list_.extend((str(format_float(x)) for x in (self.x, self.y, self.z)))
+        list_.extend((str(_format_float(x)) for x in (self.x, self.y, self.z)))
         return list_
 
 
@@ -286,7 +286,7 @@ class Element(Entity):
         matids: Iterable[MaterialIndex] = self.materials
         if not kwargs.get('allow_float_matid', True):
             matids = filter(lambda m: isinstance(m, int), self.materials)
-        out.extend((format_matid(m) for m in matids))
+        out.extend((_format_matid(m) for m in matids))
         return out
 
 
@@ -501,3 +501,39 @@ class NodeString:
         if self.name is not None and kwargs.get('include_name', True):
             list_.append(self.name)
         return list_
+
+
+def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
+    """Format a node position into a string.
+
+    This uses the format requested by 2DM: up to nine significant
+    digits followed by an exponent, e.g. ``0.5 -> 5.0e-01``.
+
+    :param value: A object that supports casting to :class:`float`.
+    :type value: :obj:`typing.SupportsFloat`
+    :param decimals: The number of decimal places to include, defaults
+        to ``8``.
+    :type decimals: :class:`int`, optional
+    :return: The formatted string with no extra whitespace.
+    :rtype: :class:`str`
+    """
+    string = f'{" " if float(value) >= 0.0 else ""}{float(value):.{decimals}e}'
+    return string
+
+
+def _format_matid(value: MaterialIndex, *, decimals: int = 8) -> str:
+    """Format a material index.
+
+    The decimals parameter will be ignored if the input value is an
+    integer.
+
+    :param value: The material index to format.
+    :type value: :obj:`typing.Union` [:class:`int`, :class:`float`]
+    :param decimals: The number of decimal places to include for
+        floating point material IDs, defaults to ``8``.
+    :type decimals: :class:`int`, optional
+    :return: The formatted material index.
+    :rtype: :class:`str`
+    """
+    return (str(value) if isinstance(value, int)
+            else _format_float(value, decimals=decimals))
