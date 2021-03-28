@@ -13,7 +13,6 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
 
 from ._entities import Element, Node, NodeString
-from .errors import FormatError
 
 try:
     from typing import Literal
@@ -278,13 +277,13 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         This is only available if the node strings define a name. For
         meshes whose node strings are not named, convert
-        :meth:`Reader.iter_node_strings` to a :class:`list` and access
-        the node strings by index.
+        :attr:`Reader.node_strings` to a :class:`list` and access the
+        node strings by index.
 
         .. code-block:: python3
 
             with py2dm.Reader('my-mesh.2dm') as mesh:
-                node_strings = list(mesh.iter_node_strings())
+                node_strings = list(mesh.node_strings)
                 node_string_two = node_strings[1]
 
         :param name: Unique name of the node string
@@ -314,7 +313,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
+    def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
 
         :param start: The starting node ID. If not specified, the
@@ -358,14 +357,6 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :yield: Mesh node strings in order of definition.
         :type: :class:`py2dm.NodeString`
         """
-
-    def _parse_metadata(self) -> Any:
-        """Parse the file for metadata.
-
-        This method is only intended to be called as part of the
-        initialiser and should not be called by other functions.
-        """
-        # TODO: Rewrite metadata parser (C?)
 
 
 class Reader(ReaderBase):
@@ -486,14 +477,10 @@ class Reader(ReaderBase):
         if end > id_max:
             raise IndexError('End element ID must be less than or equal to '
                              f'{id_max} ({end})')
-        offset = int(self._zero_index)
-        for index, element in enumerate(
-                self._cache_elements[start-offset:end-offset]):
-            if index == 0 and element.id != int(self._zero_index):
-                raise FormatError('idk', 'idk', 1)
-            yield element
+        offset = 0 if self._zero_index else -1
+        return iter(self._cache_elements[start+offset:end+offset+1])
 
-    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
+    def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
         if self.num_nodes < 1:
             return iter(())
         # Get defaults
@@ -513,8 +500,8 @@ class Reader(ReaderBase):
         if end > id_max:
             raise IndexError('End node ID must be less than or equal to '
                              f'{id_max} ({end})')
-        offset = int(self._zero_index)
-        return iter(self._cache_nodes[start-offset:end-offset])
+        offset = 0 if self._zero_index else -1
+        return iter(self._cache_nodes[start+offset:end+offset+1])
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
