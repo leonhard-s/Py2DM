@@ -3,10 +3,9 @@
 import abc
 import warnings
 from typing import (Any, ClassVar, Iterable, List, Optional, SupportsFloat,
-                    Tuple, Type, TypeVar)
+                    Tuple, Type, TypeVar, Union)
 
 from .errors import CardError, CustomFormatIgnored
-from .types import MaterialIndex
 
 try:
     from ._cparser import parse_element, parse_node, parse_node_string
@@ -33,6 +32,7 @@ __all__ = [
     'TriangularElement'
 ]
 
+_Material = Union[int, float]
 EntityT = TypeVar('EntityT', bound='Entity')
 ElementT = TypeVar('ElementT', bound='Element')
 
@@ -212,21 +212,20 @@ class Element(Entity):
     """The number of nodes of this element."""
 
     def __init__(self, id_: int, *nodes: int,
-                 materials: Optional[Tuple[MaterialIndex, ...]] = None
-                 ) -> None:
+                 materials: Optional[Tuple[_Material, ...]] = None) -> None:
         self.id = id_
         """The unique ID of the element.
         
         :type: :class:`int`
         """
-        self.materials = materials or ()
+        self.materials: Tuple[_Material, ...] = materials or ()
         """Material IDs assigned to this element.
 
         Depending on the 2DM-like format used, this could be a floating
         point value used to store e.g. element centroid elevation.
 
-        :type: :obj:`typing.Optional` [:obj:`typing.Tuple` [
-            :obj:`typing.Union` [:class:`int`, :class:`float`]]]
+        :type: :obj:`typing.Tuple` [
+            :obj:`typing.Union` [:class:`int`, :class:`float`], ...]
         """
         self.nodes = tuple(nodes)
         """The defining nodes for this element.
@@ -283,7 +282,7 @@ class Element(Entity):
         out = [self.card, str(self.id)]
         out.extend((str(n) for n in self.nodes))
         # Discard floating point material indices if disallowed
-        matids: Iterable[MaterialIndex] = self.materials
+        matids: Iterable[_Material] = self.materials
         if not kwargs.get('allow_float_matid', True):
             matids = filter(lambda m: isinstance(m, int), self.materials)
         out.extend((_format_matid(m) for m in matids))
@@ -521,7 +520,7 @@ def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     return string
 
 
-def _format_matid(value: MaterialIndex, *, decimals: int = 8) -> str:
+def _format_matid(value: _Material, *, decimals: int = 8) -> str:
     """Format a material index.
 
     The decimals parameter will be ignored if the input value is an

@@ -2,10 +2,9 @@
 
 import math
 from types import TracebackType
-from typing import IO, List, Optional, Tuple, Type
+from typing import IO, List, Optional, Tuple, Type, Union
 
 from ._entities import Element, Node, NodeString
-from .types import MaterialIndex
 
 try:
     from typing import Literal
@@ -72,7 +71,8 @@ class Writer:
             self._file.close()
 
     def element(self, type_: Type[Element], nodes: Tuple[int, ...],
-                materials: Optional[Tuple[MaterialIndex, ...]] = None) -> int:
+                materials: Optional[Tuple[Union[int, float], ...]] = None
+                ) -> int:
         """Create a new node at the given position.
 
         This will always create a new element, even if one already
