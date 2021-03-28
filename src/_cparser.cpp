@@ -17,7 +17,7 @@ in a cPython extension.
 
 /**
  * @brief Check whether a given 2DM card represents an element.
- * 
+ *
  * @param s The 2DM card to check.
  * @return true if it is an element, otherwise false.
  */
@@ -34,10 +34,10 @@ bool card_is_element(const std::string s)
 
 /**
  * @brief Return the number of nodes in an element.
- * 
+ *
  * Note that elements can have any number of materials assigned to them
  * in addition to their defining nodes.
- * 
+ *
  * @param s The 2DM card of the element to return.
  * @return The number of nodes as a positive integer, or 0 if the
  * given card is not a known element.
@@ -78,10 +78,10 @@ nodes_per_element(const std::string s)
 
 /**
  * @brief Return whether the given character represents whitespace.
- * 
+ *
  * The characters considered whitespace are the ones from the
  * `string.whitespace` constant in Python 3.8.5.
- * 
+ *
  * @param c The character to check.
  * @return True if Python considers the given character to be
  * whitespace, otherwise false.
@@ -98,10 +98,10 @@ bool is_whitespace(const char c)
 
 /**
  * @brief Whitespace-only implementation of Python's `str.split()`.
- * 
+ *
  * This function is not intended to be called directly, please call
  * `split()` with an empty delimiter string instead.
- * 
+ *
  * @param s The input string to split.
  * @param maxsplit The maximum number of splits allowed. If set to a
  * negative value, s will be split at every delimiter occurrence.
@@ -144,10 +144,10 @@ split_any_whitespace(const std::string s, const ssize_t maxsplit)
 
 /**
  * @brief Split a C++ string at a delimiter substring.
- * 
+ *
  * This function emulates the Python `str.split()` implementation, but
  * utilises C++ strings to avoid the Python object overhead.
- * 
+ *
  * @param s The input string to split.
  * @param d The delimiter to split at. If empty, string will not be
  * split.
@@ -184,11 +184,11 @@ split(const std::string s, std::string d, const ssize_t maxsplit)
 
 /**
  * @brief Return the chunks in the given line.
- * 
+ *
  * This removes any trailing comments before splitting the line into
  * whitespace-separated chunks for further processing.
  * These chunks will not contain whitespace or comments; only data.
- * 
+ *
  * @param line The line to parse.
  * @return A vector of data chunks in the given line.
  */
@@ -201,12 +201,12 @@ chunks_from_line(const std::string line)
 
 /**
  * @brief Convert a string to a long.
- * 
+ *
  * This uses Python's string parsing strategy to ensure equal fault
  * tolerance.
- * 
+ *
  * Raises a Python ValueError if conversion is not possible.
- * 
+ *
  * @param s The string to convert.
  * @param err Error flag. Set to true on error.
  * @return Converted long or -1 on error.
@@ -231,12 +231,12 @@ long string_to_long(const std::string s, bool *err)
 
 /**
  * @brief Convert a string to a double.
- * 
+ *
  * This uses Python's string parsing strategy to ensure equal fault
  * tolderance.
- * 
+ *
  * Raises a Python ValueError if conversion is not possible.
- * 
+ *
  * @param s The string to convert.
  * @param err Error flag. Set to true on error.
  * @return Converted double or -1.0 on error.
@@ -268,7 +268,7 @@ string_to_double(const std::string s, bool *err)
 
 /**
  * @brief Get a custom exception object from the py2dm.errors submodule.
- * 
+ *
  * @param name The name of the object to retrieve.
  * @return The custom Exception matching the given name.
  */
@@ -298,10 +298,10 @@ get_error(const std::string name)
 
 /**
  * @brief Parse a string into a node.
- * 
+ *
  * This converts a valid node definition string into a Python tuple
  * that can be used to instantiate the corresponding Node object.
- * 
+ *
  * @param self Reference to the function object iself.
  * @param args Positional arguments.
  * @param kwargs Keyword arguments.
@@ -378,10 +378,10 @@ py2dm_parse_node(PyObject *, PyObject *args, PyObject *kwargs)
 
 /**
  * @brief Parse a string into an element.
- * 
+ *
  * This converts a valid element definition string into a Python tuple
  * that can be used to instantiate the corresponding Element subclass.
- * 
+ *
  * @param self Reference to the function object iself.
  * @param args Positional arguments.
  * @param kwargs Keyword arguments.
@@ -520,11 +520,11 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
 
 /**
  * @brief Parse a string into a node string.
- * 
+ *
  * This converts a valid node string definition string into a Python
  * tuple that can be used to instantiate the corresponding NodeString
  * object.
- * 
+ *
  * @param self Reference to the function object iself.
  * @param args Positional arguments.
  * @param kwargs Keyword arguments.

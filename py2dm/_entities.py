@@ -108,36 +108,36 @@ class Node(Entity):
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
         self.id = id_
         """Unique identifier of the node.
-        
+
         :type: :class:`int`
         """
         self.x = x
         """X coordinate of the node.
-        
+
         :type: :class:`float`
 
         .. seealso::
-        
+
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
         self.y = y
         """Y coordinate of the node.
-                
+
         :type: :class:`float`
 
         .. seealso::
-        
+
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
         self.z = z
         """Z coordinate of the node.
-                
+
         :type: :class:`float`
 
         .. seealso::
-        
+
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
@@ -215,7 +215,7 @@ class Element(Entity):
                  materials: Optional[Tuple[_Material, ...]] = None) -> None:
         self.id = id_
         """The unique ID of the element.
-        
+
         :type: :class:`int`
         """
         self.materials: Tuple[_Material, ...] = materials or ()
@@ -229,7 +229,7 @@ class Element(Entity):
         """
         self.nodes = tuple(nodes)
         """The defining nodes for this element.
-        
+
         :type: :obj:`typing.Tuple` [
             :class:`int`, :class:`int`, :class:`int`]
         """

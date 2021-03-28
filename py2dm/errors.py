@@ -77,7 +77,7 @@ class CardError(FormatError):
 class WriteError(Py2DMError):
     """Base exception for errors when writing a 2DM file.
 
-    This subclass of :class:`Py2DMError` can be used to provide more 
+    This subclass of :class:`Py2DMError` can be used to provide more
     helpful errors to the user when the same operation reads and writes
     mesh files.
     """
