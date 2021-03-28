@@ -109,8 +109,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
                 f'\t{self.num_elements} elements\n'
                 f'\t{self.num_node_strings} node strings')
 
-    @property  # type: ignore
-    @functools.lru_cache(1)
+    @functools.cached_property
     def extent(self) -> Tuple[float, float, float, float]:
         """Return the extents of the mesh as a tuple of four floats.
 
