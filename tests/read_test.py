@@ -1,5 +1,6 @@
 """Unit tests for the reader class."""
 
+import math
 import unittest
 import warnings
 
@@ -78,6 +79,27 @@ class TestReadPedantic(unittest.TestCase):
         with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.materials_per_element, 0)
         # TODO: Test other material numbers
+
+    def test_str(self) -> None:
+        """Test string representation."""
+        path = 'tests/data/all-the-comments.2dm'
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(str(mesh), 'Py2DM Reader\n\t4 nodes\n'
+                             '\t2 elements\n\t0 node strings')
+
+    def test_extents(self) -> None:
+        """Test the extents calculation property."""
+        path = 'tests/data/all-the-comments.2dm'
+        with py2dm.Reader(path) as mesh:
+            self.assertTupleEqual(mesh.extent, (-10.0, 10.0, -10.0, 10.0))
+        path = 'tests/data/empty.2dm'
+        with py2dm.Reader(path) as mesh:
+            self.assertTrue(all((math.isnan(e) for e in mesh.extent)))
+        with warnings.catch_warnings(record=True):
+            path = 'tests/data/external/mdal/M01_5m_002.2dm'
+            with py2dm.Reader(path) as mesh:
+                self.assertTupleEqual(mesh.extent, (292842.529, 293650.286,
+                                                    6177570.015, 6178437.106))
 
     def test_nd(self) -> None:
         """Test the ND card, used for nodes."""
