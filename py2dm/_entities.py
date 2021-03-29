@@ -523,14 +523,22 @@ class NodeString:
     def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
-        It is returned as a list of strings to facilitate formatting
-        into constant-width columns.
+        The returned list should be written as a whitespace-separated
+        list with irregular line width. It may also contain newline
+        characters. No whitespace should be inserted around newlines.
 
         :return: A list of words to write to disk
         :rtype: :obj:`typing.List` [:class:`str`]
         """
         list_ = [self.card]
-        list_.extend((str(n) for n in self.nodes))
+        fold = int(kwargs.get('fold_after', 10))
+        if fold > 0:
+            for i, n in enumerate(self.nodes):
+                if i != 0 and i % fold == 0 and len(self.nodes) > i:
+                    list_.extend(('\n', self.card))
+                list_.append(str(n))
+        else:
+            list_.extend((str(n) for n in self.nodes))
         # Flip last node ID to signify the end of the node sign
         list_[-1] = f'-{list_[-1]}'
         if self.name is not None and kwargs.get('include_name', True):
