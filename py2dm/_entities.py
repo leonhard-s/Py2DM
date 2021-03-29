@@ -44,7 +44,7 @@ class Entity(metaclass=abc.ABCMeta):
     the subclasses of :class:`Element`.
 
     This is an abstract class, subclasses must implement the
-    :meth:`from_line` and :meth:`to_list` methods, as well as provide
+    :meth:`from_line` and :meth:`to_line` methods, as well as provide
     a :attr:`card` class attribute associating it with its 2DM card.
     """
 
@@ -74,7 +74,7 @@ class Entity(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         The line is returned as a list of strings to facilitate
@@ -180,7 +180,7 @@ class Node(Entity):
             warnings.warn('unexpected node fields', CustomFormatIgnored)
         return cls(id_, *pos)
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         This is returned as a list of strings to facilitate formatting
@@ -288,7 +288,7 @@ class Element(Entity):
             filter(lambda m: flag or not isinstance(m, float), materials))
         return cls(id_, *nodes, materials=materials)
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         This is returned as a list of strings to facilitate formatting
@@ -510,7 +510,7 @@ class NodeString:
             node_string.name = name.strip('"')
         return node_string, is_done
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         It is returned as a list of strings to facilitate formatting

@@ -199,7 +199,7 @@ class Writer:
             columns = (3, ele_col, *(node_col,)*element.num_nodes)
             if self._nmpe > 0:
                 columns = (*columns, *(matid_col,)*self._nmpe)
-            self._write_line(element.to_list(), columns=columns)
+            self._write_line(element.to_line(), columns=columns)
 
     def write_header(self) -> None:
         """Write the 2DM file header.
@@ -241,7 +241,7 @@ class Writer:
     def write_node_strings(self) -> None:
         """Write all node strings registered."""
         for node_string in self.node_strings:
-            line = node_string.to_list()
+            line = node_string.to_line()
             self._write_line(line)
 
     def write_nodes(self) -> None:
@@ -249,4 +249,4 @@ class Writer:
         node_col = int(math.log10(len(self.nodes))) + 1
         columns = (2, node_col, 0, 0, 0)
         for node in self.nodes:
-            self._write_line(node.to_list(), columns=columns)
+            self._write_line(node.to_line(), columns=columns)
