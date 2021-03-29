@@ -221,6 +221,9 @@ class Element(Entity):
 
     def __init__(self, id_: int, *nodes: int,
                  materials: Optional[Tuple[_Material, ...]] = None) -> None:
+        if hasattr(self, 'num_nodes') and len(nodes) != self.num_nodes:
+            raise CardError(f'{self.card} element requires {self.num_nodes} '
+                            f'nodes, got {len(nodes)}')
         self.id = id_
         """The unique ID of the element.
 
