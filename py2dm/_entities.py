@@ -190,7 +190,12 @@ class Node(Entity):
         :rtype: :class:`typing.List` [:class:`str`]
         """
         list_ = [self.card, str(self.id)]
-        list_.extend((str(_format_float(x)) for x in (self.x, self.y, self.z)))
+        if kwargs.get('compact', False):
+            list_.extend((str(x) for x in (self.x, self.y, self.z)))
+        else:
+            decimals = kwargs.get('decimals', 6)
+            list_.extend((str(_format_float(x, decimals=decimals))
+                          for x in (self.x, self.y, self.z)))
         return list_
 
 
@@ -528,7 +533,7 @@ class NodeString:
         return list_
 
 
-def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
+def _format_float(value: SupportsFloat, *, decimals: int = 6) -> str:
     """Format a node position into a string.
 
     This uses the format requested by 2DM: up to nine significant
@@ -537,7 +542,7 @@ def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     :param value: A object that supports casting to :class:`float`.
     :type value: :obj:`typing.SupportsFloat`
     :param decimals: The number of decimal places to include, defaults
-        to ``8``.
+        to ``6``.
     :type decimals: :class:`int`, optional
     :return: The formatted string with no extra whitespace.
     :rtype: :class:`str`
@@ -546,7 +551,7 @@ def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     return string
 
 
-def _format_matid(value: _Material, *, decimals: int = 8) -> str:
+def _format_matid(value: _Material, *, decimals: int = 6) -> str:
     """Format a material index.
 
     The decimals parameter will be ignored if the input value is an
@@ -555,7 +560,7 @@ def _format_matid(value: _Material, *, decimals: int = 8) -> str:
     :param value: The material index to format.
     :type value: :obj:`typing.Union` [:class:`int`, :class:`float`]
     :param decimals: The number of decimal places to include for
-        floating point material IDs, defaults to ``8``.
+        floating point material IDs, defaults to ``6``.
     :type decimals: :class:`int`, optional
     :return: The formatted material index.
     :rtype: :class:`str`
