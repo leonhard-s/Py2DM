@@ -193,7 +193,7 @@ class Node(Entity):
         if kwargs.get('compact', False):
             list_.extend((str(x) for x in (self.x, self.y, self.z)))
         else:
-            decimals = kwargs.get('decimals', 6)
+            decimals = int(kwargs.get('decimals', 6))
             list_.extend((str(_format_float(x, decimals=decimals))
                           for x in (self.x, self.y, self.z)))
         return list_
@@ -308,7 +308,12 @@ class Element(Entity):
         matids: Iterable[_Material] = self.materials
         if not kwargs.get('allow_float_matid', True):
             matids = filter(lambda m: isinstance(m, int), self.materials)
-        out.extend((_format_matid(m) for m in matids))
+        # Format materials
+        if kwargs.get('compact', False):
+            out.extend((str(m) for m in matids))
+        else:
+            decimals = int(kwargs.get('decimals', 3))
+            out.extend((_format_matid(m, decimals=decimals) for m in matids))
         return out
 
 
@@ -565,5 +570,6 @@ def _format_matid(value: _Material, *, decimals: int = 6) -> str:
     :return: The formatted material index.
     :rtype: :class:`str`
     """
-    return (str(value) if isinstance(value, int)
-            else _format_float(value, decimals=decimals))
+    if isinstance(value, int):
+        return str(value) if value < 0 else f' {value}'
+    return _format_float(value, decimals=decimals)
