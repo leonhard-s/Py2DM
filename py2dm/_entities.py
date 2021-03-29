@@ -449,6 +449,8 @@ class NodeString:
     card: ClassVar[str] = 'NS'
 
     def __init__(self, *nodes: int, name: Optional[str] = None) -> None:
+        if len(nodes) < 2:
+            raise CardError('At least two node required')
         self.name = name
         """An optional name used to identify the node string.
 
@@ -461,7 +463,7 @@ class NodeString:
         """
 
     def __eq__(self, other: Any) -> bool:
-        if not super().__eq__(other):
+        if not (type(self) == type(other) and self.card == other.card):
             return False
         return self.nodes == other.nodes and self.name == other.name
 
@@ -501,8 +503,9 @@ class NodeString:
             [] if node_string is None else list(node_string.nodes))
         nodes, is_done, name = parse_node_string(line, nodes=nodes, **kwargs)
         if node_string is None:
-            node_string = NodeString()
-        node_string.nodes = tuple(nodes)
+            node_string = NodeString(*nodes)
+        else:
+            node_string.nodes = tuple(nodes)
         if name:
             node_string.name = name.strip('"')
         return node_string, is_done
