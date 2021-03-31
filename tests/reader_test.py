@@ -225,6 +225,18 @@ class TestReadSynthetic(unittest.TestCase):
             self.assertListEqual(
                 list(mesh.iter_node_strings()), list(mesh.node_strings),
                 'bad node string iterator')
+            self.assertEqual(
+                mesh.element(2),
+                py2dm.Element3T(2, 2, 3, 4),
+                'bad element')
+            self.assertEqual(
+                mesh.node(3),
+                py2dm.Node(3, 5.0, -5.0, -3.0),
+                'bad node')
+            self.assertEqual(
+                mesh.node_string('second'),
+                py2dm.NodeString(4, 5, 1, name='second'),
+                'bad node string')
 
 
 class TestReadMdal(unittest.TestCase):
