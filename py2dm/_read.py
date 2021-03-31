@@ -13,6 +13,7 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
 
 from ._entities import Element, Node, NodeString
+from .errors import FileIsClosedError
 
 try:
     from typing import Literal
@@ -27,7 +28,7 @@ __all__ = [
     'ReaderBase'
 ]
 
-_T = TypeVar('_T')
+_ReaderT = TypeVar('_ReaderT', bound='ReaderBase')
 
 
 class _Metadata(NamedTuple):
@@ -79,7 +80,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`str`
         """
-
+        self._closed: bool = True
         self._filepath = filepath
         self._num_materials = int(kwargs.get('materials', 0))
         self._float_materials = bool(kwargs.get('allow_float_matid', True))
@@ -92,7 +93,8 @@ class ReaderBase(metaclass=abc.ABCMeta):
         if self._metadata.num_materials_per_elem is not None:
             self.materials_per_element = self._metadata.num_materials_per_elem
 
-    def __enter__(self: _T) -> _T:
+    def __enter__(self: _ReaderT) -> _ReaderT:
+        self._closed = True
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
@@ -107,6 +109,19 @@ class ReaderBase(metaclass=abc.ABCMeta):
                 f'\t{self.num_nodes} nodes\n'
                 f'\t{self.num_elements} elements\n'
                 f'\t{self.num_node_strings} node strings')
+
+    @property
+    def closed(self) -> bool:
+        """Return whether the underlying file is closed.
+
+        After closing (either via the :meth:py2dm.Reader.close` method
+        or by leaving the reader's context manager), any operations
+        requiring use of the underlying file will raise a
+        :exc:`py2dm.errors.FileIsClosedError`.
+
+        :type: :class:`bool`
+        """
+        return self._closed
 
     @functools.cached_property
     def extent(self) -> Tuple[float, float, float, float]:
@@ -247,7 +262,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
             This method is called automatically when using the class
             via the context manager.
         """
-        _ = self
+        self._closed = True
 
     @abc.abstractmethod
     def element(self, id_: int) -> Element:
@@ -358,6 +373,21 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :class:`py2dm.NodeString`
         """
 
+    def _require_open(self) -> None:
+        """Check whether the file reader is still open.
+
+        Subclasses should call this prior to performing operations on
+        disk to ensure the class is still meant to interact with the
+        disk.
+
+        :raises py2dm.errors.FileIsClosedError: Raised if the
+            underlying has already been closed, either via the
+            :meth:`close` method or by leaving the body of the
+            context manager.
+        """
+        if self._closed:
+            raise FileIsClosedError(self._filepath)
+
 
 class Reader(ReaderBase):
     """Default Py2DM reader class used to parse and validate 2DM files.
@@ -417,17 +447,21 @@ class Reader(ReaderBase):
 
     @property
     def elements(self) -> Iterator[Element]:
+        self._require_open()
         return iter(self._cache_elements)
 
     @property
     def nodes(self) -> Iterator[Node]:
+        self._require_open()
         return iter(self._cache_nodes)
 
     @property
     def node_strings(self) -> Iterator[NodeString]:
+        self._require_open()
         return iter(self._cache_node_strings)
 
     def element(self, id_: int) -> Element:
+        self._require_open()
         # Conform ID to always be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -440,6 +474,7 @@ class Reader(ReaderBase):
         return self._cache_elements[id_conf-1]
 
     def node(self, id_: int) -> Node:
+        self._require_open()
         # Conform ID to alwasy be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -451,6 +486,7 @@ class Reader(ReaderBase):
         return self._cache_nodes[id_conf-1]
 
     def node_string(self, name: str) -> NodeString:
+        self._require_open()
         for node_string in self.iter_node_strings():
             if node_string.name == name:
                 return node_string
@@ -458,6 +494,7 @@ class Reader(ReaderBase):
 
     def iter_elements(self, start: int = -1,
                       end: int = -1) -> Iterator[Element]:
+        self._require_open()
         if self.num_elements < 1:
             return iter(())
         # Get defaults
@@ -481,6 +518,7 @@ class Reader(ReaderBase):
         return iter(self._cache_elements[start+offset:end+offset+1])
 
     def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
+        self._require_open()
         if self.num_nodes < 1:
             return iter(())
         # Get defaults
@@ -505,6 +543,7 @@ class Reader(ReaderBase):
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
+        self._require_open()
         if self.num_node_strings < 1:
             return iter(())
         if end < 0:

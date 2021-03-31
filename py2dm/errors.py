@@ -88,7 +88,14 @@ class Py2DMWarning(Warning):
 
     This may be used to filter any custom warnings broadcast by this
     module.
+    """
 
+
+class FileIsClosedError(Py2DMError):
+    """Raised if the underlying file has been closed.
+
+    This is raised when attempting to interact with a reader or writer
+    after its :meth:`py2dm.Reader.close` method has been called.
     """
 
 
