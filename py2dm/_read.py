@@ -536,8 +536,11 @@ class Reader(ReaderBase):
         if end < 0:
             end = id_max
         # Check bounds
+        if start < id_min:
+            raise IndexError('Start element ID must be greater than or equal '
+                             f'to {id_min} ({start})')
         if start > id_max:
-            raise IndexError(f'Start element ID must be less than or equal to '
+            raise IndexError('Start element ID must be less than or equal to '
                              f'{id_max} ({start})')
         if end <= start:
             raise IndexError('End element ID must be greater than the start '
@@ -560,6 +563,9 @@ class Reader(ReaderBase):
         if end < 0:
             end = id_max
         # Check bounds
+        if start < id_min:
+            raise IndexError('Start element ID must be greater than or equal '
+                             f'to {id_min} ({start})')
         if start > id_max:
             raise IndexError(f'Start node ID must be less than or equal to '
                              f'{id_max} ({start})')
@@ -579,6 +585,16 @@ class Reader(ReaderBase):
             return iter(())
         if start < 0:
             start = 0
+        # Check bounds
+        if start > self.num_node_strings-1:
+            raise IndexError(
+                f'Start index must be greater than or equal to 0 ({start})')
+        if end <= start and not end < 0:
+            raise IndexError('End index must be greater than the start index '
+                             f'({end}<={start})')
+        if end >= self.num_node_strings+1:
+            raise IndexError('Upper bound must be less than or equal to '
+                             f'{self.num_node_strings} ({end})')
         if end < 0:
             return iter(self._cache_node_strings[start:])
         return iter(self._cache_node_strings[start:end])
