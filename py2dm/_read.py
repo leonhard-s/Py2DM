@@ -125,6 +125,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
             :class:`float`, :class:`float`]
         """
+        self._require_open()
         iterator = iter(self.iter_nodes())
         # Get initial node for base values
         try:
@@ -221,6 +222,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._num_materials
 
     @property
@@ -229,6 +231,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_elements
 
     @property
@@ -237,6 +240,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_nodes
 
     @property
@@ -245,6 +249,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_node_strings
 
     def close(self) -> None:
