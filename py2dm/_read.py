@@ -528,7 +528,7 @@ class Reader(ReaderBase):
             return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
-        id_max = self.num_elements+1 if self._zero_index else self.num_elements
+        id_max = self.num_elements-1 if self._zero_index else self.num_elements
         if start < 0:
             start = id_min
         if end < 0:
@@ -552,7 +552,7 @@ class Reader(ReaderBase):
             return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
-        id_max = self.num_nodes+1 if self._zero_index else self.num_nodes
+        id_max = self.num_nodes-1 if self._zero_index else self.num_nodes
         if start < 0:
             start = id_min
         if end < 0:
@@ -575,6 +575,8 @@ class Reader(ReaderBase):
         self._require_open()
         if self.num_node_strings < 1:
             return iter(())
+        if start < 0:
+            start = 0
         if end < 0:
             return iter(self._cache_node_strings[start:])
         return iter(self._cache_node_strings[start:end])
