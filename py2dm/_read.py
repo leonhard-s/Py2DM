@@ -63,7 +63,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are
         provided, their specified name will be used here. If neither
         card is given, the mesh name will default to
-        ``"Unnamed mesh"``.
+        ``Unnamed mesh``.
 
         :type: :class:`str`
         """
@@ -86,6 +86,8 @@ class ReaderBase(metaclass=abc.ABCMeta):
         return False
 
     def __str__(self) -> str:
+        if self._closed:
+            return 'Py2DM Reader (closed)'
         return ('Py2DM Reader\n'
                 f'\t{self.num_nodes} nodes\n'
                 f'\t{self.num_elements} elements\n'
