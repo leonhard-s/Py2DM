@@ -572,15 +572,12 @@ class Reader(ReaderBase):
 def _element_factory(line: str) -> Type[Element]:
     """Return a :class:`py2dm.Element` subclass by card.
 
-    Arguments:
-        line: The line to create an element for.
-
-    Raises:
-        ValueError: Raised if the given card doesn't match any subclass
-
-    Returns:
-        The element class mataching the given tag
-
+    :param line: The line to create an element fro.
+    :type line: :class:`str`
+    :raises ValueError: Raised if the given card doesn't match any
+        :class:`py2dm.Element` subclass'.
+    :return: The element type matching the given card.
+    :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
     """
     for element_group in Element.__subclasses__():
         for subclass in element_group.__subclasses__():
