@@ -44,13 +44,16 @@ class Entity(metaclass=abc.ABCMeta):
     the subclasses of :class:`Element`.
 
     This is an abstract class, subclasses must implement the
-    :meth:`from_line` and :meth:`to_list` methods, as well as provide
+    :meth:`from_line` and :meth:`to_line` methods, as well as provide
     a :attr:`card` class attribute associating it with its 2DM card.
     """
 
     __slots__: List[str] = []
     card: ClassVar[str]
     """The 2DM card associated with this geometry."""
+
+    def __eq__(self, other: Any) -> bool:
+        return type(self) == type(other) and self.card == other.card
 
     @classmethod
     @abc.abstractmethod
@@ -71,7 +74,7 @@ class Entity(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         The line is returned as a list of strings to facilitate
@@ -100,11 +103,11 @@ class Node(Entity):
     :param z: Z position of the node.
     :type z: :class:`float`
     """
+    # pylint: disable=invalid-name
 
     __slots__ = ['id', 'x', 'y', 'z']
     card: ClassVar[str] = 'ND'
 
-    # pylint: disable=invalid-name
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
         self.id = id_
         """Unique identifier of the node.
@@ -142,6 +145,11 @@ class Node(Entity):
             Z coordinate of the node.
         """
 
+    def __eq__(self, other: Any) -> bool:
+        if not super().__eq__(other):
+            return False
+        return self.id == other.id and self.pos == other.pos
+
     def __repr__(self) -> str:
         return f'<Node #{self.id}: {self.pos}>'
 
@@ -172,7 +180,7 @@ class Node(Entity):
             warnings.warn('unexpected node fields', CustomFormatIgnored)
         return cls(id_, *pos)
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         This is returned as a list of strings to facilitate formatting
@@ -182,7 +190,12 @@ class Node(Entity):
         :rtype: :class:`typing.List` [:class:`str`]
         """
         list_ = [self.card, str(self.id)]
-        list_.extend((str(_format_float(x)) for x in (self.x, self.y, self.z)))
+        if kwargs.get('compact', False):
+            list_.extend((str(x) for x in (self.x, self.y, self.z)))
+        else:
+            decimals = int(kwargs.get('decimals', 6))
+            list_.extend((str(_format_float(x, decimals=decimals))
+                          for x in (self.x, self.y, self.z)))
         return list_
 
 
@@ -204,8 +217,8 @@ class Element(Entity):
     :type materials: :obj:`typing.Tuple` [
         :obj:`typing.Union` [:class:`int`, :class:`float`]], optional
     """
-
     # pylint: disable=invalid-name
+
     __slots__ = ['id', 'materials', 'nodes']
     card: ClassVar[str]
     num_nodes: ClassVar[int]
@@ -213,6 +226,9 @@ class Element(Entity):
 
     def __init__(self, id_: int, *nodes: int,
                  materials: Optional[Tuple[_Material, ...]] = None) -> None:
+        if hasattr(self, 'num_nodes') and len(nodes) != self.num_nodes:
+            raise CardError(f'{self.card} element requires {self.num_nodes} '
+                            f'nodes, got {len(nodes)}')
         self.id = id_
         """The unique ID of the element.
 
@@ -234,8 +250,17 @@ class Element(Entity):
             :class:`int`, :class:`int`, :class:`int`]
         """
 
+    def __eq__(self, other: Any) -> bool:
+        if not super().__eq__(other):
+            return False
+        return (self.id == other.id and
+                self.nodes == other.nodes and
+                self.materials == other.materials)
+
     def __repr__(self) -> str:
-        return f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}>'
+        string = f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}'
+        string += f' Materials {self.materials}>' if self.materials else '>'
+        return string
 
     @property
     def num_materials(self) -> int:
@@ -270,7 +295,7 @@ class Element(Entity):
             filter(lambda m: flag or not isinstance(m, float), materials))
         return cls(id_, *nodes, materials=materials)
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
         This is returned as a list of strings to facilitate formatting
@@ -285,7 +310,12 @@ class Element(Entity):
         matids: Iterable[_Material] = self.materials
         if not kwargs.get('allow_float_matid', True):
             matids = filter(lambda m: isinstance(m, int), self.materials)
-        out.extend((_format_matid(m) for m in matids))
+        # Format materials
+        if kwargs.get('compact', False):
+            out.extend((str(m) for m in matids))
+        else:
+            decimals = int(kwargs.get('decimals', 3))
+            out.extend((_format_matid(m, decimals=decimals) for m in matids))
         return out
 
 
@@ -431,6 +461,8 @@ class NodeString:
     card: ClassVar[str] = 'NS'
 
     def __init__(self, *nodes: int, name: Optional[str] = None) -> None:
+        if len(nodes) < 2:
+            raise CardError('At least two node required')
         self.name = name
         """An optional name used to identify the node string.
 
@@ -441,6 +473,11 @@ class NodeString:
 
         :type: :obj:`typing.Tuple` [:class:`int`]
         """
+
+    def __eq__(self, other: Any) -> bool:
+        if not (type(self) == type(other) and self.card == other.card):
+            return False
+        return self.nodes == other.nodes and self.name == other.name
 
     def __repr__(self) -> str:
         if self.name is not None:
@@ -478,23 +515,32 @@ class NodeString:
             [] if node_string is None else list(node_string.nodes))
         nodes, is_done, name = parse_node_string(line, nodes=nodes, **kwargs)
         if node_string is None:
-            node_string = NodeString()
-        node_string.nodes = tuple(nodes)
+            node_string = NodeString(*nodes)
+        else:
+            node_string.nodes = tuple(nodes)
         if name:
             node_string.name = name.strip('"')
         return node_string, is_done
 
-    def to_list(self, **kwargs: Any) -> List[str]:
+    def to_line(self, **kwargs: Any) -> List[str]:
         """Generate the canonical 2DM representation of this entity.
 
-        It is returned as a list of strings to facilitate formatting
-        into constant-width columns.
+        The returned list should be written as a whitespace-separated
+        list with irregular line width. It may also contain newline
+        characters. No whitespace should be inserted around newlines.
 
         :return: A list of words to write to disk
         :rtype: :obj:`typing.List` [:class:`str`]
         """
         list_ = [self.card]
-        list_.extend((str(n) for n in self.nodes))
+        fold = int(kwargs.get('fold_after', 10))
+        if fold > 0:
+            for i, n in enumerate(self.nodes):
+                if i != 0 and i % fold == 0 and len(self.nodes) > i:
+                    list_.extend(('\n', self.card))
+                list_.append(str(n))
+        else:
+            list_.extend((str(n) for n in self.nodes))
         # Flip last node ID to signify the end of the node sign
         list_[-1] = f'-{list_[-1]}'
         if self.name is not None and kwargs.get('include_name', True):
@@ -502,7 +548,7 @@ class NodeString:
         return list_
 
 
-def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
+def _format_float(value: SupportsFloat, *, decimals: int = 6) -> str:
     """Format a node position into a string.
 
     This uses the format requested by 2DM: up to nine significant
@@ -511,7 +557,7 @@ def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     :param value: A object that supports casting to :class:`float`.
     :type value: :obj:`typing.SupportsFloat`
     :param decimals: The number of decimal places to include, defaults
-        to ``8``.
+        to ``6``.
     :type decimals: :class:`int`, optional
     :return: The formatted string with no extra whitespace.
     :rtype: :class:`str`
@@ -520,7 +566,7 @@ def _format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
     return string
 
 
-def _format_matid(value: _Material, *, decimals: int = 8) -> str:
+def _format_matid(value: _Material, *, decimals: int = 6) -> str:
     """Format a material index.
 
     The decimals parameter will be ignored if the input value is an
@@ -529,10 +575,11 @@ def _format_matid(value: _Material, *, decimals: int = 8) -> str:
     :param value: The material index to format.
     :type value: :obj:`typing.Union` [:class:`int`, :class:`float`]
     :param decimals: The number of decimal places to include for
-        floating point material IDs, defaults to ``8``.
+        floating point material IDs, defaults to ``6``.
     :type decimals: :class:`int`, optional
     :return: The formatted material index.
     :rtype: :class:`str`
     """
-    return (str(value) if isinstance(value, int)
-            else _format_float(value, decimals=decimals))
+    if isinstance(value, int):
+        return str(value) if value < 0 else f' {value}'
+    return _format_float(value, decimals=decimals)

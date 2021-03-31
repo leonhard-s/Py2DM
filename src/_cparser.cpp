@@ -434,8 +434,8 @@ py2dm_parse_element(PyObject *, PyObject *args, PyObject *kwargs)
         PyErr_Format(get_error("CardError"),
                      "%s element definition requires at least %d fields "
                      "(id, node_1, ..., node_%d), got %d",
-                     card.c_str(), num_nodes - 1,
-                     num_nodes - 1, chunks.size() - 1);
+                     card.c_str(), num_nodes + 1,
+                     num_nodes, chunks.size() - 1);
         return nullptr;
     }
     // Element ID

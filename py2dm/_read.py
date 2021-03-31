@@ -13,7 +13,7 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
 
 from ._entities import Element, Node, NodeString
-from .errors import FormatError
+from .errors import FileIsClosedError
 
 try:
     from typing import Literal
@@ -28,7 +28,7 @@ __all__ = [
     'ReaderBase'
 ]
 
-_T = TypeVar('_T')
+_ReaderT = TypeVar('_ReaderT', bound='ReaderBase')
 
 
 class _Metadata(NamedTuple):
@@ -57,43 +57,25 @@ class ReaderBase(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        self.materials_per_element = int(kwargs.get('materials', 0))
-        """Number of materials per element.
-
-        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
-        card. Alternatively, the user may specify the number of
-        materials to use via the `materials` keyword argument.
-
-        If the number of materials is not specified in the file or via
-        the `materials` argument, the number of elements will default
-        to `0`.
-
-        :type: :class:`int`
-        """
         self.name = 'Unnamed mesh'
         """Display name of the mesh.
 
         If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are
         provided, their specified name will be used here. If neither
         card is given, the mesh name will default to
-        ``"Unnamed mesh"``.
+        ``Unnamed mesh``.
 
         :type: :class:`str`
         """
-
+        self._closed: bool = True
         self._filepath = filepath
         self._num_materials = int(kwargs.get('materials', 0))
         self._float_materials = bool(kwargs.get('allow_float_matid', True))
         self._zero_index = bool(kwargs.get('zero_index', False))
-        with open(filepath) as file_:
-            self._metadata = _Metadata(
-                *scan_metadata(file_, filepath, self._zero_index))
-        if self._metadata.name is not None:
-            self.name = self._metadata.name
-        if self._metadata.num_materials_per_elem is not None:
-            self.materials_per_element = self._metadata.num_materials_per_elem
+        self._metadata: _Metadata
 
-    def __enter__(self: _T) -> _T:
+    def __enter__(self: _ReaderT) -> _ReaderT:
+        self.open()
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
@@ -104,10 +86,25 @@ class ReaderBase(metaclass=abc.ABCMeta):
         return False
 
     def __str__(self) -> str:
+        if self._closed:
+            return 'Py2DM Reader (closed)'
         return ('Py2DM Reader\n'
                 f'\t{self.num_nodes} nodes\n'
                 f'\t{self.num_elements} elements\n'
                 f'\t{self.num_node_strings} node strings')
+
+    @property
+    def closed(self) -> bool:
+        """Return whether the underlying file is closed.
+
+        After closing (either via the :meth:py2dm.Reader.close` method
+        or by leaving the reader's context manager), any operations
+        requiring use of the underlying file will raise a
+        :exc:`py2dm.errors.FileIsClosedError`.
+
+        :type: :class:`bool`
+        """
+        return self._closed
 
     @functools.cached_property
     def extent(self) -> Tuple[float, float, float, float]:
@@ -130,6 +127,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
             :class:`float`, :class:`float`]
         """
+        self._require_open()
         iterator = iter(self.iter_nodes())
         # Get initial node for base values
         try:
@@ -213,11 +211,29 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
 
     @property
+    def materials_per_element(self) -> int:
+        """Number of materials per element.
+
+        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
+        card. Alternatively, the user may specify the number of
+        materials to use via the `materials` keyword argument.
+
+        If the number of materials is not specified in the file or via
+        the `materials` argument, the number of elements will default
+        to `0`.
+
+        :type: :class:`int`
+        """
+        self._require_open()
+        return self._num_materials
+
+    @property
     def num_elements(self) -> int:
         """Return the number of elements in the mesh.
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_elements
 
     @property
@@ -226,6 +242,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_nodes
 
     @property
@@ -234,6 +251,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         :type: :class:`int`
         """
+        self._require_open()
         return self._metadata.num_node_strings
 
     def close(self) -> None:
@@ -248,7 +266,27 @@ class ReaderBase(metaclass=abc.ABCMeta):
             This method is called automatically when using the class
             via the context manager.
         """
-        _ = self
+        self._closed = True
+
+    def open(self) -> None:
+        """Open the mesh reader.
+
+        This performs the initial metadata read and sets up the class
+        for continued access.
+
+        When calling this function manually, be sure to call
+        :meth:`close` once you no longer require file access.
+        Alternatively, you can use the context manager interface, in
+        which case both methods will be called automatically.
+        """
+        with open(self._filepath) as file_:
+            self._metadata = _Metadata(
+                *scan_metadata(file_, self._filepath, self._zero_index))
+        if self._metadata.name is not None:
+            self.name = self._metadata.name
+        if self._metadata.num_materials_per_elem is not None:
+            self._num_materials = self._metadata.num_materials_per_elem
+        self._closed = False
 
     @abc.abstractmethod
     def element(self, id_: int) -> Element:
@@ -278,13 +316,13 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
         This is only available if the node strings define a name. For
         meshes whose node strings are not named, convert
-        :meth:`Reader.iter_node_strings` to a :class:`list` and access
-        the node strings by index.
+        :attr:`Reader.node_strings` to a :class:`list` and access the
+        node strings by index.
 
         .. code-block:: python3
 
             with py2dm.Reader('my-mesh.2dm') as mesh:
-                node_strings = list(mesh.iter_node_strings())
+                node_strings = list(mesh.node_strings)
                 node_string_two = node_strings[1]
 
         :param name: Unique name of the node string
@@ -314,7 +352,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
+    def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
         """Iterator over the mesh nodes.
 
         :param start: The starting node ID. If not specified, the
@@ -359,13 +397,20 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :class:`py2dm.NodeString`
         """
 
-    def _parse_metadata(self) -> Any:
-        """Parse the file for metadata.
+    def _require_open(self) -> None:
+        """Check whether the file reader is still open.
 
-        This method is only intended to be called as part of the
-        initialiser and should not be called by other functions.
+        Subclasses should call this prior to performing operations on
+        disk to ensure the class is still meant to interact with the
+        disk.
+
+        :raises py2dm.errors.FileIsClosedError: Raised if the
+            underlying has already been closed, either via the
+            :meth:`close` method or by leaving the body of the
+            context manager.
         """
-        # TODO: Rewrite metadata parser (C?)
+        if self._closed:
+            raise FileIsClosedError(self._filepath)
 
 
 class Reader(ReaderBase):
@@ -387,8 +432,11 @@ class Reader(ReaderBase):
         self._cache_nodes: List[Node] = []
         self._cache_elements: List[Element] = []
         self._cache_node_strings: List[NodeString] = []
+
+    def open(self) -> None:
+        super().open()
         # Parse and load the entire file
-        with open(filepath) as file_:
+        with open(self._filepath) as file_:
             # Nodes
             if self.num_nodes > 0:
                 file_.seek(self._metadata.pos_nodes)
@@ -410,6 +458,10 @@ class Reader(ReaderBase):
                             allow_float_matid=self._float_materials)
                     except ValueError:
                         continue
+                    # Strip extra elements
+                    if len(element.materials) > self._num_materials:
+                        element.materials = tuple(
+                            element.materials[:self._num_materials])
                     self._cache_elements.append(element)
                     if element.id >= self.num_elements:
                         break
@@ -426,17 +478,21 @@ class Reader(ReaderBase):
 
     @property
     def elements(self) -> Iterator[Element]:
+        self._require_open()
         return iter(self._cache_elements)
 
     @property
     def nodes(self) -> Iterator[Node]:
+        self._require_open()
         return iter(self._cache_nodes)
 
     @property
     def node_strings(self) -> Iterator[NodeString]:
+        self._require_open()
         return iter(self._cache_node_strings)
 
     def element(self, id_: int) -> Element:
+        self._require_open()
         # Conform ID to always be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -449,6 +505,7 @@ class Reader(ReaderBase):
         return self._cache_elements[id_conf-1]
 
     def node(self, id_: int) -> Node:
+        self._require_open()
         # Conform ID to alwasy be one-indexed
         id_conf = id_+1 if self._zero_index else id_
         # Check ID range
@@ -460,6 +517,7 @@ class Reader(ReaderBase):
         return self._cache_nodes[id_conf-1]
 
     def node_string(self, name: str) -> NodeString:
+        self._require_open()
         for node_string in self.iter_node_strings():
             if node_string.name == name:
                 return node_string
@@ -467,18 +525,22 @@ class Reader(ReaderBase):
 
     def iter_elements(self, start: int = -1,
                       end: int = -1) -> Iterator[Element]:
+        self._require_open()
         if self.num_elements < 1:
             return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
-        id_max = self.num_elements+1 if self._zero_index else self.num_elements
+        id_max = self.num_elements-1 if self._zero_index else self.num_elements
         if start < 0:
             start = id_min
         if end < 0:
             end = id_max
         # Check bounds
+        if start < id_min:
+            raise IndexError('Start element ID must be greater than or equal '
+                             f'to {id_min} ({start})')
         if start > id_max:
-            raise IndexError(f'Start element ID must be less than or equal to '
+            raise IndexError('Start element ID must be less than or equal to '
                              f'{id_max} ({start})')
         if end <= start:
             raise IndexError('End element ID must be greater than the start '
@@ -486,24 +548,24 @@ class Reader(ReaderBase):
         if end > id_max:
             raise IndexError('End element ID must be less than or equal to '
                              f'{id_max} ({end})')
-        offset = int(self._zero_index)
-        for index, element in enumerate(
-                self._cache_elements[start-offset:end-offset]):
-            if index == 0 and element.id != int(self._zero_index):
-                raise FormatError('idk', 'idk', 1)
-            yield element
+        offset = 0 if self._zero_index else -1
+        return iter(self._cache_elements[start+offset:end+offset+1])
 
-    def iter_nodes(self, start: int = 1, end: int = -1) -> Iterator[Node]:
+    def iter_nodes(self, start: int = -1, end: int = -1) -> Iterator[Node]:
+        self._require_open()
         if self.num_nodes < 1:
             return iter(())
         # Get defaults
         id_min = 0 if self._zero_index else 1
-        id_max = self.num_nodes+1 if self._zero_index else self.num_nodes
+        id_max = self.num_nodes-1 if self._zero_index else self.num_nodes
         if start < 0:
             start = id_min
         if end < 0:
             end = id_max
         # Check bounds
+        if start < id_min:
+            raise IndexError('Start element ID must be greater than or equal '
+                             f'to {id_min} ({start})')
         if start > id_max:
             raise IndexError(f'Start node ID must be less than or equal to '
                              f'{id_max} ({start})')
@@ -513,13 +575,26 @@ class Reader(ReaderBase):
         if end > id_max:
             raise IndexError('End node ID must be less than or equal to '
                              f'{id_max} ({end})')
-        offset = int(self._zero_index)
-        return iter(self._cache_nodes[start-offset:end-offset])
+        offset = 0 if self._zero_index else -1
+        return iter(self._cache_nodes[start+offset:end+offset+1])
 
     def iter_node_strings(self, start: int = 0,
                           end: int = -1) -> Iterator[NodeString]:
+        self._require_open()
         if self.num_node_strings < 1:
             return iter(())
+        if start < 0:
+            start = 0
+        # Check bounds
+        if start > self.num_node_strings-1:
+            raise IndexError(
+                f'Start index must be greater than or equal to 0 ({start})')
+        if end <= start and not end < 0:
+            raise IndexError('End index must be greater than the start index '
+                             f'({end}<={start})')
+        if end >= self.num_node_strings+1:
+            raise IndexError('Upper bound must be less than or equal to '
+                             f'{self.num_node_strings} ({end})')
         if end < 0:
             return iter(self._cache_node_strings[start:])
         return iter(self._cache_node_strings[start:end])
@@ -529,15 +604,12 @@ class Reader(ReaderBase):
 def _element_factory(line: str) -> Type[Element]:
     """Return a :class:`py2dm.Element` subclass by card.
 
-    Arguments:
-        line: The line to create an element for.
-
-    Raises:
-        ValueError: Raised if the given card doesn't match any subclass
-
-    Returns:
-        The element class mataching the given tag
-
+    :param line: The line to create an element fro.
+    :type line: :class:`str`
+    :raises ValueError: Raised if the given card doesn't match any
+        :class:`py2dm.Element` subclass'.
+    :return: The element type matching the given card.
+    :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
     """
     for element_group in Element.__subclasses__():
         for subclass in element_group.__subclasses__():

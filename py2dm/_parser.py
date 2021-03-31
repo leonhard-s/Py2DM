@@ -208,7 +208,6 @@ def scan_metadata(file_: IO[str], filename: str,
         if (line.startswith('NS')
                 and '-' in line.split('#', maxsplit=1)[0]):
             num_node_strings += 1
-            num_materials_per_elem = int(line.split(maxsplit=2)[1])
             if node_strings_start == 0:
                 node_strings_start = file_.tell() - len(line_raw) - 1
         elif line.startswith('MESHNAME') or line.startswith('GM'):
