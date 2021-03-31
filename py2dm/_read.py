@@ -57,19 +57,6 @@ class ReaderBase(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        self.materials_per_element = int(kwargs.get('materials', 0))
-        """Number of materials per element.
-
-        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
-        card. Alternatively, the user may specify the number of
-        materials to use via the `materials` keyword argument.
-
-        If the number of materials is not specified in the file or via
-        the `materials` argument, the number of elements will default
-        to `0`.
-
-        :type: :class:`int`
-        """
         self.name = 'Unnamed mesh'
         """Display name of the mesh.
 
@@ -221,6 +208,22 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
 
     @property
+    def materials_per_element(self) -> int:
+        """Number of materials per element.
+
+        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
+        card. Alternatively, the user may specify the number of
+        materials to use via the `materials` keyword argument.
+
+        If the number of materials is not specified in the file or via
+        the `materials` argument, the number of elements will default
+        to `0`.
+
+        :type: :class:`int`
+        """
+        return self._num_materials
+
+    @property
     def num_elements(self) -> int:
         """Return the number of elements in the mesh.
 
@@ -275,7 +278,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         if self._metadata.name is not None:
             self.name = self._metadata.name
         if self._metadata.num_materials_per_elem is not None:
-            self.materials_per_element = self._metadata.num_materials_per_elem
+            self._num_materials = self._metadata.num_materials_per_elem
         self._closed = False
 
     @abc.abstractmethod
