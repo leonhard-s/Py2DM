@@ -2,9 +2,383 @@
 
 import math
 import os
+from typing import Iterator
 import unittest
 
 import py2dm  # pylint: disable=import-error
+
+
+class TestReader(unittest.TestCase):
+    """Tests for the py2dm.Reader class."""
+
+    _PATH = os.path.join('tests', 'data', 'basic-node-strings.2dm')
+
+    def test___init__(self) -> None:
+        path = os.path.join('path', 'to', 'mesh')
+        reader = py2dm.Reader(path)
+        self.assertEqual(
+            reader.name, 'Unnamed mesh',
+            'unpexected default mesh name')
+        self.assertTrue(
+            reader.closed,
+            'reader not closed')
+        with self.assertRaises(py2dm.errors.FileIsClosedError):
+            _ = reader.element(1)
+
+    def test_context_manager(self) -> None:
+        reader = py2dm.Reader(self._PATH)
+        self.assertTrue(
+            reader.closed,
+            'reader not closed upon instantiation')
+        with reader as mesh:
+            self.assertFalse(
+                reader.closed,
+                'reader not opening with context manager')
+            self.assertIs(
+                reader, mesh,
+                'reader __enter__ does not return self')
+        self.assertTrue(
+            reader.closed,
+            'reader not closed after leaving context manager')
+
+    def test___str__(self) -> None:
+        reader = py2dm.Reader(self._PATH)
+        self.assertEqual(
+            str(reader), 'Py2DM Reader (closed)',
+            'unexpected string representation')
+        reader.open()
+        self.assertEqual(
+            str(reader),
+            ('Py2DM Reader\n'
+             '\t5 nodes\n'
+             '\t4 elements\n'
+             '\t2 node strings'),
+            'unexpected string representation')
+        reader.close()
+        self.assertEqual(
+            str(reader), 'Py2DM Reader (closed)',
+            'unexpected string representation')
+
+    def test_extent(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertTupleEqual(
+                mesh.extent, (-5.0, 5.0, -5.0, 5.0),
+                'incorrect mesh extent')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+        with self.subTest('empty'):
+            path = os.path.join('tests', 'data', 'empty-mesh.2dm')
+            with py2dm.Reader(path) as mesh:
+                self.assertTrue(
+                    all((math.isnan(f) for f in mesh.extent)),
+                    'mesh extent not empty')
+
+    def test_elements(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertIsInstance(
+                mesh.elements, Iterator,
+                'not subclass of iterator')
+            self.assertListEqual(
+                list(mesh.elements),
+                list(mesh.iter_elements()),
+                'differing elements list')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.elements
+
+    def test_nodes(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertIsInstance(
+                mesh.nodes, Iterator,
+                'not subclass of iterator')
+            self.assertListEqual(
+                list(mesh.nodes),
+                list(mesh.iter_nodes()),
+                'differing nodes list')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.nodes
+
+    def test_node_strings(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertIsInstance(
+                mesh.node_strings, Iterator,
+                'not subclass of iterator')
+            self.assertListEqual(
+                list(mesh.node_strings),
+                list(mesh.iter_node_strings()),
+                'differing node strings list')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.node_strings
+
+    def test_materials_per_element(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertEqual(
+                mesh.materials_per_element, 0,
+                'bad material count')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.materials_per_element
+
+    def test_num_elements(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 4,
+                'bad element count')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.num_elements
+
+    def test_num_nodes(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertEqual(
+                mesh.num_nodes, 5,
+                'bad node count')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.num_nodes
+
+    def test_num_node_strings(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            self.assertEqual(
+                mesh.num_node_strings, 2,
+                'bad node string count')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.num_node_strings
+
+    def test_open_close(self) -> None:
+        reader = py2dm.Reader(self._PATH)
+        with self.assertRaises(py2dm.errors.FileIsClosedError):
+            _ = reader.element(1)
+        with self.assertRaises(py2dm.errors.FileIsClosedError):
+            _ = reader.num_nodes
+        reader.open()
+        self.assertFalse(
+            reader.closed,
+            'reader closed after open() call')
+        _ = reader.element(1)  # Test for erroneous exception
+        reader.close()
+        self.assertTrue(
+            reader.closed,
+            'reader not closed after close() call')
+        with self.assertRaises(py2dm.errors.FileIsClosedError):
+            _ = reader.element(1)
+
+    def test_element(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('valid'):
+                self.assertEqual(
+                    mesh.element(1),
+                    py2dm.Element3T(1, 1, 2, 3),
+                    'unexpected element')
+            with self.subTest('too low'):
+                with self.assertRaises(KeyError):
+                    _ = mesh.element(0)
+            with self.subTest('too high'):
+                with self.assertRaises(KeyError):
+                    _ = mesh.element(5)
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_node(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('valid'):
+                self.assertEqual(
+                    mesh.node(2),
+                    py2dm.Node(2, -5.0, 5.0, 2.0),
+                    'unexpected node')
+            with self.subTest('too low'):
+                with self.assertRaises(KeyError):
+                    _ = mesh.node(0)
+            with self.subTest('too high'):
+                with self.assertRaises(KeyError):
+                    _ = mesh.node(6)
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_node_string(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('valid'):
+                self.assertEqual(
+                    mesh.node_string('first'),
+                    py2dm.NodeString(1, 2, 4, 3, name='first'),
+                    'unexpected node string')
+            with self.subTest('bad name'):
+                with self.assertRaises(KeyError):
+                    _ = mesh.node_string('third')
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_iter_elements(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('full'):
+                self.assertListEqual(
+                    list(mesh.iter_elements()),
+                    # pylint: disable=private-access
+                    mesh._cache_elements,  # type: ignore
+                    'unexpected element list')
+            with self.subTest('subset'):
+                self.assertListEqual(
+                    list(mesh.iter_elements(2, 3)),
+                    [py2dm.Element3T(2, 2, 3, 4),
+                     py2dm.Element2L(3, 1, 3)],
+                    'unexpected element list')
+            with self.subTest('subset (lower unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_elements(-1, 2)),
+                    [py2dm.Element3T(1, 1, 2, 3),
+                     py2dm.Element3T(2, 2, 3, 4)],
+                    'unexpected element list')
+            with self.subTest('subset (upper unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_elements(3, -1)),
+                    [py2dm.Element2L(3, 1, 3),
+                     py2dm.Element2L(4, 2, 4)],
+                    'unexpected element list')
+            with self.subTest('start < min'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_elements(0)
+            with self.subTest('start > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_elements(mesh.num_elements+1)
+            with self.subTest('end < start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_elements(4, 3)
+            with self.subTest('end == start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_elements(3, 3)
+            with self.subTest('end > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_elements(1, mesh.num_elements+1)
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_iter_nodes(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('full'):
+                self.assertListEqual(
+                    list(mesh.iter_nodes()),
+                    # pylint: disable=private-access
+                    mesh._cache_nodes,  # type: ignore
+                    'unexpected node list')
+            with self.subTest('subset'):
+                self.assertListEqual(
+                    list(mesh.iter_nodes(2, 4)),
+                    [py2dm.Node(2, -5.0, 5.0, 2.0),
+                     py2dm.Node(3, 5.0, -5.0, -3.0),
+                     py2dm.Node(4, 5.0, 5.0, 4.0)],
+                    'unexpected node list')
+            with self.subTest('subset (lower unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_nodes(-1, 2)),
+                    [py2dm.Node(1, -5.0, -5.0, -1.0),
+                     py2dm.Node(2, -5.0, 5.0, 2.0)],
+                    'unexpected node list')
+            with self.subTest('subset (upper unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_nodes(3, -1)),
+                    [py2dm.Node(3, 5.0, -5.0, -3.0),
+                     py2dm.Node(4, 5.0, 5.0, 4.0),
+                     py2dm.Node(5, 0.0, 0.0, 5.0)],
+                    'unexpected node list')
+            with self.subTest('start < min'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_nodes(0)
+            with self.subTest('start > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_nodes(mesh.num_nodes+1)
+            with self.subTest('end < start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_nodes(4, 3)
+            with self.subTest('end == start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_nodes(3, 3)
+            with self.subTest('end > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_nodes(1, mesh.num_nodes+1)
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_iter_node_strings(self) -> None:
+        with py2dm.Reader(self._PATH) as mesh:
+            with self.subTest('full'):
+                self.assertListEqual(
+                    list(mesh.iter_node_strings()),
+                    # pylint: disable=private-access
+                    mesh._cache_node_strings,  # type: ignore
+                    'unexpected node string list')
+            with self.subTest('subset'):
+                self.assertListEqual(
+                    list(mesh.iter_node_strings(0, 2)),
+                    [py2dm.NodeString(1, 2, 4, 3, name='first'),
+                     py2dm.NodeString(4, 5, 1, name='second')],
+                    'unexpected node string list')
+            with self.subTest('subset (lower unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_node_strings(-1, 1)),
+                    [py2dm.NodeString(1, 2, 4, 3, name='first')],
+                    'unexpected node string list')
+            with self.subTest('subset (upper unbounded)'):
+                self.assertListEqual(
+                    list(mesh.iter_node_strings(1, -1)),
+                    [py2dm.NodeString(4, 5, 1, name='second')],
+                    'unexpected node string list')
+            with self.subTest('start > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_node_strings(mesh.num_node_strings)
+            with self.subTest('end < start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_node_strings(1, 0)
+            with self.subTest('end == start'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_node_strings(1, 1)
+            with self.subTest('end > max'):
+                with self.assertRaises(IndexError):
+                    _ = mesh.iter_node_strings(0, mesh.num_node_strings+1)
+        with self.subTest('closed'):
+            reader = py2dm.Reader(self._PATH)
+            with self.assertRaises(py2dm.errors.FileIsClosedError):
+                _ = reader.extent
+
+    def test_element_factory(self) -> None:
+        from py2dm._read import _element_factory as get_element
+        elements = {'E2L': py2dm.Element2L,
+                    'E3L': py2dm.Element3L,
+                    'E3T': py2dm.Element3T,
+                    'E4Q': py2dm.Element4Q,
+                    'E6T': py2dm.Element6T,
+                    'E8Q': py2dm.Element8Q,
+                    'E9Q': py2dm.Element9Q}
+        for card, instance in elements.items():
+            with self.subTest(f'{card} element'):
+                line = f'{card} 1 2 3 4 5 6 7 8.0 -9 # 10'
+                self.assertEqual(
+                    get_element(line), instance,
+                    'wrong class returned')
+        with self.subTest('fallback error'):
+            with self.assertRaises(NotImplementedError):
+                get_element('NOT-AN-ELEMENT lorem ipsum dolor sit amet')
 
 
 class TestReadSynthetic(unittest.TestCase):
