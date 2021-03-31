@@ -19,7 +19,7 @@ class TestReadSynthetic(unittest.TestCase):
             os.path.join(cls._DATA_DIR, filename))
 
     def test_empty_mesh(self) -> None:
-        path = self.data('empty_mesh.2dm')
+        path = self.data('empty-mesh.2dm')
         with py2dm.Reader(path) as mesh:
             self.assertTrue(
                 all((math.isnan(f) for f in mesh.extent)),
@@ -56,7 +56,7 @@ class TestReadSynthetic(unittest.TestCase):
                 _ = next(iter(mesh.iter_node_strings()))
 
     def test_empty_file(self) -> None:
-        path = self.data('empty_file.2dm')
+        path = self.data('empty-file.2dm')
         with self.assertRaises(py2dm.errors.ReadError):
             with py2dm.Reader(path) as mesh:
                 _ = mesh
