@@ -225,3 +225,217 @@ class TestReadSynthetic(unittest.TestCase):
             self.assertListEqual(
                 list(mesh.iter_node_strings()), list(mesh.node_strings),
                 'bad node string iterator')
+
+
+class TestReadMdal(unittest.TestCase):
+    """Extra test cases from the MDAL repository.
+
+    These mostly exist to ensure compatibility/known incompatibilities
+    between the two libraries, and between Py2DM and QGIS 3 (which uses
+    MDAL for its mesh data support).
+    """
+
+    _DATA_DIR = 'tests/data/external/mdal'
+
+    @classmethod
+    def data(cls, filename: str) -> str:
+        """Return an absolute path to a synthetic test file."""
+        return os.path.abspath(
+            os.path.join(cls._DATA_DIR, filename))
+
+    def test_lines(self) -> None:
+        path = self.data('lines.2dm')
+        with py2dm.Reader(path, materials=1) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 3,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 4,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 1,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(1),
+                py2dm.Node(1, 1000.0, 2000.0, 20.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(2),
+                py2dm.Element2L(2, 2, 3, materials=(1,)),
+                'bad element')
+
+    def test_quad_georefed(self) -> None:
+        path = self.data('M01_5m_002.2dm')
+        with self.assertWarns(py2dm.errors.CustomFormatIgnored):
+            with py2dm.Reader(path, materials=1) as mesh:
+                self.assertEqual(
+                    mesh.num_elements, 20486,
+                    'incorrect element count')
+                self.assertEqual(
+                    mesh.num_nodes, 20893,
+                    'incorrect node count')
+                self.assertEqual(
+                    mesh.num_node_strings, 0,
+                    'incorrect node string count')
+                self.assertEqual(
+                    mesh.materials_per_element, 1,
+                    'incorrect material count')
+                self.assertEqual(
+                    mesh.node(11111),
+                    py2dm.Node(11111, 293161.35, 6178031.562, 42.631),
+                    'bad node')
+                self.assertEqual(
+                    mesh.element(17710),
+                    py2dm.Element4Q(
+                        17710, 18051, 18050, 17947, 17948, materials=(1,)),
+                    'bad element')
+
+    def test_numbering_gaps(self) -> None:
+        path = self.data('mesh_with_numbering_gaps.2dm')
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path, materials=1):
+                pass
+
+    def test_multi_material(self) -> None:
+        path = self.data('multi_material.2dm')
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 12,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 11,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 3,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(5),
+                py2dm.Node(5, -10.0, 0.0, 10.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(10),
+                py2dm.Element3T(10, 5, 9, 10, materials=(0, 8.333, 1)),
+                'bad element')
+
+    def test_not_mesh(self) -> None:
+        path = self.data('not_a_mesh_file.2dm')
+        with self.assertRaises(py2dm.errors.ReadError):
+            with py2dm.Reader(path):
+                pass
+
+    def test_quad_and_line(self) -> None:
+        path = self.data('quad_and_line.2dm')
+        with py2dm.Reader(path, materials=1) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 2,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 5,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 1,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(3),
+                py2dm.Node(3, 3000.0, 2000.0, 40.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(1),
+                py2dm.Element4Q(1, 1, 2, 4, 5, materials=(1,)),
+                'bad element')
+
+    def test_quad_and_triangle(self) -> None:
+        path = self.data('quad_and_triangle.2dm')
+        with py2dm.Reader(path, materials=1) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 2,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 5,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 1,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(4),
+                py2dm.Node(4, 2000.0, 3000.0, 50.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(2),
+                py2dm.Element3T(2, 2, 3, 4, materials=(1,)),
+                'bad element')
+
+    def test_regular_grid(self) -> None:
+        path = self.data('regular_grid.2dm')
+        with self.assertWarns(py2dm.errors.CustomFormatIgnored):
+            with py2dm.Reader(path, materials=1) as mesh:
+                self.assertEqual(
+                    mesh.num_elements, 1875,
+                    'incorrect element count')
+                self.assertEqual(
+                    mesh.num_nodes, 1976,
+                    'incorrect node count')
+                self.assertEqual(
+                    mesh.num_node_strings, 0,
+                    'incorrect node string count')
+                self.assertEqual(
+                    mesh.materials_per_element, 1,
+                    'incorrect material count')
+                self.assertEqual(
+                    mesh.node(1280),
+                    py2dm.Node(1280, 381575.785, 168732.985, 36.122),
+                    'bad node')
+                self.assertEqual(
+                    mesh.element(1620),
+                    py2dm.Element4Q(
+                        1620, 1718, 1717, 1641, 1642, materials=(1,)),
+                    'bad element')
+
+    def test_triangle_e6t(self) -> None:
+        path = self.data('triangleE6T.2dm')
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path):
+                pass
+
+    def test_unordered_ids(self) -> None:
+        path = self.data('unordered_ids.2dm')
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path):
+                pass
+
+    def test_unsupported_elements(self) -> None:
+        path = self.data('unsupported_elements.2dm')
+        with py2dm.Reader(path, materials=1) as mesh:
+            self.assertEqual(
+                mesh.num_elements, 1,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 8,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 1,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(5),
+                py2dm.Node(5, 2000.0, 1000.0, 20.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(1),
+                py2dm.Element8Q(
+                    1, 1, 2, 3, 4, 5, 6, 7, 8, materials=(1,)),
+                'bad element')
