@@ -448,6 +448,10 @@ class Reader(ReaderBase):
                             allow_float_matid=self._float_materials)
                     except ValueError:
                         continue
+                    # Strip extra elements
+                    if len(element.materials) > self._num_materials:
+                        element.materials = tuple(
+                            element.materials[:self._num_materials])
                     self._cache_elements.append(element)
                     if element.id >= self.num_elements:
                         break
