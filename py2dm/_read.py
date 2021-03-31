@@ -85,16 +85,10 @@ class ReaderBase(metaclass=abc.ABCMeta):
         self._num_materials = int(kwargs.get('materials', 0))
         self._float_materials = bool(kwargs.get('allow_float_matid', True))
         self._zero_index = bool(kwargs.get('zero_index', False))
-        with open(filepath) as file_:
-            self._metadata = _Metadata(
-                *scan_metadata(file_, filepath, self._zero_index))
-        if self._metadata.name is not None:
-            self.name = self._metadata.name
-        if self._metadata.num_materials_per_elem is not None:
-            self.materials_per_element = self._metadata.num_materials_per_elem
+        self._metadata: _Metadata
 
     def __enter__(self: _ReaderT) -> _ReaderT:
-        self._closed = True
+        self.open()
         return self
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
@@ -264,6 +258,26 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
         self._closed = True
 
+    def open(self) -> None:
+        """Open the mesh reader.
+
+        This performs the initial metadata read and sets up the class
+        for continued access.
+
+        When calling this function manually, be sure to call
+        :meth:`close` once you no longer require file access.
+        Alternatively, you can use the context manager interface, in
+        which case both methods will be called automatically.
+        """
+        with open(self._filepath) as file_:
+            self._metadata = _Metadata(
+                *scan_metadata(file_, self._filepath, self._zero_index))
+        if self._metadata.name is not None:
+            self.name = self._metadata.name
+        if self._metadata.num_materials_per_elem is not None:
+            self.materials_per_element = self._metadata.num_materials_per_elem
+        self._closed = False
+
     @abc.abstractmethod
     def element(self, id_: int) -> Element:
         """Return a mesh element by its unique ID.
@@ -408,8 +422,11 @@ class Reader(ReaderBase):
         self._cache_nodes: List[Node] = []
         self._cache_elements: List[Element] = []
         self._cache_node_strings: List[NodeString] = []
+
+    def open(self) -> None:
+        super().open()
         # Parse and load the entire file
-        with open(filepath) as file_:
+        with open(self._filepath) as file_:
             # Nodes
             if self.num_nodes > 0:
                 file_.seek(self._metadata.pos_nodes)
