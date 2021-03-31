@@ -439,3 +439,55 @@ class TestReadMdal(unittest.TestCase):
                 py2dm.Element8Q(
                     1, 1, 2, 3, 4, 5, 6, 7, 8, materials=(1,)),
                 'bad element')
+
+
+class TestReadExternal(unittest.TestCase):
+    """Additional real-world files for testing."""
+
+    _DATA_DIR = 'tests/data/external'
+
+    @classmethod
+    def data(cls, filename: str, *args: str) -> str:
+        """Return an absolute path to a synthetic test file."""
+        return os.path.abspath(
+            os.path.join(cls._DATA_DIR, filename, *args))
+
+    def test_tm_forum_1(self) -> None:
+        path = self.data('tm_forum', 'HYDRO_AS-2D.2dm')
+        # NOTE: This mesh has holes in its element IDs and cannot be read by
+        # Py2DM. Once the converter/conformer has been added, it should be
+        # enabled here.
+        with self.assertRaises(py2dm.errors.FormatError):
+            with py2dm.Reader(path):
+                pass
+
+    def test_tm_forum_2(self) -> None:
+        path = self.data('tm_forum', 'original_mesh.2dm')
+        with py2dm.Reader(path, materials=1) as mesh:
+            self.assertEqual(
+                mesh.name, 'Mesh',
+                'incorrect mesh name')
+            self.assertTupleEqual(
+                mesh.extent,
+                (502382.6, 593280.0, 8522685.58, 8609367.2),
+                'incorrect mesh extent')
+            self.assertEqual(
+                mesh.num_elements, 31580,
+                'incorrect element count')
+            self.assertEqual(
+                mesh.num_nodes, 17151,
+                'incorrect node count')
+            self.assertEqual(
+                mesh.num_node_strings, 0,
+                'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 1,
+                'incorrect material count')
+            self.assertEqual(
+                mesh.node(1337),
+                py2dm.Node(1337, 552522.763, 8561666.81, -1.0),
+                'bad node')
+            self.assertEqual(
+                mesh.element(10000),
+                py2dm.Element3T(10000, 5539, 5359, 5360, materials=(4,)),
+                'bad element')
