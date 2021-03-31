@@ -158,10 +158,16 @@ class TestElement2L(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element2L(12, 3, 4)),
-            '<Element #12 [E2L]: Node IDs (3, 4)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element2L(12, 3, 4)),
+                '<Element #12 [E2L]: Node IDs (3, 4)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element2L(12, 3, 4, materials=(1.0, 2))),
+                '<Element #12 [E2L]: Node IDs (3, 4) Materials (1.0, 2)>',
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element2L(12, 3, 4, materials=(1.0, 2))
@@ -293,10 +299,16 @@ class TestElement3L(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element3L(12, 3, 4, 5)),
-            '<Element #12 [E3L]: Node IDs (3, 4, 5)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element3L(12, 3, 4, 5)),
+                '<Element #12 [E3L]: Node IDs (3, 4, 5)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element3L(12, 3, 4, 5, materials=(1.0, 2))),
+                '<Element #12 [E3L]: Node IDs (3, 4, 5) Materials (1.0, 2)>',
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element3L(12, 3, 4, 5, materials=(1.0, 2))
@@ -428,10 +440,16 @@ class TestElement3T(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element3T(12, 3, 4, 5)),
-            '<Element #12 [E3T]: Node IDs (3, 4, 5)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element3T(12, 3, 4, 5)),
+                '<Element #12 [E3T]: Node IDs (3, 4, 5)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element3T(12, 3, 4, 5, materials=(1.0, 2))),
+                '<Element #12 [E3T]: Node IDs (3, 4, 5) Materials (1.0, 2)>',
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element3T(12, 3, 4, 5, materials=(1.0, 2))
@@ -561,10 +579,17 @@ class TestElement4Q(unittest.TestCase):
             'separate instance but same value')
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element4Q(12, 3, 4, 5, 6)),
-            '<Element #12 [E4Q]: Node IDs (3, 4, 5, 6)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element4Q(12, 3, 4, 5, 6)),
+                '<Element #12 [E4Q]: Node IDs (3, 4, 5, 6)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element4Q(12, 3, 4, 5, 6, materials=(1.0, 2))),
+                ('<Element #12 [E4Q]: Node IDs (3, 4, 5, 6) '
+                 'Materials (1.0, 2)>'),
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element4Q(12, 3, 4, 5, 6, materials=(1.0, 2))
@@ -696,10 +721,18 @@ class TestElement6T(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element6T(12, 3, 4, 5, 6, 7, 8)),
-            '<Element #12 [E6T]: Node IDs (3, 4, 5, 6, 7, 8)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element6T(12, 3, 4, 5, 6, 7, 8)),
+                '<Element #12 [E6T]: Node IDs (3, 4, 5, 6, 7, 8)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element6T(
+                    12, 3, 4, 5, 6, 7, 8, materials=(1.0, 2))),
+                ('<Element #12 [E6T]: Node IDs (3, 4, 5, 6, 7, 8) '
+                 'Materials (1.0, 2)>'),
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element6T(12, 3, 4, 5, 6, 7, 8, materials=(1.0, 2))
@@ -838,10 +871,18 @@ class TestElement8Q(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element8Q(12, 3, 4, 5, 6, 7, 8, 9, 10)),
-            '<Element #12 [E8Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element8Q(12, 3, 4, 5, 6, 7, 8, 9, 10)),
+                '<Element #12 [E8Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element8Q(
+                    12, 3, 4, 5, 6, 7, 8, 9, 10, materials=(1.0, 2))),
+                ('<Element #12 [E8Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10) '
+                 'Materials (1.0, 2)>'),
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element8Q(
@@ -983,10 +1024,18 @@ class TestElement9Q(unittest.TestCase):
             element_1, None)
 
     def test___repr__(self) -> None:
-        self.assertEqual(
-            repr(py2dm.Element9Q(12, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
-            '<Element #12 [E9Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10, 11)>',
-            'unexpected string representation')
+        with self.subTest('no materials'):
+            self.assertEqual(
+                repr(py2dm.Element9Q(12, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+                '<Element #12 [E9Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10, 11)>',
+                'unexpected string representation')
+        with self.subTest('w/ materials'):
+            self.assertEqual(
+                repr(py2dm.Element9Q(
+                    12, 3, 4, 5, 6, 7, 8, 9, 10, 11, materials=(1.0, 2))),
+                ('<Element #12 [E9Q]: Node IDs (3, 4, 5, 6, 7, 8, 9, 10, 11) '
+                 'Materials (1.0, 2)>'),
+                'unexpected string representation')
 
     def test_num_materials(self) -> None:
         element = py2dm.Element9Q(

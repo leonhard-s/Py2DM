@@ -258,7 +258,9 @@ class Element(Entity):
                 self.materials == other.materials)
 
     def __repr__(self) -> str:
-        return f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}>'
+        string = f'<Element #{self.id} [{self.card}]: Node IDs {self.nodes}'
+        string += f' Materials {self.materials}>' if self.materials else '>'
+        return string
 
     @property
     def num_materials(self) -> int:
