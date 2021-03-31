@@ -216,6 +216,9 @@ class TestReadSynthetic(unittest.TestCase):
             self.assertEqual(
                 mesh.num_node_strings, 2,
                 'incorrect node string count')
+            self.assertEqual(
+                mesh.materials_per_element, 0,
+                'incorrect number of materials')
             self.assertListEqual(
                 list(mesh.iter_elements()), list(mesh.elements),
                 'bad element iterator')
