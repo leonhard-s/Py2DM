@@ -97,9 +97,9 @@ class ReaderBase(metaclass=abc.ABCMeta):
     def closed(self) -> bool:
         """Return whether the underlying file is closed.
 
-        After closing (either via the :meth:py2dm.Reader.close` method
-        or by leaving the reader's context manager), any operations
-        requiring use of the underlying file will raise a
+        After closing (either via the :meth:`close` method or by
+        leaving the reader's context manager), any operations requiring
+        use of the underlying file will raise a
         :exc:`py2dm.errors.FileIsClosedError`.
 
         :type: :class:`bool`
@@ -214,9 +214,10 @@ class ReaderBase(metaclass=abc.ABCMeta):
     def materials_per_element(self) -> int:
         """Number of materials per element.
 
-        This value will be set by the `NUM_MATERIALS_PER_ELEM <count>``
-        card. Alternatively, the user may specify the number of
-        materials to use via the `materials` keyword argument.
+        This value will be set by the
+        ``NUM_MATERIALS_PER_ELEM <count>`` card. Alternatively, the
+        user may specify the number of materials to use via the
+        `materials` keyword argument.
 
         If the number of materials is not specified in the file or via
         the `materials` argument, the number of elements will default
