@@ -230,7 +230,7 @@ class TestReader(unittest.TestCase):
             with self.subTest('full'):
                 self.assertListEqual(
                     list(mesh.iter_elements()),
-                    # pylint: disable=private-access
+                    # pylint: disable=protected-access
                     mesh._cache_elements,  # type: ignore
                     'unexpected element list')
             with self.subTest('subset'):
@@ -276,7 +276,7 @@ class TestReader(unittest.TestCase):
             with self.subTest('full'):
                 self.assertListEqual(
                     list(mesh.iter_nodes()),
-                    # pylint: disable=private-access
+                    # pylint: disable=protected-access
                     mesh._cache_nodes,  # type: ignore
                     'unexpected node list')
             with self.subTest('subset'):
@@ -324,7 +324,7 @@ class TestReader(unittest.TestCase):
             with self.subTest('full'):
                 self.assertListEqual(
                     list(mesh.iter_node_strings()),
-                    # pylint: disable=private-access
+                    # pylint: disable=protected-access
                     mesh._cache_node_strings,  # type: ignore
                     'unexpected node string list')
             with self.subTest('subset'):

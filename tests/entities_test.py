@@ -1337,6 +1337,7 @@ class TestElementFactory(unittest.TestCase):
     """Test for the element_factory() utility method."""
 
     def test_element_factory(self) -> None:
+        # pylint: disable=import-error
         from py2dm._entities import element_factory
         elements = {'E2L': py2dm.Element2L,
                     'E3L': py2dm.Element3L,
