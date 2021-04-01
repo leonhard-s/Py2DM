@@ -590,7 +590,7 @@ class Reader(ReaderBase):
         if start > self.num_node_strings-1:
             raise IndexError(
                 f'Start index must be greater than or equal to 0 ({start})')
-        if end <= start and not end < 0:
+        if end <= start and end >= 0:
             raise IndexError('End index must be greater than the start index '
                              f'({end}<={start})')
         if end >= self.num_node_strings+1:

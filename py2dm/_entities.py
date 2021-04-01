@@ -54,6 +54,7 @@ class Entity(metaclass=abc.ABCMeta):
     """The 2DM card associated with this geometry."""
 
     def __eq__(self, other: Any) -> bool:
+        # pylint: disable=unidiomatic-typecheck
         return type(self) == type(other) and self.card == other.card
 
     @classmethod
@@ -536,10 +537,11 @@ class NodeString:
         list_ = [self.card]
         fold = int(kwargs.get('fold_after', 10))
         if fold > 0:
-            for i, n in enumerate(self.nodes):
-                if i != 0 and i % fold == 0 and len(self.nodes) > i:
+            for index, node in enumerate(self.nodes):
+                if (index != 0 and index % fold == 0
+                        and len(self.nodes) > index):
                     list_.extend(('\n', self.card))
-                list_.append(str(n))
+                list_.append(str(node))
         else:
             list_.extend((str(n) for n in self.nodes))
         # Flip last node ID to signify the end of the node sign
