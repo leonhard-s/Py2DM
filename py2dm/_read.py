@@ -12,8 +12,9 @@ from types import TracebackType
 from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
 
-from ._entities import Element, Node, NodeString
+from ._entities import Element, Node, NodeString, element_factory
 from .errors import FileIsClosedError
+from ._parser import scan_metadata
 
 try:
     from typing import Literal
@@ -21,7 +22,6 @@ except ImportError:  # pragma: no cover
     # Required for compatibilty with Python 3.7 (used in QGIS 3)
     from typing_extensions import Literal  # type: ignore
 
-from ._parser import scan_metadata
 
 __all__ = [
     'Reader',
@@ -453,7 +453,7 @@ class Reader(ReaderBase):
                 file_.seek(self._metadata.pos_elements)
                 for line in file_:
                     try:
-                        element = _element_factory(line).from_line(
+                        element = element_factory(line).from_line(
                             line, allow_zero_index=self._zero_index,
                             allow_float_matid=self._float_materials)
                     except ValueError:
@@ -598,24 +598,3 @@ class Reader(ReaderBase):
         if end < 0:
             return iter(self._cache_node_strings[start:])
         return iter(self._cache_node_strings[start:end])
-
-
-@functools.lru_cache(None)
-def _element_factory(line: str) -> Type[Element]:
-    """Return a :class:`py2dm.Element` subclass by card.
-
-    :param line: The line to create an element fro.
-    :type line: :class:`str`
-    :raises ValueError: Raised if the given card doesn't match any
-        :class:`py2dm.Element` subclass'.
-    :return: The element type matching the given card.
-    :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
-    """
-    for element_group in Element.__subclasses__():
-        for subclass in element_group.__subclasses__():
-            if line.startswith(subclass.card):
-                return subclass
-    if not line.split() or not line.split('#')[0].split():
-        raise ValueError('Line is blank')
-    card = line.split(maxsplit=1)[0]
-    raise NotImplementedError(f'Unsupported card name \'{card}\'')

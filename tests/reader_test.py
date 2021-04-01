@@ -361,25 +361,6 @@ class TestReader(unittest.TestCase):
             with self.assertRaises(py2dm.errors.FileIsClosedError):
                 _ = reader.extent
 
-    def test_element_factory(self) -> None:
-        from py2dm._read import _element_factory as get_element
-        elements = {'E2L': py2dm.Element2L,
-                    'E3L': py2dm.Element3L,
-                    'E3T': py2dm.Element3T,
-                    'E4Q': py2dm.Element4Q,
-                    'E6T': py2dm.Element6T,
-                    'E8Q': py2dm.Element8Q,
-                    'E9Q': py2dm.Element9Q}
-        for card, instance in elements.items():
-            with self.subTest(f'{card} element'):
-                line = f'{card} 1 2 3 4 5 6 7 8.0 -9 # 10'
-                self.assertEqual(
-                    get_element(line), instance,
-                    'wrong class returned')
-        with self.subTest('fallback error'):
-            with self.assertRaises(NotImplementedError):
-                get_element('NOT-AN-ELEMENT lorem ipsum dolor sit amet')
-
 
 class TestReadSynthetic(unittest.TestCase):
     """Short, synthetic files to check specific parsing behaviours."""

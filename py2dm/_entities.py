@@ -1,6 +1,7 @@
 """Python versions of the objects represented by the 2DM mesh."""
 
 import abc
+import functools
 import warnings
 from typing import (Any, ClassVar, Iterable, List, Optional, SupportsFloat,
                     Tuple, Type, TypeVar, Union)
@@ -583,3 +584,24 @@ def _format_matid(value: _Material, *, decimals: int = 6) -> str:
     if isinstance(value, int):
         return str(value) if value < 0 else f' {value}'
     return _format_float(value, decimals=decimals)
+
+
+@functools.lru_cache(None)
+def element_factory(line: str) -> Type[Element]:
+    """Return a :class:`py2dm.Element` subclass by card.
+
+    :param line: The line to create an element fro.
+    :type line: :class:`str`
+    :raises ValueError: Raised if the given card doesn't match any
+        :class:`py2dm.Element` subclass'.
+    :return: The element type matching the given card.
+    :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
+    """
+    for element_group in Element.__subclasses__():
+        for subclass in element_group.__subclasses__():
+            if line.startswith(subclass.card):
+                return subclass
+    if not line.split() or not line.split('#')[0].split():
+        raise ValueError('Line is blank')
+    card = line.split(maxsplit=1)[0]
+    raise NotImplementedError(f'Unsupported card name \'{card}\'')

@@ -1331,3 +1331,26 @@ class TestNodeString(unittest.TestCase):
                 ['NS', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '\n',
                  'NS', '11', '12', '13', '-14'],
                 'unexpected line chunks')
+
+
+class TestElementFactory(unittest.TestCase):
+    """Test for the element_factory() utility method."""
+
+    def test_element_factory(self) -> None:
+        from py2dm._entities import element_factory
+        elements = {'E2L': py2dm.Element2L,
+                    'E3L': py2dm.Element3L,
+                    'E3T': py2dm.Element3T,
+                    'E4Q': py2dm.Element4Q,
+                    'E6T': py2dm.Element6T,
+                    'E8Q': py2dm.Element8Q,
+                    'E9Q': py2dm.Element9Q}
+        for card, instance in elements.items():
+            with self.subTest(f'{card} element'):
+                line = f'{card} 1 2 3 4 5 6 7 8.0 -9 # 10'
+                self.assertEqual(
+                    element_factory(line), instance,
+                    'wrong class returned')
+        with self.subTest('fallback error'):
+            with self.assertRaises(NotImplementedError):
+                element_factory('NOT-AN-ELEMENT lorem ipsum dolor sit amet')
