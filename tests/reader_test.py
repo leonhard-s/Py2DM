@@ -14,8 +14,7 @@ class TestReader(unittest.TestCase):
     _PATH = os.path.join('tests', 'data', 'basic-node-strings.2dm')
 
     def test___init__(self) -> None:
-        path = os.path.join('path', 'to', 'mesh')
-        reader = py2dm.Reader(path)
+        reader = py2dm.Reader(self._PATH)
         self.assertEqual(
             reader.name, 'Unnamed mesh',
             'unpexected default mesh name')
@@ -365,7 +364,7 @@ class TestReader(unittest.TestCase):
 class TestReadSynthetic(unittest.TestCase):
     """Short, synthetic files to check specific parsing behaviours."""
 
-    _DATA_DIR = 'tests/data/'
+    _DATA_DIR = os.path.join('tests', 'data')
 
     @classmethod
     def data(cls, filename: str) -> str:
@@ -605,7 +604,7 @@ class TestReadMdal(unittest.TestCase):
     MDAL for its mesh data support).
     """
 
-    _DATA_DIR = 'tests/data/external/mdal'
+    _DATA_DIR = os.path.join('tests', 'data', 'external', 'mdal')
 
     @classmethod
     def data(cls, filename: str) -> str:
@@ -814,7 +813,7 @@ class TestReadMdal(unittest.TestCase):
 class TestReadExternal(unittest.TestCase):
     """Additional real-world files for testing."""
 
-    _DATA_DIR = 'tests/data/external'
+    _DATA_DIR = os.path.join('tests', 'data', 'external')
 
     @classmethod
     def data(cls, filename: str, *args: str) -> str:
