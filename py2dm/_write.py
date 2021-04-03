@@ -8,7 +8,7 @@ without any base class interfaces.
 import copy
 import os
 from types import TracebackType
-from typing import Any, Dict, IO, List, Optional, Type, Union, cast
+from typing import Any, Dict, IO, List, Optional, Tuple, Type, Union, cast, overload
 import warnings
 
 from ._entities import Entity, Element, Node, NodeString, element_factory
@@ -190,6 +190,52 @@ class Writer:
         self._file = open(self._filepath, 'w')
         self._closed = False
 
+    @overload
+    def element(self, element: Element) -> int:
+        """Add an element to the mesh.
+
+        In this overload, a deep copy is created of the given `element`
+        and added to the mesh.
+
+        If the ID of the element is negative, one will be selected
+        automatically based on the number of existing elements.
+
+        :param element: The instance or type of element to add.
+        :type element: :class:`py2dm.Element`
+        :raises TypeError: Raised when extra arguments are passed while
+            also passing a :class:`py2dm.Element` instance.
+        :return: The ID of the element that was added.
+        :rtype: :class:`int`
+        """
+
+    @overload
+    def element(self, element: Union[Type[Element], str], id_: int,
+                *nodes: int, materials: Tuple[Union[int, float], ...] = ...
+                ) -> int:
+        r"""Add an element to the mesh.
+
+        In this overload, this method acts as a factory, with the
+        `element` field being either the subclass to instantiate or the
+        name of the 2DM card of the element. Any extra arguments are
+        passed on to the class's initialiser.
+
+        If the ID of the element is negative, one will be selected
+        automatically based on the number of existing elements.
+
+        :param element: The type of element to add.
+        :type element: :obj:`typing.Union` [
+            :obj:`typing.Type` [:class:`py2dm.Element`], :class:`str`]
+        :param id_: The ID of the element.
+        :type id_: :class:`int`
+        :param \*nodes: The IDs of the nodes belonging to this element.
+        :type \*nodes: :class:`int`
+        :param materials: A tuple of material IDs for the element.
+        :type materials: obj:`typing.Tuple` [:obj:`typing.Union` [
+            :class:`int`, :class:`float`]]
+        :return: The ID of the element that was added.
+        :rtype: :class:`int`
+        """
+
     def element(self, element: Union[Element, Type[Element], str],
                 *args: Any, **kwargs: Any) -> int:
         r"""Add an element to the mesh.
@@ -254,6 +300,49 @@ class Writer:
         self._count[Element] += 1
         return element.id
 
+    @overload
+    def node(self, node: Node) -> int:
+        """Add a node to the mesh.
+
+        In this overload, a deep copy is created of the given `node`
+        and added to the mesh.
+
+        If the ID of the node is negative, one will be selected
+        automatically based on the number of existing nodes.
+
+        :param node: The node instance to add.
+        :type node: :class:`py2dm.Node`
+        :raises TypeError: Raised when extra arguments are passed while
+            also passing a :class:`py2dm.Node` instance.
+        :return: The ID of the node that was added.
+        :rtype: :class:`int`
+        """
+
+    @overload
+    # pylint: disable=invalid-name
+    def node(self, node: int, x: float, y: float, z: float) -> int:
+        """Add a node to the mesh.
+
+        In this overload, this method acts as a factory, with the
+        `node` field being used for the ID of the node to create. Any
+        extra arguments are passed on to the :class:`py2dm.Node`
+        initialiser. Refer to its docstring for supported arguments.
+
+        If the ID of the node is negative, one will be selected
+        automatically based on the number of existing nodes.
+
+        :param node: The ID of the node to create.
+        :type node: :class:`int`
+        :param x: X coordinate of the node.
+        :type x: :class:`float`
+        :param y: Y coordinate of the node.
+        :type y: :class:`float`
+        :param z: Z coordinate of the node.
+        :type z: :class:`float`
+        :return: The ID of the node that was added.
+        :rtype: :class:`int`
+        """
+
     def node(self, node: Union[Node, int], *args: Any, **kwargs: Any) -> int:
         r"""Add a node to the mesh.
 
@@ -298,6 +387,45 @@ class Writer:
         self._cache[Node].append(node)
         self._count[Node] += 1
         return node.id
+
+    @overload
+    def node_string(self, node_string: NodeString) -> int:
+        r"""Add a node string to the mesh.
+
+        In this overload, a deep copy is created of the given
+        `node_string` and added to the mesh.
+
+        :param node_string: The node string instance to add.
+        :type node: :class:`py2dm.NodeString`
+        :raises TypeError: Raised when extra arguments are passed while
+            also passing a :class:`py2dm.NodeString` instance.
+        :return: The zero-based index of the node string in the mesh's
+            list of node strings.
+        :rtype: :class:`int`
+        """
+
+    @overload
+    def node_string(self, node_string: int,
+                    *nodes: int, name: Optional[str] = ...) -> int:
+        r"""Add a node string to the mesh.
+
+        In this overload, this method acts as a factory, with the
+        `node_string` field being used for the first node ID in the
+        string. Any extra arguments are passed on to the 
+        class:`py2dm.NodeString` initialiser.
+
+        :param node_string: The ID of the first node for the node
+            string to create.
+        :type node: :class:`int`
+        :param \*nodes: Additional node IDs to include in the node
+            string.
+        :type \*nodes: :class:`int`
+        :param name: An optional name for the node string.
+        :type name: :obj:`typing.Optional` [:class:`str`]
+        :return: The zero-based index of the node string in the mesh's
+            list of node strings.
+        :rtype: :class:`int`
+        """
 
     def node_string(self, node_string: Union[NodeString, int],
                     *args: Any, **kwargs: Any) -> int:
