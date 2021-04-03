@@ -412,14 +412,12 @@ class TestReadSynthetic(unittest.TestCase):
     def test_empty_file(self) -> None:
         path = self.data('empty-file.2dm')
         with self.assertRaises(py2dm.errors.ReadError):
-            with py2dm.Reader(path) as mesh:
-                _ = mesh
+            py2dm.Reader(path).open()
 
     def test_non_mesh(self) -> None:
         path = self.data('not-a-mesh.2dm')
         with self.assertRaises(py2dm.errors.ReadError):
-            with py2dm.Reader(path) as mesh:
-                _ = mesh
+            py2dm.Reader(path).open()
 
     def test_comments(self) -> None:
         path = self.data('all-the-comments.2dm')
@@ -665,8 +663,7 @@ class TestReadMdal(unittest.TestCase):
     def test_numbering_gaps(self) -> None:
         path = self.data('mesh_with_numbering_gaps.2dm')
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path, materials=1):
-                pass
+            py2dm.Reader(path, materials=1).open()
 
     def test_multi_material(self) -> None:
         path = self.data('multi_material.2dm')
@@ -695,8 +692,7 @@ class TestReadMdal(unittest.TestCase):
     def test_not_mesh(self) -> None:
         path = self.data('not_a_mesh_file.2dm')
         with self.assertRaises(py2dm.errors.ReadError):
-            with py2dm.Reader(path):
-                pass
+            py2dm.Reader(path).open()
 
     def test_quad_and_line(self) -> None:
         path = self.data('quad_and_line.2dm')
@@ -775,14 +771,12 @@ class TestReadMdal(unittest.TestCase):
     def test_triangle_e6t(self) -> None:
         path = self.data('triangleE6T.2dm')
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path):
-                pass
+            py2dm.Reader(path).open()
 
     def test_unordered_ids(self) -> None:
         path = self.data('unordered_ids.2dm')
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path):
-                pass
+            py2dm.Reader(path).open()
 
     def test_unsupported_elements(self) -> None:
         path = self.data('unsupported_elements.2dm')
@@ -827,8 +821,7 @@ class TestReadExternal(unittest.TestCase):
         # Py2DM. Once the converter/conformer has been added, it should be
         # enabled here.
         with self.assertRaises(py2dm.errors.FormatError):
-            with py2dm.Reader(path):
-                pass
+            py2dm.Reader(path).open()
 
     def test_tm_forum_2(self) -> None:
         path = self.data('tm_forum', 'original_mesh.2dm')
