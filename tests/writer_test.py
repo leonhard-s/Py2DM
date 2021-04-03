@@ -21,7 +21,7 @@ class TestWriter(unittest.TestCase):
         self.temp = tempfile.mkdtemp()
 
     def tearDown(self) -> None:
-        return shutil.rmtree(self.temp)
+        shutil.rmtree(self.temp)
 
     def get_file(self, filename: str = 'mesh.2dm') -> str:
         """A utility to quickly return the absolute path to a file."""
@@ -490,3 +490,77 @@ class TestWriter(unittest.TestCase):
                  '# lines\n'
                  'NUM_MATERIALS_PER_ELEM 0\n'),
                 'unexpected file buffer')
+
+
+class TestFileCopy(unittest.TestCase):
+    """Test the writer class by comparing copied files.
+
+    This takes an external file, reads it, and writes it back to disk.
+    The original and the copy are then compared via the reader to
+    ensure the process did not lose or falsify any data.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.temp: str = '.'
+
+    def setUp(self) -> None:
+        self.temp = tempfile.mkdtemp()
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.temp)
+
+    def copy_file(self, filepath: str) -> str:
+        """Create a copy of the given file and return its path.
+
+        :param filepath: The file to copy.
+        :type filepath: :class:`str`
+        :return: A re-written version of the input file to test.
+        :rtype: :class:`str`
+        """
+        out_path = os.path.join(os.path.dirname(self.temp), 'copy.2dm')
+        with py2dm.Reader(filepath) as in_mesh:
+            num_materials = in_mesh.materials_per_element
+            with py2dm.Writer(out_path, materials=num_materials) as out_mesh:
+                for node in in_mesh.nodes:
+                    out_mesh.node(node)
+                for element in in_mesh.elements:
+                    out_mesh.element(element)
+                for node_string in in_mesh.node_strings:
+                    out_mesh.node_string(node_string)
+        return out_path
+
+    def compare_meshes(self, mesh_a: py2dm.Reader,
+                       mesh_b: py2dm.Reader) -> None:
+        """Compare two meshes entity by entity.
+
+        :param mesh_a: The mesh to compare against.
+        :type mesh_a: :class:`py2dm.Reader`
+        :param mesh_b: The mesh to compare.
+        :type mesh_b: :class:`py2dm.Reader`
+        """
+        self.assertEqual(
+            mesh_a.materials_per_element,
+            mesh_b.materials_per_element,
+            'differing material count')
+        for node_a, node_b in zip(mesh_a.nodes, mesh_b.nodes):
+            self.assertEqual(
+                node_a, node_b,
+                'differing node in copy')
+        for element_a, element_b in zip(
+                mesh_a.elements, mesh_b.elements):
+            self.assertEqual(
+                element_a, element_b,
+                'differing element in copy')
+        for node_string_a, node_string_b in zip(
+                mesh_a.node_strings, mesh_b.node_strings):
+            self.assertEqual(
+                node_string_a, node_string_b,
+                'differing node strings in copy')
+
+    def test_basic_node_string(self) -> None:
+        source = os.path.join('tests', 'data', 'basic-node-strings.2dm')
+        copy = self.copy_file(source)
+        with py2dm.Reader(source) as mesh_a:
+            with py2dm.Reader(copy) as mesh_b:
+                self.compare_meshes(mesh_a, mesh_b)
