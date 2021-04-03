@@ -237,27 +237,27 @@ class TestWriter(unittest.TestCase):
                     mesh.element(element), 2,
                     'bad element ID')
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, 3)
+                    _ = mesh.element(element, 3)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, materials=())
+                    _ = mesh.element(element, materials=())  # type: ignore
         with self.subTest('pass class'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
                     mesh.element(py2dm.Element3T, 2, 3, 4, 5), 2,
                     'bad element ID')
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, 3)
+                    _ = mesh.element(element, 3)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, materials=())
+                    _ = mesh.element(element, materials=())  # type: ignore
         with self.subTest('pass string'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
                     mesh.element('E3T', 2, 3, 4, 5), 2,
                     'bad element ID')
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, 3)
+                    _ = mesh.element(element, 3)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.element(element, materials=())
+                    _ = mesh.element(element, materials=())  # type: ignore
         with self.subTest('auto ID'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
@@ -319,18 +319,18 @@ class TestWriter(unittest.TestCase):
                     mesh.node(node), 2,
                     'bad node ID')
                 with self.assertRaises(TypeError):
-                    _ = mesh.node(node, 1.0)
+                    _ = mesh.node(node, 1.0)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node(node, var=True)
+                    _ = mesh.node(node, var=True)  # type: ignore
         with self.subTest('pass args'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
                     mesh.node(2, 3, 4, 5), 2,
                     'bad node ID')
                 with self.assertRaises(TypeError):
-                    _ = mesh.node(node, 1.0)
+                    _ = mesh.node(node, 1.0)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node(node, var=True)
+                    _ = mesh.node(node, var=True)  # type: ignore
         with self.subTest('auto ID'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
@@ -367,18 +367,20 @@ class TestWriter(unittest.TestCase):
                     mesh.node_string(node_string), 1,
                     'bad node string count')
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(node_string, 1)
+                    _ = mesh.node_string(node_string, 1)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(node_string, name='bogus')
+                    _ = mesh.node_string(  # type: ignore
+                        node_string, name='bogus')
         with self.subTest('pass args'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
                     mesh.node_string(1, 2, 3), 1,
                     'bad node string count')
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(node_string, 1)
+                    _ = mesh.node_string(node_string, 1)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(node_string, name='bogus')
+                    _ = mesh.node_string(  # type: ignore
+                        node_string, name='bogus')
         with self.subTest('closed'):
             writer = py2dm.Writer(self.get_file())
             with self.assertRaises(py2dm.errors.FileIsClosedError):
