@@ -15,13 +15,7 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
 from ._entities import Element, Node, NodeString, element_factory
 from .errors import FileIsClosedError
 from ._parser import scan_metadata
-
-try:
-    from typing import Literal
-except ImportError:  # pragma: no cover
-    # Required for compatibilty with Python 3.7 (used in QGIS 3)
-    from typing_extensions import Literal  # type: ignore
-
+from ._typing import Literal
 
 __all__ = [
     'Reader',

@@ -13,12 +13,7 @@ import warnings
 
 from ._entities import Entity, Element, Node, NodeString, element_factory
 from .errors import FileIsClosedError, Py2DMWarning, WriteError
-
-try:
-    from typing import Literal
-except ImportError:  # pragma: no cover
-    # Required for compatibilty with Python 3.7 (used in QGIS 3)
-    from typing_extensions import Literal  # type: ignore
+from ._typing import Literal
 
 __all__ = [
     'Writer'
@@ -411,7 +406,7 @@ class Writer:
 
         In this overload, this method acts as a factory, with the
         `node_string` field being used for the first node ID in the
-        string. Any extra arguments are passed on to the 
+        string. Any extra arguments are passed on to the
         class:`py2dm.NodeString` initialiser.
 
         :param node_string: The ID of the first node for the node
