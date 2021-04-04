@@ -470,6 +470,7 @@ class NodeString:
         """
 
     def __eq__(self, other: Any) -> bool:
+        # pylint: disable=unidiomatic-typecheck
         if not (type(self) == type(other) and self.card == other.card):
             return False
         return self.nodes == other.nodes and self.name == other.name
