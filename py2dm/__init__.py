@@ -9,7 +9,7 @@ https://www.xmswiki.com/wiki/SMS:2D_Mesh_Files_*.2dm.
 
 """
 
-from . import errors
+from . import errors, utils
 from ._entities import (Element, Element2L, Element3L, Element3T, Element4Q,
                         Element6T, Element8Q, Element9Q, LinearElement, Node,
                         NodeString, QuadrilateralElement, TriangularElement)
@@ -33,6 +33,7 @@ __all__ = [
     'Reader',
     'ReaderBase',
     'TriangularElement',
+    'utils',
     'Writer'
 ]
 
