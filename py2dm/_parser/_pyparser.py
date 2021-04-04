@@ -2,7 +2,7 @@
 
 from typing import IO, List, Optional, Tuple, Union
 
-from .errors import CardError, FormatError, ReadError
+from ..errors import CardError, FormatError, ReadError
 
 _MetadataArgs = Tuple[
     int,  # num_nodes

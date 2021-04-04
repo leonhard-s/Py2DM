@@ -7,14 +7,7 @@ from typing import (Any, ClassVar, Iterable, List, Optional, SupportsFloat,
                     Tuple, Type, TypeVar, Union)
 
 from .errors import CardError, CustomFormatIgnored
-
-try:
-    from ._cparser import parse_element, parse_node, parse_node_string
-except ImportError:  # pragma: no cover
-    from ._parser import parse_element, parse_node, parse_node_string
-    import platform
-    if platform.python_implementation() == 'CPython':
-        warnings.warn('C parser not found, using Python implementation')
+from ._parser import parse_element, parse_node, parse_node_string
 
 __all__ = [
     'Entity',
