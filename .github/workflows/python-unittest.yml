@@ -1,0 +1,43 @@
+# This workflow will run any files matching "tests/*_test.py" using the Python
+# unittest module.
+# The module is invoked by the coverage module, which generates a test coverage
+# report called ".coveragerc", which is sent to coveralls.io as the final step.
+
+name: Run Python unit tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --user coverage coveralls typing_extensions
+
+      - name: Run tests
+        run: |
+          python -m coverage run --source py2dm/ -m unittest discover -p *_test.py tests/
+
+      - name: Upload code coverage analysis (3.8 only)
+        if: ${{ matrix.python-version == 3.8 }}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: |
+          python -m coveralls
