@@ -4,6 +4,7 @@ A Python module for reading and writing [SMS 2DM](https://www.xmswiki.com/wiki/S
 
 ![PyPI - License](https://img.shields.io/pypi/l/py2dm)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/leonhard-s/py2dm/Run%20Python%20unit%20tests?label=tests)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/leonhard-s/py2dm/Upload%20Python%20Package)
 [![Coveralls github branch](https://img.shields.io/coveralls/github/leonhard-s/Py2DM/master)](https://coveralls.io/github/leonhard-s/Py2DM)
 [![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/leonhard-s/py2dm)](https://www.codefactor.io/repository/github/leonhard-s/py2dm)
 [![PyPI](https://img.shields.io/pypi/v/py2dm)](https://pypi.org/project/py2dm/)
