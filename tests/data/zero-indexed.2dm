@@ -1,5 +1,5 @@
-# This is incorrect as per the standard, but it is a common enough error to
-# handle gracefully (i.e. correct it but warn the user of the alteration).
+# This is incorrect as per the standard, but it is common enough to warrant
+# supporting via the zero_index Reader flag.
 MESH2D
 NUM_MATERIALS_PER_ELEM 0
 ND  0  -10.0   10.0  0.0
