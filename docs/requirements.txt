@@ -1,0 +1,3 @@
+# RTD currently uses Python 3.7 for its build process
+typing_extensions
+cached_property
