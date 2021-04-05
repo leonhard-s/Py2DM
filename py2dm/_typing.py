@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
     from typing_extensions import Literal  # type: ignore
 
 
-class cached_property(Generic[_T]):
+class cached_property(Generic[_T]):  # pragma: no cover
     """This class is a stripped out version of its typeshed equivalent.
 
     It mostly exists to allow typing both the default cached property
@@ -47,7 +47,7 @@ class cached_property(Generic[_T]):
 
 try:
     from functools import cached_property as py38_cp
-except ImportError:
+except ImportError:  # pragma: no cover
     from cached_property import cached_property as ext_cp  # type: ignore
     cached_property = ext_cp  # type: ignore
 else:
