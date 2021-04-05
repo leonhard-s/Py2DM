@@ -26,7 +26,7 @@ import py2dm
 # -- Project information -----------------------------------------------------
 
 project = 'Py2DM'
-copyright = '2020, Leonhard S.'
+copyright = '2021, Leonhard S.'
 author = 'Leonhard S.'
 version = py2dm.__version__
 
