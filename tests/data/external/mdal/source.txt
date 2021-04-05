@@ -1,0 +1,8 @@
+The mesh files in this directory were retrieved from the mesh data abstraction
+library (MDAL) source code repository which is avilable under the MIT license.
+
+The files were last retriveed 2021-02-26 from the URI below and were included
+here without modification of any kind.
+
+URI:        https://github.com/lutraconsulting/MDAL/tree/master/tests/data/2dm
+Retrieved:  2021-02-25

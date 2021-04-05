@@ -1,0 +1,17 @@
+The OpenTELEMAC forum's terms and conditions explicitly allow use of unaltere
+versions of any uploaded documents as long as the source is clearly referenced:
+    
+    > Documents from this website may be used, provided that (1) such Document
+    > will not be copied or posted on any network computer or broadcast in an
+    > media without explicit mention of its source, and (2) no modifications of
+    > any Documents are made.
+
+http://www.opentelemac.org/index.php/terms-and-conditions
+
+File:       HYDRO_AS-2D.2dm
+URI:        http://www.opentelemac.org/index.php/community-old/forum4/blue-kenue/6801-import-of-2dm-mesh-illustration-problems-and-negative-determinants#11933
+Retrieved:  2021-02-25
+
+File:       original_mesh.2dm
+URI:        http://www.opentelemac.org/index.php/assistance/forum5/blue-kenue/7438-importing-2dm-mesh-problem#15077
+Retrieved:  2021-02-25

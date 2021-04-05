@@ -1,97 +1,106 @@
-"""Shared utilities used for reading and writing 2DM files."""
+"""Tools and helper methods for working with Py2DM.
 
-import contextlib
-from typing import Iterator, SupportsFloat
+This module includes independent utilities that may be useful when
+working with Py2DM as part of a larger workflow. This includes
+compatibility modes, format converters and the likes.
+"""
 
-from .types import MaterialIndex
+import os
+import warnings
+from typing import List, Union
+
+from ._entities import Element3T, Element6T
+from ._write import Writer
+
+__all__ = [
+    'triangle_to_2dm'
+]
 
 
-def cast_matid(value: str) -> MaterialIndex:
-    """Cast a given string to a material index.
+def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
+    """Create a 2DM mesh from "Triangle" output files.
 
-    :param value: The string version of the value to cast
-    :type value: str
-    :raises TypeError: Raised if the string literal cannot be cast
-    :return: The cast value of the string, either ``int`` or ``float``
-    :rtype: Union[int, float]
+    This converter allows the creation of a Py2DM-compatible mesh from
+    the output files of the Triangle 2D mesh generator:
+    `<https://www.cs.cmu.edu/~quake/triangle.html>`_.
+
+    :param node_file: The Triangle NODE file to read.
+    :type node_file: :class:`str`
+    :param ele_file: The Triangle ELE file to read.
+    :type ele_file: :class:`str`
+    :param output: The output file to write. Defaults to the name of
+        the Triangle output, minus the iteration number.
+    :type output: :class:`str`
     """
-    with contextlib.suppress(ValueError):
-        return int(value)
-    with contextlib.suppress(ValueError):
-        return float(value)
-    raise TypeError(f'Unable to convert string literal to MATID: {value}')
-
-
-def clean_line(line: str) -> str:
-    """Return a cleaned version of the input line's contents.
-
-    This means removing any leading and trailing whitespace, as well as
-    discarding any trailing inline comments.
-
-    :param line: The input line to process
-    :type line: str
-    :return: The cleaned contents of the line
-    :rtype: str
-    """
-    data = line.split('#', 1)[0]
-    return data.strip()
-
-
-def format_float(value: SupportsFloat, *, decimals: int = 8) -> str:
-    """Format a node position into a string.
-
-    This uses the format requested by 2DM: up to nine significant
-    digits followed by an exponent, e.g. ``0.5 -> 5.0e-01``.
-
-    :param value: A object that supports casting to float
-    :type value: SupportsFloat
-    :param decimals: The number of decimal places to include, defaults
-        to ``8``.
-    :type decimals: int, optional
-    :return: The formatted string with no extra whitespace
-    :rtype: str
-    """
-    string = f'{" " if float(value) >= 0.0 else ""}{float(value):.{decimals}e}'
-    return string
-
-
-def format_matid(value: MaterialIndex, *, decimals: int = 8) -> str:
-    """Format a material index.
-
-    The decimals parameter will be ignored if the input value is an
-    integer.
-
-    :param value: The material index to format
-    :type value: Union[int, float]
-    :param decimals: The number of decimal places to include, defaults
-        to ``8``.
-    :type decimals: int, optional
-    :return: The formatted material index
-    :rtype: str
-    """
-    return (str(value) if isinstance(value, int)
-            else format_float(value, decimals=decimals))
-
-
-def next_line(iterator: Iterator[str]) -> str:
-    """Return the next valid 2DM line.
-
-    This will jump over any empty lines, as well as strip out any
-    comments.
-
-    This will return an empty string only if the iterator is exhausted
-    while attempting to return a valid line.
-
-    :param iterator: The iterator to use for traversal of the file
-    :type line: Iterator [str]
-    :return: The next non-empty line
-    :rtype: str
-    """
-    while True:
-        try:
-            line = next(iterator)
-        except StopIteration:
-            return ''
-        line = clean_line(line)
-        if line:
-            return line
+    if not output:
+        output, _ = os.path.splitext(node_file)
+        print(f'Output (pre-tail): {output}')
+        # Strip iteration number, if any
+        if '.' in output:
+            output, tail = output.rsplit('.', maxsplit=1)
+            try:
+                _ = int(tail)
+            except ValueError:
+                # Not an iteration number, re-append tail
+                output = f'{output}.{tail}'
+        print(f'Output (post-tail): {output}')
+        output += '.2dm'
+    # Check the header of the element file to get the number of element
+    # attributes
+    with open(ele_file) as f_elements:
+        line = f_elements.readline()
+        if not line:
+            raise RuntimeError('ELE file is empty')
+        _, nodes_per_element, num_materials = (int(i) for i in line.split())
+    if nodes_per_element not in (3, 6):
+        raise RuntimeError('Only three- and six-noded elements are supported')
+    # Write mesh
+    with Writer(output, materials=num_materials) as mesh:
+        mesh.write_header()
+        # Add nodes
+        with open(node_file) as f_nodes:
+            for index, line in enumerate(f_nodes):
+                if index == 0:
+                    num_attributes = int(line.split()[2])
+                    if num_attributes > 0:
+                        warnings.warn(
+                            'The 2DM format does not support node-specific '
+                            f'attributes, {num_attributes} attributes per '
+                            'node will be ignored')
+                    continue
+                if line.strip().startswith('#'):
+                    continue
+                chunks = line.split()
+                pos_2d = tuple((float(i) for i in chunks[1:3]))
+                mesh.node(int(chunks[0]), pos_2d[0], pos_2d[1], 0.0)
+                # Flush node cache every 10k nodes
+                if index % 10_000 == 0:
+                    mesh.flush_nodes()
+        # Add elements
+        cls = Element3T if nodes_per_element == 3 else Element6T
+        with open(ele_file) as f_elements:
+            for index, line in enumerate(f_elements):
+                if index == 0:
+                    continue
+                if line.strip().startswith('#'):
+                    continue
+                chunks = line.split()
+                id_, *nodes = (int(i) for i in chunks[:nodes_per_element+1])
+                materials: List[Union[int, float]] = []
+                for material in chunks[nodes_per_element+1:]:
+                    try:
+                        value = int(material)
+                    except ValueError:
+                        value = float(material)
+                    materials.append(value)
+                # NOTE: Triangle numbers its quadratics elements' nodes
+                # corner-corner-corner-edge-edge-edge, while 2DM uses
+                # counter-clockwise node ordering.
+                # Ref: <https://www.cs.cmu.edu/~quake/triangle.highorder.html>
+                if nodes_per_element == 6:
+                    nodes = [nodes[0], nodes[5], nodes[1],
+                             nodes[3], nodes[2], nodes[4]]
+                mesh.element(cls, id_, *nodes, materials=tuple(materials))
+                # Flush element cache every 10k elements
+                if index % 10_000 == 0:
+                    mesh.flush_elements()

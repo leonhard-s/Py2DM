@@ -1,0 +1,6 @@
+The test files in this directory are available on as example input geometries
+as part of the Triangle documentation.
+
+File:       spiral.node
+URI:        https://www.cs.cmu.edu/~quake/triangle.quality.html
+Retrieved:  2021-04-04
