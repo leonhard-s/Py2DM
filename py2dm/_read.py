@@ -7,7 +7,6 @@ for specific use-cases. Refer to the implementation classes
 """
 
 import abc
-import functools
 from types import TracebackType
 from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
                     TypeVar)
@@ -15,7 +14,7 @@ from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
 from ._entities import Element, Node, NodeString, element_factory
 from .errors import FileIsClosedError
 from ._parser import scan_metadata
-from ._typing import Literal
+from ._typing import Literal, cached_property
 
 __all__ = [
     'Reader',
@@ -100,7 +99,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """
         return self._closed
 
-    @functools.cached_property
+    @cached_property
     def extent(self) -> Tuple[float, float, float, float]:
         """Return the extents of the mesh as a tuple of four floats.
 
