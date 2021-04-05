@@ -3,6 +3,7 @@
 import unittest
 
 import py2dm  # pylint: disable=import-error
+from py2dm._entities import element_factory  # pylint: disable=import-error
 
 
 class TestNode(unittest.TestCase):
@@ -96,19 +97,20 @@ class TestNode(unittest.TestCase):
             node = py2dm.Node(1, 12.0, 34.0, 56.0)
             self.assertListEqual(
                 node.to_line(),
-                ['ND', '1', ' 1.200000e+01', ' 3.400000e+01', ' 5.600000e+01'],
+                ['ND', '       1', ' 1.200000e+01',
+                 ' 3.400000e+01', ' 5.600000e+01'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             node = py2dm.Node(10, -12, 20.0, 2.5)
             self.assertListEqual(
                 node.to_line(decimals=2),
-                ['ND', '10', '-1.20e+01', ' 2.00e+01', ' 2.50e+00'],
+                ['ND', '      10', '-1.20e+01', ' 2.00e+01', ' 2.50e+00'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             node = py2dm.Node(5, 1.23, 2.0, 4.5)
             self.assertListEqual(
                 node.to_line(compact=True),
-                ['ND', '5', '1.23', '2.0', '4.5'],
+                ['ND', '       5', '1.23', '2.0', '4.5'],
                 'unexpected line chunks')
 
 
@@ -231,25 +233,27 @@ class TestElement2L(unittest.TestCase):
             element = py2dm.Element2L(1, 233, 3, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E2L', '1', '233', '3', ' 1.000e+00', '-2', ' 5'],
+                ['E2L', '       1', '     233', '       3',
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element2L(1, 2, 3, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E2L', '1', '2', '3', ' 1.00e+00', '-2', ' 5'],
+                ['E2L', *[f'{n:8}' for n in range(1, 4)],
+                 ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element2L(1, 2, 3, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E2L', '1', '2', '3', '1.0', '-2', '5'],
+                ['E2L', *[f'{n:8}' for n in range(1, 4)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element2L(1, 2, 3, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E2L', '1', '2', '3', '-2'],
+                ['E2L', *[f'{n:8}' for n in range(1, 4)], '-2'],
                 'unexpected line chunks')
 
 
@@ -372,25 +376,27 @@ class TestElement3L(unittest.TestCase):
             element = py2dm.Element3L(1, 233, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E3L', '1', '233', '3', '4', ' 1.000e+00', '-2', ' 5'],
+                ['E3L', '       1', '     233', '       3', '       4',
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element3L(1, 2, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E3L', '1', '2', '3', '4', ' 1.00e+00', '-2', ' 5'],
+                ['E3L', *
+                    [f'{n:8}' for n in range(1, 5)], ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element3L(1, 2, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E3L', '1', '2', '3', '4', '1.0', '-2', '5'],
+                ['E3L', *[f'{n:8}' for n in range(1, 5)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element3L(1, 2, 3, 4, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E3L', '1', '2', '3', '4', '-2'],
+                ['E3L', *[f'{n:8}' for n in range(1, 5)], '-2'],
                 'unexpected line chunks')
 
 
@@ -513,25 +519,27 @@ class TestElement3T(unittest.TestCase):
             element = py2dm.Element3T(1, 233, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E3T', '1', '233', '3', '4', ' 1.000e+00', '-2', ' 5'],
+                ['E3T', '       1', '     233', '       3', '       4',
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element3T(1, 2, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E3T', '1', '2', '3', '4', ' 1.00e+00', '-2', ' 5'],
+                ['E3T', *
+                    [f'{n:8}' for n in range(1, 5)], ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element3T(1, 2, 3, 4, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E3T', '1', '2', '3', '4', '1.0', '-2', '5'],
+                ['E3T', *[f'{n:8}' for n in range(1, 5)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element3T(1, 2, 3, 4, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E3T', '1', '2', '3', '4', '-2'],
+                ['E3T', *[f'{n:8}' for n in range(1, 5)], '-2'],
                 'unexpected line chunks')
 
 
@@ -653,25 +661,28 @@ class TestElement4Q(unittest.TestCase):
             element = py2dm.Element4Q(1, 233, 3, 4, 5, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E4Q', '1', '233', '3', '4', '5', ' 1.000e+00', '-2', ' 5'],
+                ['E4Q', '       1', '     233',
+                 *[f'{n:8}' for n in range(3, 6)],
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element4Q(1, 2, 3, 4, 5, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E4Q', '1', '2', '3', '4', '5', ' 1.00e+00', '-2', ' 5'],
+                ['E4Q', *
+                    [f'{n:8}' for n in range(1, 6)], ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element4Q(1, 2, 3, 4, 5, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E4Q', '1', '2', '3', '4', '5', '1.0', '-2', '5'],
+                ['E4Q', *[f'{n:8}' for n in range(1, 6)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element4Q(1, 2, 3, 4, 5, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E4Q', '1', '2', '3', '4', '5', '-2'],
+                ['E4Q', *[f'{n:8}' for n in range(1, 6)], '-2'],
                 'unexpected line chunks')
 
 
@@ -797,30 +808,30 @@ class TestElement6T(unittest.TestCase):
                 1, 233, 3, 4, 5, 6, 7, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E6T', '1', '233', '3', '4', '5', '6',
-                    '7', ' 1.000e+00', '-2', ' 5'],
+                ['E6T', '       1', '     233', *[f'{n:8}' for n in range(3, 8)],
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element6T(
                 1, 2, 3, 4, 5, 6, 7, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E6T', '1', '2', '3', '4', '5', '6',
-                    '7', ' 1.00e+00', '-2', ' 5'],
+                ['E6T', *[f'{n:8}' for n in range(1, 8)],
+                 ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element6T(
                 1, 2, 3, 4, 5, 6, 7, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E6T', '1', '2', '3', '4', '5', '6', '7', '1.0', '-2', '5'],
+                ['E6T', *[f'{n:8}' for n in range(1, 8)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element6T(
                 1, 2, 3, 4, 5, 6, 7, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E6T', '1', '2', '3', '4', '5', '6', '7', '-2'],
+                ['E6T', *[f'{n:8}' for n in range(1, 8)], '-2'],
                 'unexpected line chunks')
 
 
@@ -948,31 +959,31 @@ class TestElement8Q(unittest.TestCase):
                 1, 233, 3, 4, 5, 6, 7, 8, 9, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E8Q', '1', '233', '3', '4', '5', '6', '7',
-                    '8', '9', ' 1.000e+00', '-2', ' 5'],
+                ['E8Q', '       1', '     233',
+                 *[f'{n:8}' for n in range(3, 10)],
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element8Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E8Q', '1', '2', '3', '4', '5', '6', '7',
-                    '8', '9', ' 1.00e+00', '-2', ' 5'],
+                ['E8Q', *[f'{n:8}' for n in range(1, 10)],
+                 ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element8Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E8Q', '1', '2', '3', '4', '5', '6',
-                    '7', '8', '9', '1.0', '-2', '5'],
+                ['E8Q', *[f'{n:8}' for n in range(1, 10)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element8Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E8Q', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-2'],
+                ['E8Q', *[f'{n:8}' for n in range(1, 10)], '-2'],
                 'unexpected line chunks')
 
 
@@ -1101,31 +1112,31 @@ class TestElement9Q(unittest.TestCase):
                 1, 233, 3, 4, 5, 6, 7, 8, 9, 10, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(),
-                ['E9Q', '1', '233', '3', '4', '5', '6', '7',
-                    '8', '9', '10', ' 1.000e+00', '-2', ' 5'],
+                ['E9Q', '       1', '     233',
+                 *[f'{n:8}' for n in range(3, 11)],
+                 ' 1.000e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('fixed_decimals'):
             element = py2dm.Element9Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(decimals=2),
-                ['E9Q', '1', '2', '3', '4', '5', '6', '7',
-                    '8', '9', '10', ' 1.00e+00', '-2', ' 5'],
+                ['E9Q', *[f'{n:8}' for n in range(1, 11)],
+                 ' 1.00e+00', '-2', ' 5'],
                 'unexpected line chunks')
         with self.subTest('compact'):
             element = py2dm.Element9Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, materials=(1.0, -2, 5))
             self.assertListEqual(
                 element.to_line(compact=True),
-                ['E9Q', '1', '2', '3', '4', '5', '6', '7',
-                    '8', '9', '10', '1.0', '-2', '5'],
+                ['E9Q', *[f'{n:8}' for n in range(1, 11)], '1.0', '-2', '5'],
                 'unexpected line chunks')
         with self.subTest('integer materials only'):
             element = py2dm.Element9Q(
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, materials=(1.0, -2))
             self.assertListEqual(
                 element.to_line(allow_float_matid=False),
-                ['E9Q', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '-2'],
+                ['E9Q', *[f'{n:8}' for n in range(1, 11)], '-2'],
                 'unexpected line chunks')
 
 
@@ -1337,8 +1348,6 @@ class TestElementFactory(unittest.TestCase):
     """Test for the element_factory() utility method."""
 
     def test_element_factory(self) -> None:
-        # pylint: disable=import-error
-        from py2dm._entities import element_factory
         elements = {'E2L': py2dm.Element2L,
                     'E3L': py2dm.Element3L,
                     'E3T': py2dm.Element3T,

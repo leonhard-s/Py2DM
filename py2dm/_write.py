@@ -465,7 +465,7 @@ class Writer:
         self._count[NodeString] += 1
         return self._count[NodeString]
 
-    def flush_elements(self) -> None:
+    def flush_elements(self, **kwargs: Any) -> None:
         """Write the local element cache to disk.
 
         This clears out the in-memory element cache and writes its
@@ -476,14 +476,18 @@ class Writer:
         if 'header' not in self._write_history:
             self.write_header()
         self._check_flush_state('element')
-        # TODO: Add support for float material formats
+        fmt = {'allow_float_matid': self._float_materials,
+               'compact': False,
+               'decimals': 3,
+               'id_width': 8}
+        fmt.update(kwargs)
         self._file.writelines(
-            (f'{" ".join(e.to_line())}\n'
+            (f'{" ".join(e.to_line(**fmt))}\n'
              for e in cast(List[Element], self._cache[Element])))
         self._update_flush_state('element')
         self._cache[Element].clear()
 
-    def flush_nodes(self) -> None:
+    def flush_nodes(self, **kwargs: Any) -> None:
         """Write the local node cache to disk.
 
         This clears out the in-memory node cache and writes its
@@ -494,14 +498,17 @@ class Writer:
         if 'header' not in self._write_history:
             self.write_header()
         self._check_flush_state('node')
-        # TODO: Add support for coordinate formats
+        fmt = {'compact': False,
+               'decimals': 6,
+               'id_width': 8}
+        fmt.update(kwargs)
         self._file.writelines(
-            (f'{" ".join(n.to_line())}\n'
+            (f'{" ".join(n.to_line(**fmt))}\n'
              for n in cast(List[Node], self._cache[Node])))
         self._update_flush_state('node')
         self._cache[Node].clear()
 
-    def flush_node_strings(self) -> None:
+    def flush_node_strings(self, **kwargs: Any) -> None:
         """Write the local node string cache to disk.
 
         This clears out the in-memory node string cache and writes its
@@ -512,9 +519,8 @@ class Writer:
         if 'header' not in self._write_history:
             self.write_header()
         self._check_flush_state('node string')
-        # TODO: Add support for line folding
         self._file.writelines(
-            (f'{" ".join(n.to_line())}\n'
+            (f'{" ".join(n.to_line(**kwargs))}\n'
              for n in cast(List[NodeString], self._cache[NodeString])))
         self._update_flush_state('node string')
         self._cache[NodeString].clear()

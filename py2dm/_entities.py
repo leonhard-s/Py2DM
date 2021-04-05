@@ -184,7 +184,8 @@ class Node(Entity):
         :return: A list of words to write to disk.
         :rtype: :class:`typing.List` [:class:`str`]
         """
-        list_ = [self.card, str(self.id)]
+        id_width = int(kwargs.get('id_width', 8))
+        list_ = [self.card, f'{self.id:{id_width}}']
         if kwargs.get('compact', False):
             list_.extend((str(x) for x in (self.x, self.y, self.z)))
         else:
@@ -299,8 +300,9 @@ class Element(Entity):
         :return: A list of words to write to disk.
         :rtype: :class:`typing.List` [:class:`str`]
         """
-        out = [self.card, str(self.id)]
-        out.extend((str(n) for n in self.nodes))
+        id_width = int(kwargs.get('id_width', 8))
+        out = [self.card, f'{self.id:{id_width}}']
+        out.extend((f'{n:{id_width}}' for n in self.nodes))
         # Discard floating point material indices if disallowed
         matids: Iterable[_Material] = self.materials
         if not kwargs.get('allow_float_matid', True):

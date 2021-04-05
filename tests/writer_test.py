@@ -413,7 +413,7 @@ class TestWriter(unittest.TestCase):
             buffer.getvalue(),
             ('MESH2D\n'
              'NUM_MATERIALS_PER_ELEM 0\n'
-             'E2L 1 2 3\n'),
+             'E2L        1        2        3\n'),
             'unexpected file buffer')
 
     def test_flush_nodes(self) -> None:
@@ -435,7 +435,7 @@ class TestWriter(unittest.TestCase):
             buffer.getvalue(),
             ('MESH2D\n'
              'NUM_MATERIALS_PER_ELEM 0\n'
-             'ND 1  2.000000e+00  3.000000e+00  4.000000e+00\n'),
+             'ND        1  2.000000e+00  3.000000e+00  4.000000e+00\n'),
             'unexpected file buffer')
 
     def test_flush_node_strings(self) -> None:
