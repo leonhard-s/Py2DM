@@ -83,8 +83,6 @@ class Entity(metaclass=abc.ABCMeta):
 class Node(Entity):
     """A unique, numbered point in space.
 
-    This is a subclass of :class:`Entity`.
-
     Nodes are the only geometries that define position in a mesh. Other
     objects like elements or node strings reference them by ID to
     position themselves.
@@ -197,8 +195,6 @@ class Node(Entity):
 
 class Element(Entity):
     r"""Base class for all mesh Elements.
-
-    This is a subclass of :class:`Entity`.
 
     This implements all of the abstract methods required to parse the
     element. The actual element classes themselves mostly serve to
@@ -440,9 +436,9 @@ class Element9Q(QuadrilateralElement):
 class NodeString:
     r"""A polyline represented by a string of nodes (NS).
 
-    This mostly satisfies the interface laid out by the :class:`Entity`
-    ABC, except that the :meth:`from_line` method features an optional
-    parameter that allows specification of an existing node string.
+    This differs from the other mesh entity classes in that the
+    :meth:`from_line` method features an optional parameter that allows
+    specification of an existing node string to extend.
 
     This is necessary as node strings may be split across multiple
     lines in a 2DM file as lines may not exceed 10 tags.
