@@ -105,7 +105,7 @@ Py2DM attempts to strike a balance of supporting these custom format variants wi
 
 - The maximum ID limit of 999'999 is not enforced.
 
-- Floating point values may be used as material ID0s by default.
+- Floating point values may be used as material IDs by default.
 
   You can set the `allow_float_matid` flag to False to quietly discard floating point materials in the mesh:
 
