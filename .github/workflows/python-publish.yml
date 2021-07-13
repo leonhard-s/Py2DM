@@ -11,22 +11,42 @@ jobs:
   deploy:
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9, 3.10]
+
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.x"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel twine
 
-      - name: Build and publish
+      - name: Install compatibility packages (3.6 and 3.7 only)
+        if: ${{ matrix.python-version == 3.6 || matrix.python-version == 3.7 }}
+        run: |
+          python -m pip install --user typing_extensions cached_property
+
+      - name: Collect source (3.8 only)
+        if: ${{ matrix.python-version == 3.8 }}
+        run: |
+          python setup.py sdist
+
+      - name: Build wheel
+        run: |
+          python setup.py bdist_wheel
+
+      - name: Upload
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python setup.py sdist bdist_wheel
           twine upload dist/*
