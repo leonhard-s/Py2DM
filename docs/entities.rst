@@ -61,3 +61,9 @@ Node strings
 
 .. autoclass:: py2dm.NodeString
    :members:
+
+Entity interface
+================
+
+.. autoclass:: py2dm.Entity
+   :members:
