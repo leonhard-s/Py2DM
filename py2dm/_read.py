@@ -49,7 +49,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        self.name = 'Unnamed mesh'
+        self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
 
         If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are

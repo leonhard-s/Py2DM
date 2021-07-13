@@ -41,7 +41,7 @@ class ReadError(Py2DMError):
 
     def __init__(self, message: str, filename: str) -> None:
         super().__init__(message)
-        self.filename = filename
+        self.filename: str = filename
 
 
 class MissingCardError(ReadError):

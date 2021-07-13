@@ -34,7 +34,7 @@ class Writer:
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        self.name = 'Unnamed mesh'
+        self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
 
         A custom name to store in the mesh to aid with identification.
