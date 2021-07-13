@@ -115,7 +115,7 @@ class Node(Entity):
            You can also create new nodes directly through the
            :meth:`py2dm.Writer.node` method.
 
-        :param id\_: The unique ID of the node. Must not be negative.
+        :param id\_: The unique ID of the node.
         :type id\_: :class:`int`
         :param x: X position of the node.
         :type x: :class:`float`
@@ -124,8 +124,6 @@ class Node(Entity):
         :param z: Z position of the node.
         :type z: :class:`float`
         """
-        if id_ < 0:
-            raise ValueError('Node IDs may not be negative')
         if x == float('nan') or y == float('nan') or z == float('nan'):
             raise ValueError(f'Invalid node position: ({x}, {y}, {z})')
         self.id: int = id_
@@ -207,6 +205,8 @@ class Node(Entity):
         :return: A list of words to write to disk.
         :rtype: :class:`list` [:class:`str`]
         """
+        if self.id < 0:
+            raise ValueError('Invalid node with negative ID encountered')
         id_width = int(kwargs.get('id_width', 8))
         list_ = [self.card, f'{self.id:{id_width}}']
         if kwargs.get('compact', False):
@@ -254,8 +254,6 @@ class Element(Entity):
         if hasattr(self, 'num_nodes') and len(nodes) != self.num_nodes:
             raise CardError(f'{self.card} element requires {self.num_nodes} '
                             f'nodes, got {len(nodes)}')
-        if id_ < 0:
-            raise ValueError('Element IDs may not be negative')
         if any((n < 0 for n in nodes)):
             raise ValueError(f'Negative ID in node list: {nodes}')
         self.id: int = id_
@@ -336,6 +334,8 @@ class Element(Entity):
         :return: A list of words to write to disk.
         :rtype: :class:`list` [:class:`str`]
         """
+        if self.id < 0:
+            raise ValueError('Invalid element with negative ID encountered')
         id_width = int(kwargs.get('id_width', 8))
         out = [self.card, f'{self.id:{id_width}}']
         out.extend((f'{n:{id_width}}' for n in self.nodes))
