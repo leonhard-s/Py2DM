@@ -2,8 +2,7 @@
 
 This module defines the :class:`py2dm.ReaderBase` interface, as well as
 subclasses implementing this interface to provide variations optimised
-for specific use-cases. Refer to the implementation classes
-:class:`py2dm.Reader` and :class:`py2dm.LazyReader for details.
+for specific use-cases.
 """
 
 import abc
