@@ -35,11 +35,12 @@ class Entity(metaclass=abc.ABCMeta):
     """Base class for geometries defined in the 2DM specification.
 
     This includes :class:`Node`, :class:`NodeString`, and
-    the subclasses of :class:`Element`.
+    subclasses of :class:`Element` like :class:`Element3T`.
 
     This is an abstract class, subclasses must implement the
     :meth:`from_line` and :meth:`to_line` methods, as well as provide
-    a :attr:`card` class attribute associating it with its 2DM card.
+    a :attr:`card` class attribute associating them with their
+    corresponding 2DM card.
     """
 
     __slots__: List[str] = []
@@ -47,6 +48,18 @@ class Entity(metaclass=abc.ABCMeta):
     """The 2DM card associated with this geometry."""
 
     def __eq__(self, other: Any) -> bool:
+        """Custom instance equality check.
+
+        This reimplements the equality check operator and only compares
+        the object type and :attr:`card` identifier. Subclasses must
+        extend this method to include checks for attributes; as-is this
+        is equivalent to ``type(a) == type(b)``.
+
+        .. warning::
+
+           Subclassing this base without properly extending this method
+           could lead to unexpected behaviour.
+        """
         # pylint: disable=unidiomatic-typecheck
         return type(self) == type(other) and self.card == other.card
 
@@ -76,7 +89,7 @@ class Entity(metaclass=abc.ABCMeta):
         formatting into constant-width columns if requested.
 
         :return: A list of words to write to disk.
-        :rtype: :obj:`typing.List` [:class:`str`]
+        :rtype: :class:`list` [:class:`str`]
         """
 
 
@@ -87,14 +100,7 @@ class Node(Entity):
     objects like elements or node strings reference them by ID to
     position themselves.
 
-    :param id_: The unique ID of the node. Always positive or zero.
-    :type id_: :class:`int`
-    :param x: X position of the node.
-    :type x: :class:`float`
-    :param y: Y position of the node.
-    :type y: :class:`float`
-    :param z: Z position of the node.
-    :type z: :class:`float`
+    **Base classes:** :class:`py2dm.Entity`
     """
     # pylint: disable=invalid-name
 
@@ -102,6 +108,26 @@ class Node(Entity):
     card: ClassVar[str] = 'ND'
 
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
+        r"""Create a new node.
+
+        .. seealso::
+
+           You can also create new nodes directly through the
+           :meth:`py2dm.Writer.node` method.
+
+        :param id\_: The unique ID of the node. Must not be negative.
+        :type id\_: :class:`int`
+        :param x: X position of the node.
+        :type x: :class:`float`
+        :param y: Y position of the node.
+        :type y: :class:`float`
+        :param z: Z position of the node.
+        :type z: :class:`float`
+        """
+        if id_ < 0:
+            raise ValueError('Node IDs may not be negative')
+        if x == float('nan') or y == float('nan') or z == float('nan'):
+            raise ValueError(f'Invalid node position: ({x}, {y}, {z})')
         self.id: int = id_
         """Unique identifier of the node.
 
@@ -114,8 +140,7 @@ class Node(Entity):
 
         .. seealso::
 
-            :attr:`pos` -- A tuple of floats representing the X, Y, and
-            Z coordinate of the node.
+           :attr:`pos` returns the node position as a tuple of floats.
         """
         self.y: float = y
         """Y coordinate of the node.
@@ -124,21 +149,22 @@ class Node(Entity):
 
         .. seealso::
 
-            :attr:`pos` -- A tuple of floats representing the X, Y, and
-            Z coordinate of the node.
+           :attr:`pos` returns the node position as a tuple of floats.
         """
         self.z: float = z
         """Z coordinate of the node.
 
-        :type: :class:`float`
-
         .. seealso::
 
-            :attr:`pos` -- A tuple of floats representing the X, Y, and
-            Z coordinate of the node.
+           :attr:`pos` returns the node position as a tuple of floats.
         """
 
     def __eq__(self, other: Any) -> bool:
+        """Custom instance equality check.
+
+        This check passes whenever the two nodes with identical ID and
+        coordiates are passed.
+        """
         if not super().__eq__(other):
             return False
         return self.id == other.id and self.pos == other.pos
@@ -150,8 +176,7 @@ class Node(Entity):
     def pos(self) -> Tuple[float, float, float]:
         """The 3D position of the node as a tuple of three floats.
 
-        :type: :obj:`typing.Tuple` [
-            :class:`float`, :class:`float`, :class:`float`]
+        :type: :class:`tuple` [:class:`float`, :class:`float`, :class:`float`]
         """
         return self.x, self.y, self.z
 
@@ -180,7 +205,7 @@ class Node(Entity):
         into constant-width columns.
 
         :return: A list of words to write to disk.
-        :rtype: :class:`typing.List` [:class:`str`]
+        :rtype: :class:`list` [:class:`str`]
         """
         id_width = int(kwargs.get('id_width', 8))
         list_ = [self.card, f'{self.id:{id_width}}']
@@ -194,20 +219,13 @@ class Node(Entity):
 
 
 class Element(Entity):
-    r"""Base class for all mesh Elements.
+    """Base class for all mesh Elements.
 
     This implements all of the abstract methods required to parse the
     element. The actual element classes themselves mostly serve to
     specify the 2DM card and number of nodes.
 
-    :param id_: The unique ID of the element
-    :type id_: :class:`int`
-    :param \*nodes: Any number of nodes making up the element
-    :type \*nodes: :class:`int`
-    :param materials: Any number of material IDs for the element,
-        defaults to ``None``
-    :type materials: :obj:`typing.Tuple` [
-        :obj:`typing.Union` [:class:`int`, :class:`float`]], optional
+    **Base classes:** :class:`py2dm.Entity`
     """
     # pylint: disable=invalid-name
 
@@ -218,9 +236,28 @@ class Element(Entity):
 
     def __init__(self, id_: int, *nodes: int,
                  materials: Optional[Tuple[_Material, ...]] = None) -> None:
+        r"""Create a new element.
+
+        .. seealso::
+
+           You can also create new elements directly through the
+           :meth:`py2dm.Writer.element` method.
+
+        :param id\_: The unique ID of the element
+        :type id\_: :class:`int`
+        :param \*nodes: Any number of nodes making up the element
+        :type \*nodes: :class:`int`
+        :param materials: Any number of material IDs for the element,
+           defaults to :obj:`None`
+        :type materials: :class:`tuple` [:class:`int` | :class:`float`], optional
+        """
         if hasattr(self, 'num_nodes') and len(nodes) != self.num_nodes:
             raise CardError(f'{self.card} element requires {self.num_nodes} '
                             f'nodes, got {len(nodes)}')
+        if id_ < 0:
+            raise ValueError('Element IDs may not be negative')
+        if any((n < 0 for n in nodes)):
+            raise ValueError(f'Negative ID in node list: {nodes}')
         self.id: int = id_
         """The unique ID of the element.
 
@@ -232,16 +269,20 @@ class Element(Entity):
         Depending on the 2DM-like format used, this could be a floating
         point value used to store e.g. element centroid elevation.
 
-        :type: :obj:`typing.Tuple` [
-            :obj:`typing.Union` [:class:`int`, :class:`float`], ...]
+        :type: :class:`tuple` [:class:`int` | :class:`float`, ...]
         """
         self.nodes: Tuple[int, ...] = tuple(nodes)
         """The defining nodes for this element.
 
-        :type: :obj:`typing.Tuple` [:class:`int`, ...]
+        :type: :class:`tuple` [:class:`int`, ...]
         """
 
     def __eq__(self, other: Any) -> bool:
+        """Custom instance equality check.
+
+        This check passes whenever the two elements with identical ID,
+        node ID list and materials are passed.
+        """
         if not super().__eq__(other):
             return False
         return (self.id == other.id and
@@ -293,7 +334,7 @@ class Element(Entity):
         into constant-width columns.
 
         :return: A list of words to write to disk.
-        :rtype: :class:`typing.List` [:class:`str`]
+        :rtype: :class:`list` [:class:`str`]
         """
         id_width = int(kwargs.get('id_width', 8))
         out = [self.card, f'{self.id:{id_width}}']
@@ -314,7 +355,7 @@ class Element(Entity):
 class LinearElement(Element):
     """Base class for linear mesh elements.
 
-    This is a subclass of :class:`Element`.
+    **Base classes:** :class:`py2dm.Element`
 
     This is exclusively provided to group related element types
     together and to allow checking for element type via their shared
@@ -331,7 +372,7 @@ class LinearElement(Element):
 class TriangularElement(Element):
     """Base class for triangular mesh elements.
 
-    This is a subclass of :class:`Element`.
+    **Base classes:** :class:`py2dm.Element`
 
     This is exclusively provided to group related element types
     together and to allow checking for element type via their shared
@@ -348,7 +389,7 @@ class TriangularElement(Element):
 class QuadrilateralElement(Element):
     """Base class for quadrilateral mesh elements.
 
-    This is a subclass of :class:`Element`.
+    **Base classes:** :class:`py2dm.Element`
 
     This is exclusively provided to group related element types
     together and to allow checking for element type via their shared
@@ -365,7 +406,7 @@ class QuadrilateralElement(Element):
 class Element2L(LinearElement):
     """Two-noded, linear element (E2L).
 
-    This is a subclass of :class:`LinearElement`.
+    **Base classes:** :class:`py2dm.LinearElement`
     """
 
     card: ClassVar[str] = 'E2L'
@@ -375,7 +416,7 @@ class Element2L(LinearElement):
 class Element3L(LinearElement):
     """Three-noded, linear element (E3L).
 
-    This is a subclass of :class:`LinearElement`.
+    **Base classes:** :class:`py2dm.LinearElement`
     """
 
     card: ClassVar[str] = 'E3L'
@@ -385,7 +426,7 @@ class Element3L(LinearElement):
 class Element3T(TriangularElement):
     """Three-noded, triangular mesh element (E3T).
 
-    This is a subclass of :class:`TriangularElement`.
+    **Base classes:** :class:`py2dm.TriangularElement`
     """
 
     card: ClassVar[str] = 'E3T'
@@ -395,7 +436,7 @@ class Element3T(TriangularElement):
 class Element6T(TriangularElement):
     """Six-noded, triangular mesh element (E6T).
 
-    This is a subclass of :class:`TriangularElement`.
+    **Base classes:** :class:`py2dm.TriangularElement`
     """
 
     card: ClassVar[str] = 'E6T'
@@ -405,7 +446,7 @@ class Element6T(TriangularElement):
 class Element4Q(QuadrilateralElement):
     """Four-noded, quadrilateral mesh element (E4Q).
 
-    This is a subclass of :class:`QuadrilateralElement`.
+    **Base classes:** :class:`py2dm.QuadrilateralElement`
     """
 
     card: ClassVar[str] = 'E4Q'
@@ -415,7 +456,7 @@ class Element4Q(QuadrilateralElement):
 class Element8Q(QuadrilateralElement):
     """Eight-noded, quadrilateral mesh element (E8Q).
 
-    This is a subclass of :class:`QuadrilateralElement`.
+    **Base classes:** :class:`py2dm.QuadrilateralElement`
     """
 
     card: ClassVar[str] = 'E8Q'
@@ -425,7 +466,7 @@ class Element8Q(QuadrilateralElement):
 class Element9Q(QuadrilateralElement):
     """Nine-noded, quadrilateral mesh element (E9Q).
 
-    This is a subclass of :class:`QuadrilateralElement`.
+    **Base classes:** :class:`py2dm.QuadrilateralElement`
     """
 
     card: ClassVar[str] = 'E9Q'
@@ -433,7 +474,7 @@ class Element9Q(QuadrilateralElement):
 
 
 class NodeString:
-    r"""A polyline represented by a string of nodes (NS).
+    """A polyline represented by a string of nodes (NS).
 
     This differs from the other mesh entity classes in that the
     :meth:`from_line` method features an optional parameter that allows
@@ -442,31 +483,48 @@ class NodeString:
     This is necessary as node strings may be split across multiple
     lines in a 2DM file as lines may not exceed 10 tags.
 
-    :param \*nodes: A list of node IDs making up the node string
-    :type \*nodes: :class:`int`
-    :param name: An optional name to give to a particular node string,
-        defaults to ``None``
-    :type name: :class:`str`, optional
+    .. important::
+
+       While this class implements most of the :class:`py2dm.Entity`
+       interface, it does not inherit from it. :func:`isinstance` or
+       :func:`issubclass` checks will fail for node strings.
     """
 
     __slots__ = ['name', 'nodes']
     card: ClassVar[str] = 'NS'
 
     def __init__(self, *nodes: int, name: Optional[str] = None) -> None:
+        r"""Create a new node string.
+
+        .. seealso::
+
+           You can also create new nodes directly through the
+           :meth:`py2dm.Writer.node_string` method.
+
+        :param \*nodes: A list of node IDs making up the node string
+        :type \*nodes: :class:`int`
+        :param name: An optional name to give to a particular node
+            string, defaults to :obj:`None`
+        :type name: :class:`str`, optional"""
         if len(nodes) < 2:
             raise CardError('At least two node required')
         self.name: Optional[str] = name
         """An optional name used to identify the node string.
 
-        :type: :obj:`typing.Optional` [:class:`str`]
+        :type: :class:`str` | :obj:`None`
         """
         self.nodes: Tuple[int, ...] = tuple(nodes)
         """The defining nodes of the node strings.
 
-        :type: :obj:`typing.Tuple` [:class:`int`]
+        :type: :class:`tuple` [:class:`int`]
         """
 
     def __eq__(self, other: Any) -> bool:
+        """Custom instance equality check.
+
+        This check passes whenever the two nodes with identical ID and
+        coordiates are passed.
+        """
         # pylint: disable=unidiomatic-typecheck
         if not (type(self) == type(other) and self.card == other.card):
             return False
@@ -498,11 +556,10 @@ class NodeString:
         :param line: The line to parse
         :type lint: :class:`str`
         :param node_string: An existing node string to append, defaults
-            to ``None``
+            to :obj:`None`
         :type node_string: :class:`NodeString`, optional
         :return: The created node string and the final flag
-        :rtype: :obj:`typing.Tuple` [
-            :class:`NodeString`, :class:`bool`]
+        :rtype: :class:`tuple` [:class:`NodeString`, :class:`bool`]
         """
         nodes: List[int] = (
             [] if node_string is None else list(node_string.nodes))
@@ -523,7 +580,7 @@ class NodeString:
         characters. No whitespace should be inserted around newlines.
 
         :return: A list of words to write to disk
-        :rtype: :obj:`typing.List` [:class:`str`]
+        :rtype: :class:`list` [:class:`str`]
         """
         list_ = [self.card]
         fold = int(kwargs.get('fold_after', 10))
@@ -567,7 +624,7 @@ def _format_matid(value: _Material, *, decimals: int = 6) -> str:
     integer.
 
     :param value: The material index to format.
-    :type value: :obj:`typing.Union` [:class:`int`, :class:`float`]
+    :type value: :class:`int` | :class:`float`
     :param decimals: The number of decimal places to include for
         floating point material IDs, defaults to ``6``.
     :type decimals: :class:`int`, optional
@@ -586,7 +643,7 @@ def element_factory(line: str) -> Type[Element]:
     :param line: The line to create an element fro.
     :type line: :class:`str`
     :raises ValueError: Raised if the given card doesn't match any
-        :class:`py2dm.Element` subclass'.
+        :class:`py2dm.Element` subclass.
     :return: The element type matching the given card.
     :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
     """

@@ -28,12 +28,14 @@ class Writer:
     Any elements are initially written to memory and only get committed
     to disk once the writer is closed or one of the ``flush_*()``
     methods is called.
-
-    :param filepath: Path to the mesh file to write.
-    :type filepath: :class:`str`
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
+        """Create a new mesh writer.
+
+        :param filepath: Path to the mesh file to write.
+        :type filepath: :class:`str`
+        """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
 

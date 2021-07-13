@@ -43,12 +43,14 @@ class ReaderBase(metaclass=abc.ABCMeta):
     This ABC defines the endpoints to be implemented by readers. Use
     this as the type definition for any code meant to work with Py2DM
     readers.
-
-    :param filepath: Path to the mesh file to open.
-    :type filepath: :class:`str`
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
+        """Instantiate a new reader for `filepath`.
+
+        :param filepath: Path to the mesh file to open.
+        :type filepath: :class:`str`
+        """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
 

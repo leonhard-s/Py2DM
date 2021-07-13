@@ -63,16 +63,50 @@ To access elements randomly (i.e. by their unique ID), you can use the :meth:`py
 
 Note that these use the unique identifier for a given entity. For nodes and elements, this is their ID. For node strings, this would be their unique ID when using a :doc:`subformat <subformats>` that supports unique identifiers for node strings.
 
-Lazy read mode (NYI)
-====================
-
-.. note::
-   
-   This feature is not yet available in this version of Py2DM.
+.. Lazy read mode (NYI)
+.. ====================
+..
+.. .. note::
+..   
+..    This feature is not yet available in this version of Py2DM.
 
 Reader class interface
 ======================
 
-.. autoclass:: py2dm.Reader
-   :inherited-members:
-   :members:
+.. autoclass:: py2dm.Reader()
+   
+   .. automethod:: __init__(self, filepath: str, **kwargs) -> None
+
+   .. autoattribute:: name
+
+   .. autoproperty:: closed
+
+   .. autoproperty:: elements
+
+   .. autoproperty:: nodes
+
+   .. autoproperty:: node_strings
+
+   .. autoproperty:: materials_per_element
+
+   .. autoproperty:: num_elements
+
+   .. autoproperty:: num_nodes
+
+   .. autoproperty:: num_node_strings
+   
+   .. automethod:: close() -> None
+
+   .. automethod:: open() -> None
+
+   .. automethod:: element(id_: int) -> py2dm.Element
+
+   .. automethod:: node(id_: int) -> py2dm.Node
+
+   .. automethod:: node_string(name: str) -> py2dm.NodeString
+
+   .. automethod:: iter_elements(start: int = -1, end: int = -1) -> collections.abc.Iterator[py2dm.Element]
+
+   .. automethod:: iter_nodes(start: int = -1, end: int = -1) -> collections.abc.Iterator[py2dm.Node]
+
+   .. automethod:: iter_node_strings(start: int = 0, end: int = -1) -> collections.abc.Iterator[py2dm.NodeString]

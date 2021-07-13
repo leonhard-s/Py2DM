@@ -94,5 +94,45 @@ This is particularly useful when converting large files from other formats, sinc
 Writer class interface
 ======================
 
-.. autoclass:: py2dm.Writer
-   :members:
+.. autoclass:: py2dm.Writer()
+   
+   .. automethod:: __init__(filepath: str, **kwargs) -> None
+
+   .. autoattribute:: name
+
+   .. autoproperty:: closed
+
+   .. autoproperty:: materials_per_element
+
+   .. autoproperty:: num_elements
+
+   .. autoproperty:: num_nodes
+
+   .. autoproperty:: num_node_strings
+
+   .. automethod:: close() -> None
+
+   .. automethod:: open() -> None
+
+   .. method:: element(element: py2dm.Element) -> int
+
+   .. automethod:: element(element: Union[typing.Type[py2dm.Element], str], id_: int, *nodes: int, materials: tuple[Union[int, float], ...] = None) -> int
+      :noindex:
+
+   .. method:: node(node: py2dm.Node) -> int
+
+   .. automethod:: node(node: int, x: float, y: float, z: float) -> int
+      :noindex:
+
+   .. method:: node_string(node_string: py2dm.NodeString) -> int
+
+   .. automethod:: node_string(node_string: int, *nodes: int, name: Union[str, None] = None) -> int
+      :noindex:
+
+   .. automethod:: flush_elements(**kwargs) -> None
+
+   .. automethod:: flush_nodes(**kwargs) -> None
+
+   .. automethod:: flush_node_strings(**kwargs) -> None
+
+   .. automethod:: write_header(signature: str = '') -> None
