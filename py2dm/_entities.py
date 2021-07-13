@@ -102,12 +102,12 @@ class Node(Entity):
     card: ClassVar[str] = 'ND'
 
     def __init__(self, id_: int, x: float, y: float, z: float) -> None:
-        self.id = id_
+        self.id: int = id_
         """Unique identifier of the node.
 
         :type: :class:`int`
         """
-        self.x = x
+        self.x: float = x
         """X coordinate of the node.
 
         :type: :class:`float`
@@ -117,7 +117,7 @@ class Node(Entity):
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
-        self.y = y
+        self.y: float = y
         """Y coordinate of the node.
 
         :type: :class:`float`
@@ -127,7 +127,7 @@ class Node(Entity):
             :attr:`pos` -- A tuple of floats representing the X, Y, and
             Z coordinate of the node.
         """
-        self.z = z
+        self.z: float = z
         """Z coordinate of the node.
 
         :type: :class:`float`
@@ -221,12 +221,12 @@ class Element(Entity):
         if hasattr(self, 'num_nodes') and len(nodes) != self.num_nodes:
             raise CardError(f'{self.card} element requires {self.num_nodes} '
                             f'nodes, got {len(nodes)}')
-        self.id = id_
+        self.id: int = id_
         """The unique ID of the element.
 
         :type: :class:`int`
         """
-        self.materials: Tuple[_Material, ...] = materials or ()
+        self.materials: Tuple[Union[int, float], ...] = materials or ()
         """Material IDs assigned to this element.
 
         Depending on the 2DM-like format used, this could be a floating
@@ -235,11 +235,10 @@ class Element(Entity):
         :type: :obj:`typing.Tuple` [
             :obj:`typing.Union` [:class:`int`, :class:`float`], ...]
         """
-        self.nodes = tuple(nodes)
+        self.nodes: Tuple[int, ...] = tuple(nodes)
         """The defining nodes for this element.
 
-        :type: :obj:`typing.Tuple` [
-            :class:`int`, :class:`int`, :class:`int`]
+        :type: :obj:`typing.Tuple` [:class:`int`, ...]
         """
 
     def __eq__(self, other: Any) -> bool:
@@ -456,12 +455,12 @@ class NodeString:
     def __init__(self, *nodes: int, name: Optional[str] = None) -> None:
         if len(nodes) < 2:
             raise CardError('At least two node required')
-        self.name = name
+        self.name: Optional[str] = name
         """An optional name used to identify the node string.
 
         :type: :obj:`typing.Optional` [:class:`str`]
         """
-        self.nodes = tuple(nodes)
+        self.nodes: Tuple[int, ...] = tuple(nodes)
         """The defining nodes of the node strings.
 
         :type: :obj:`typing.Tuple` [:class:`int`]

@@ -2,8 +2,7 @@
 
 This module defines the :class:`py2dm.ReaderBase` interface, as well as
 subclasses implementing this interface to provide variations optimised
-for specific use-cases. Refer to the implementation classes
-:class:`py2dm.Reader` and :class:`py2dm.LazyReader for details.
+for specific use-cases.
 """
 
 import abc
@@ -50,7 +49,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filepath: str, **kwargs: Any) -> None:
-        self.name = 'Unnamed mesh'
+        self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
 
         If the ``GM "<name>"`` or ``MESHNAME "<name>"`` cards are
@@ -153,7 +152,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of elements, cast this iterator to
         :class:`list`.
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 elements = list(mesh.elements)
@@ -173,7 +172,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of nodes, cast this iterator to
         :class:`list`.
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)
@@ -194,7 +193,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of node strings instead, pass this
         iterator into the ``list()`` constructor instead:
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)

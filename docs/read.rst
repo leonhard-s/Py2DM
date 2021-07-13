@@ -8,13 +8,13 @@ The preferred way to use this class is via the context manager interface:
 
 .. code-block:: python3
 
-    >>> with py2dm.Reader('path/to/mesh.2dm') as mesh:
-    ...   print(mesh)
-    ...
-    Py2DM Reader
-        5 nodes
-        4 elements
-        2 node strings
+   >>> with py2dm.Reader('path/to/mesh.2dm') as mesh:
+   ...   print(mesh)
+   ...
+   Py2DM Reader
+      5 nodes
+      4 elements
+      2 node strings
 
 Basic usage
 ===========
@@ -28,15 +28,15 @@ Additionally, the :attr:`py2dm.Reader.extent` property allows finding the extrem
 
 .. code-block:: python3
 
-    with py2dm.Reader('path/to/mesh.2dm') as mesh:
+   with py2dm.Reader('path/to/mesh.2dm') as mesh:
 
-        start = time.time()
-        _ = mesh.extent
-        print(time.time() - start)  # ~1.6 seconds
+      start = time.time()
+      _ = mesh.extent
+      print(time.time() - start)  # ~1.6 seconds
 
-        start = time.time()
-        _ = mesh.extent
-        print(time.time() - start)  # ~0.0 seconds
+      start = time.time()
+      _ = mesh.extent
+      print(time.time() - start)  # ~0.0 seconds
 
 Sequential access
 -----------------
@@ -47,14 +47,14 @@ As a shorthand, you can also use the :attr:`py2dm.Reader.nodes`, :attr:`py2dm.Re
 
 .. code-block:: python3
 
-    >>> with py2dm.Reader('path/to/mesh.2dm') as mesh:
-    ...   for node in mesh.nodes:
-    ...     if node.id % 10 == 0:
-    ...       print(node)
-    ...
-    Node #10: (1200.0, 200.0, 20.0)
-    Node #20: (1120.0, 220.0, 10.0)
-    (...)
+   >>> with py2dm.Reader('path/to/mesh.2dm') as mesh:
+   ...   for node in mesh.nodes:
+   ...    if node.id % 10 == 0:
+   ...      print(node)
+   ...
+   Node #10: (1200.0, 200.0, 20.0)
+   Node #20: (1120.0, 220.0, 10.0)
+   (...)
 
 Random access
 -------------
@@ -67,12 +67,12 @@ Lazy read mode (NYI)
 ====================
 
 .. note::
-    
-    This feature is not yet available in this version of Py2DM.
+   
+   This feature is not yet available in this version of Py2DM.
 
 Reader class interface
 ======================
 
 .. autoclass:: py2dm.Reader
-    :inherited-members:
-    :members:
+   :inherited-members:
+   :members:
