@@ -152,7 +152,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of elements, cast this iterator to
         :class:`list`.
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 elements = list(mesh.elements)
@@ -172,7 +172,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of nodes, cast this iterator to
         :class:`list`.
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)
@@ -193,7 +193,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         If you prefer a list of node strings instead, pass this
         iterator into the ``list()`` constructor instead:
 
-        .. code-block:: python
+        .. code-block:: python3
 
             with py2dm.Reader('mesh.2dm') as mesh:
                 nodes = list(mesh.nodes)
