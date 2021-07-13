@@ -12,7 +12,7 @@ Nodes
 =====
 
 .. autoclass:: py2dm.Node
-    :members:
+   :members:
 
 Elements
 ========
@@ -21,43 +21,43 @@ Base classes
 ------------
 
 .. autoclass:: py2dm.Element
-    :members:
+   :members:
 
 .. autoclass:: py2dm.LinearElement
-    :members:
+   :members:
 
 .. autoclass:: py2dm.TriangularElement
-    :members:
+   :members:
 
 .. autoclass:: py2dm.QuadrilateralElement
-    :members:
+   :members:
 
 Element types
 -------------
 
 .. autoclass:: py2dm.Element2L
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element3L
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element3T
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element4Q
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element6T
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element8Q
-    :members:
+   :members:
 
 .. autoclass:: py2dm.Element9Q
-    :members:
+   :members:
 
 Node strings
 ============
 
 .. autoclass:: py2dm.NodeString
-    :members:
+   :members:

@@ -13,11 +13,11 @@ Py2DM does support zero-based entity indices when the `zero_index` flag is set a
 
 .. code-block:: python3
 
-    with py2dm.Reader('path/to/mesh.2dm) as mesh:
-      assert mesh.node(0)  # Invalid
+   with py2dm.Reader('path/to/mesh.2dm) as mesh:
+     assert mesh.node(0)  # Invalid
 
-    with py2dm.Reader('path/to/mesh.2dm', zero_index=True) as mesh:
-      assert mesh.node(0)  # No exception raised
+   with py2dm.Reader('path/to/mesh.2dm', zero_index=True) as mesh:
+     assert mesh.node(0)  # No exception raised
 
 Invalid ID ranges
 =================
@@ -28,7 +28,7 @@ This in turn means that the default :class:`py2dm.Reader` class does not support
 
 .. note::
 
-    A utility for renumbering meshes with arbitrary ID ranges to use consecutive IDs is planned, but not yet available in the current version of Py2DM. See `issue #4 <issue-4>`_ in the repository for details.
+   A utility for renumbering meshes with arbitrary ID ranges to use consecutive IDs is planned, but not yet available in the current version of Py2DM. See `issue #4 <issue-4>`_ in the repository for details.
 
 BASEMENT mesh format
 ====================
@@ -61,19 +61,19 @@ As a workaround, you can use the following snippet to update the file after it w
 
 .. code-block:: python3
 
-    # This reads the mesh file written by Py2DM backwards until a
-    # non-whitespace character is found. The file is then truncated
-    # so it ends just before the trailing whitespace, as required.
+   # This reads the mesh file written by Py2DM backwards until a
+   # non-whitespace character is found. The file is then truncated
+   # so it ends just before the trailing whitespace, as required.
 
-    with open('path/to/my/mesh.2dm', 'rb+') as f:
-        f.seek(0, os.SEEK_END)
-        while not f.read(1).strip():
-            f.seek(-2, os.SEEK_CUR)
-        f.truncate()
+   with open('path/to/my/mesh.2dm', 'rb+') as f:
+      f.seek(0, os.SEEK_END)
+      while not f.read(1).strip():
+         f.seek(-2, os.SEEK_CUR)
+      f.truncate()
 
 .. note::
 
-    Some text editors will automatically add trailing newlines when saving, which might undo this workaround.
+   Some text editors will automatically add trailing newlines when saving, which might undo this workaround.
 
 TUFLOW format
 =============
@@ -86,9 +86,9 @@ The following information is a summary of `this post <TUFLOW format post>`_ in t
 
 .. note::
 
-    In addition to the cards above, some TUFLOW meshes also contain georeferencing information in their header, as well as for all nodes and elements.
+   In addition to the cards above, some TUFLOW meshes also contain georeferencing information in their header, as well as for all nodes and elements.
 
-    See `issue #3 <issue-3>`_ for details.
+   See `issue #3 <issue-3>`_ for details.
 
 .. _2DM format specification: https://www.xmswiki.com/wiki/SMS:2D_Mesh_Files_*.2dm
 .. _BASEMENT format specification: https://git.ee.ethz.ch/BASEMENTpublic/basemesh-v2/-/wikis/reference/2d-mesh-format
