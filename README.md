@@ -114,7 +114,7 @@ Py2DM attempts to strike a balance of supporting these custom format variants wi
     ...
   ```
 
-- Zero-based indices are support if the `zero_index` flag is set upon reader instantiation:
+- Zero-based indices are supported if the `zero_index` flag is set upon reader instantiation:
 
   ```py
   with py2dm.Reader('mesh.2dm', zero_index=True) as mesh:
