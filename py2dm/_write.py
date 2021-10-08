@@ -281,7 +281,7 @@ class Writer:
         if self._num_materials < 0:
             self._num_materials = element.num_materials
         elif element.num_materials < self._num_materials:
-            raise ValueError(f'Mesh requires {self._num_materials} elements, '
+            raise ValueError(f'Mesh requires {self._num_materials} materials, '
                              f'element has {element.num_materials}')
         elif element.num_materials > self._num_materials:
             warnings.warn(

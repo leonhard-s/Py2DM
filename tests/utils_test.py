@@ -2,6 +2,7 @@
 
 import os
 import unittest
+import shutil
 import tempfile
 from typing import Tuple
 
@@ -75,3 +76,95 @@ class TestTriangleConverter(unittest.TestCase):
                     # namely 1-6-2-4-3-5
                     py2dm.Element6T(20, 15, 70, 16, 35, 23, 71),
                     'bad element returned')
+
+
+class UnsortedIdConverter(unittest.TestCase):
+    """Test cases for the `convert_unsorted_nodes` parser."""
+
+    _DATA_DIR = os.path.join('tests', 'data', 'external', 'mdal')
+
+    _temp_dir: tempfile.TemporaryDirectory[str]
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._temp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self._temp_dir.cleanup()
+
+    @classmethod
+    def data(cls, filename: str) -> str:
+        """Return an absolute path to a synthetic test file."""
+        return os.path.abspath(
+            os.path.join(cls._DATA_DIR, filename))
+
+    def convert(self, filename: str) -> str:
+        """Convert an input file and open the converted copy."""
+        # Copy input to temporary directory
+        in_path = os.path.join(self._temp_dir.name, filename)
+        shutil.copy(self.data(filename), in_path)
+        # Convert
+        py2dm.utils.convert_unsorted_nodes(in_path)
+        # Return converted file's path
+        basename, ext = os.path.splitext(filename)
+        return os.path.join(self._temp_dir.name, f'{basename}_converted{ext}')
+
+    def test_triangle_e6t(self) -> None:
+        path = self.convert('triangleE6T.2dm')
+        with self.assertRaises(py2dm.errors.FormatError):
+            py2dm.Reader(path).open()
+
+    def test_unordered_ids(self) -> None:
+        path = self.convert('unordered_ids.2dm')
+        py2dm.Reader(path).open()
+
+
+class RandomIdConverter(unittest.TestCase):
+    """Test cases for the `convert_random_nodes` parser."""
+
+    _DATA_DIR = os.path.join('tests', 'data', 'external', 'mdal')
+
+    _temp_dir: tempfile.TemporaryDirectory[str]
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._temp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self._temp_dir.cleanup()
+
+    @classmethod
+    def data(cls, filename: str) -> str:
+        """Return an absolute path to a synthetic test file."""
+        return os.path.abspath(
+            os.path.join(cls._DATA_DIR, filename))
+
+    def convert(self, filename: str) -> str:
+        """Convert an input file and open the converted copy."""
+        # Copy input to temporary directory
+        in_path = os.path.join(self._temp_dir.name, filename)
+        shutil.copy(self.data(filename), in_path)
+        # Convert
+        py2dm.utils.convert_random_nodes(in_path)
+        # Return converted file's path
+        basename, ext = os.path.splitext(filename)
+        return os.path.join(self._temp_dir.name, f'{basename}_converted{ext}')
+
+    def test_triangle_e6t(self) -> None:
+        path = self.convert('triangleE6T.2dm')
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(mesh.num_elements, 6)
+            self.assertEqual(mesh.num_nodes, 22)
+            self.assertEqual(mesh.num_node_strings, 0)
+            self.assertEqual(mesh.element(1).card, 'E6T')
+
+    def test_unordered_ids(self) -> None:
+        path = self.convert('unordered_ids.2dm')
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(mesh.num_elements, 2)
+            self.assertEqual(mesh.num_nodes, 5)
+            self.assertEqual(mesh.num_node_strings, 0)
+            self.assertEqual(mesh.element(1).card, 'E4Q')
+            self.assertEqual(mesh.element(2).card, 'E3T')
