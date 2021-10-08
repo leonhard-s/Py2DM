@@ -7,14 +7,85 @@ compatibility modes, format converters and the likes.
 
 import os
 import warnings
-from typing import List, Union
+from typing import List, Optional, Union
 
-from ._entities import Element3T, Element6T
+from ._entities import (Element, Element3T, Element6T, NodeString, Node,
+                        element_factory)
 from ._write import Writer
 
 __all__ = [
+    'convert_unsorted_nodes',
     'triangle_to_2dm'
 ]
+
+
+def convert_unsorted_nodes(filepath: str) -> None:
+    """Compatibility parser for 2DM files with unsorted IDs.
+
+    The nodes and elements must still produce a consecutive block of
+    IDs, without gaps or duplicates. This parser will fix non-standard
+    ID ordering, but will not change any IDs.
+
+    The generated output file will be placed next to the input and
+    named ``<input-filename>_converted.2dm``.
+
+    If your node or elements IDs do have gaps or duplicates, please use
+    the :meth:`py2dm.utils.compat.convert_random_nodes` converter
+    instead.
+
+    :param filepath: Input 2DM file to parse.
+    :type filepath: :class:`str`
+    """
+    nodes: List[Node] = []
+    elements: List[Element] = []
+    node_strings: List[NodeString] = []
+    ns_done: bool = True
+    # Process input file
+    with open(filepath) as file_:
+        for line in file_:
+            if line.startswith('ND '):
+                nodes.append(Node.from_line(line))
+                continue
+            if line.startswith('NS '):
+                ns_previous: Optional[NodeString] = None
+                if ns_done:
+                    ns_previous = node_strings.pop()
+                node_string, ns_done = NodeString.from_line(line, ns_previous)
+                node_strings.append(node_string)
+                continue
+            if line.startswith('E'):
+                try:
+                    cls = element_factory(line)
+                except NotImplementedError:
+                    continue
+                elements.append(cls.from_line(line))
+    # Sort entities
+    # NOTE: An insertion sort would be faster for very large meshes
+    nodes = sorted(nodes, key=lambda n: n.id)
+    elements = sorted(elements, key=lambda e: e.id)
+    # Get material count
+    num_materials = elements[0].num_materials if elements else 0
+    # Write converted file
+    path, filename = os.path.split(filepath)
+    base_name, ext = os.path.splitext(filename)
+    filename = f'{base_name}_converted{ext}'
+    outpath = os.path.join(path, filename)
+    with Writer(outpath, materials=num_materials) as writer:
+        for index, node in enumerate(nodes):
+            writer.node(node)
+            if index % 100_000 == 0:
+                writer.flush_nodes()
+        writer.flush_nodes()
+        for index, element in enumerate(elements):
+            writer.element(element)
+            if index % 100_000 == 0:
+                writer.flush_elements()
+        writer.flush_elements()
+        for index, node_string in enumerate(node_strings):
+            writer.node_string(node_string)
+            if index % 1000 == 0:
+                writer.flush_node_strings()
+        writer.flush_node_strings()
 
 
 def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
