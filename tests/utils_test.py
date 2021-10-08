@@ -83,7 +83,7 @@ class UnsortedIdConverter(unittest.TestCase):
 
     _DATA_DIR = os.path.join('tests', 'data', 'external', 'mdal')
 
-    _temp_dir: tempfile.TemporaryDirectory[str]
+    _temp_dir: tempfile.TemporaryDirectory  # type: ignore
 
     def setUp(self) -> None:
         super().setUp()
@@ -91,7 +91,7 @@ class UnsortedIdConverter(unittest.TestCase):
 
     def tearDown(self) -> None:
         super().tearDown()
-        self._temp_dir.cleanup()
+        self._temp_dir.cleanup()  # type: ignore
 
     @classmethod
     def data(cls, filename: str) -> str:
@@ -102,13 +102,14 @@ class UnsortedIdConverter(unittest.TestCase):
     def convert(self, filename: str) -> str:
         """Convert an input file and open the converted copy."""
         # Copy input to temporary directory
-        in_path = os.path.join(self._temp_dir.name, filename)
+        in_path = os.path.join(self._temp_dir.name, filename)  # type: ignore
         shutil.copy(self.data(filename), in_path)
         # Convert
         py2dm.utils.convert_unsorted_nodes(in_path)
         # Return converted file's path
         basename, ext = os.path.splitext(filename)
-        return os.path.join(self._temp_dir.name, f'{basename}_converted{ext}')
+        return os.path.join(self._temp_dir.name,  # type: ignore
+                            f'{basename}_converted{ext}')
 
     def test_triangle_e6t(self) -> None:
         path = self.convert('triangleE6T.2dm')
@@ -125,7 +126,7 @@ class RandomIdConverter(unittest.TestCase):
 
     _DATA_DIR = os.path.join('tests', 'data', 'external', 'mdal')
 
-    _temp_dir: tempfile.TemporaryDirectory[str]
+    _temp_dir: tempfile.TemporaryDirectory  # type: ignore
 
     def setUp(self) -> None:
         super().setUp()
@@ -133,7 +134,7 @@ class RandomIdConverter(unittest.TestCase):
 
     def tearDown(self) -> None:
         super().tearDown()
-        self._temp_dir.cleanup()
+        self._temp_dir.cleanup()  # type: ignore
 
     @classmethod
     def data(cls, filename: str) -> str:
@@ -144,13 +145,14 @@ class RandomIdConverter(unittest.TestCase):
     def convert(self, filename: str) -> str:
         """Convert an input file and open the converted copy."""
         # Copy input to temporary directory
-        in_path = os.path.join(self._temp_dir.name, filename)
+        in_path = os.path.join(self._temp_dir.name, filename)  # type: ignore
         shutil.copy(self.data(filename), in_path)
         # Convert
         py2dm.utils.convert_random_nodes(in_path)
         # Return converted file's path
         basename, ext = os.path.splitext(filename)
-        return os.path.join(self._temp_dir.name, f'{basename}_converted{ext}')
+        return os.path.join(self._temp_dir.name,  # type: ignore
+                            f'{basename}_converted{ext}')
 
     def test_triangle_e6t(self) -> None:
         path = self.convert('triangleE6T.2dm')
