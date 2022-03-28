@@ -10,6 +10,8 @@ from typing import Any, Tuple
 import py2dm  # pylint: disable=import-error
 
 
+# pylint: disable=missing-function-docstring
+
 class TestWriter(unittest.TestCase):
     """Unit tests for the entire writer class API."""
 
@@ -369,8 +371,8 @@ class TestWriter(unittest.TestCase):
                 with self.assertRaises(TypeError):
                     _ = mesh.node_string(node_string, 1)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(  # type: ignore
-                        node_string, name='bogus')
+                    _ = mesh.node_string(
+                        node_string, name='bogus')  # type: ignore
         with self.subTest('pass args'):
             with py2dm.Writer(self.get_file()) as mesh:
                 self.assertEqual(
@@ -379,8 +381,8 @@ class TestWriter(unittest.TestCase):
                 with self.assertRaises(TypeError):
                     _ = mesh.node_string(node_string, 1)  # type: ignore
                 with self.assertRaises(TypeError):
-                    _ = mesh.node_string(  # type: ignore
-                        node_string, name='bogus')
+                    _ = mesh.node_string(
+                        node_string, name='bogus')  # type: ignore
         with self.subTest('closed'):
             writer = py2dm.Writer(self.get_file())
             with self.assertRaises(py2dm.errors.FileIsClosedError):
