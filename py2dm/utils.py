@@ -5,6 +5,7 @@ working with Py2DM as part of a larger workflow. This includes
 compatibility modes, format converters and the likes.
 """
 
+import csv
 import os
 import warnings
 from typing import Dict, List, Optional, Tuple, Union
@@ -82,6 +83,10 @@ def convert_random_nodes(
     filename = f'{base_name}_converted{ext}'
     outpath = os.path.join(path, filename)
     _write_converted(outpath, nodes, elements, node_strings)
+    # Export conversion table
+    if export_conversion_tables:
+        _write_conversion_tables(os.path.join(path, f'{base_name}_converted'),
+                                 translate_nodes, translate_elements)
 
 
 def convert_unsorted_nodes(filepath: str) -> None:
@@ -272,3 +277,27 @@ def _write_converted(filepath: str, nodes: List[Node], elements: List[Element],
             if index % 1000 == 0:
                 writer.flush_node_strings()
         writer.flush_node_strings()
+
+
+def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
+                             elements: Dict[int, int]) -> None:
+    """Helper function for exporting conversion tables as CSV files.
+
+    :param filepath: Output directory to write to. The "_nodes.csv" and
+        "_elements.csv" suffix is added automatically.
+    :type filepath: :class:`str`
+    :param nodes: Node conversion table
+    :type nodes: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    :param elements: Element conversion table
+    :type elements: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    """
+    with open(f'{filepath}_nodes.csv', 'w',
+              encoding='utf-8', newline='') as f_nodes:
+        writer = csv.writer(f_nodes)
+        writer.writerow(['Old Node ID', 'New Node ID'])
+        writer.writerows(nodes.items())
+    with open(f'{filepath}_elements.csv', 'w',
+              encoding='utf-8', newline='') as f_elements:
+        writer = csv.writer(f_elements)
+        writer.writerow(['Old Element ID', 'New Element ID'])
+        writer.writerows(elements.items())

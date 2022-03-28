@@ -1,5 +1,6 @@
 """Test cases for the py2dm.utils sub module."""
 
+import csv
 import os
 import unittest
 import shutil
@@ -7,6 +8,11 @@ import tempfile
 from typing import Tuple
 
 import py2dm  # pylint: disable=import-error
+# pylint: disable=import-error
+from py2dm.utils import convert_random_nodes, convert_unsorted_nodes
+
+
+# pylint: disable=missing-function-docstring
 
 
 class TestTriangleConverter(unittest.TestCase):
@@ -105,7 +111,7 @@ class UnsortedIdConverter(unittest.TestCase):
         in_path = os.path.join(self._temp_dir.name, filename)  # type: ignore
         shutil.copy(self.data(filename), in_path)
         # Convert
-        py2dm.utils.convert_unsorted_nodes(in_path)
+        convert_unsorted_nodes(in_path)
         # Return converted file's path
         basename, ext = os.path.splitext(filename)
         return os.path.join(self._temp_dir.name,  # type: ignore
@@ -142,20 +148,20 @@ class RandomIdConverter(unittest.TestCase):
         return os.path.abspath(
             os.path.join(cls._DATA_DIR, filename))
 
-    def convert(self, filename: str) -> str:
+    def convert(self, filename: str, export_conversion_tables: bool) -> str:
         """Convert an input file and open the converted copy."""
         # Copy input to temporary directory
         in_path = os.path.join(self._temp_dir.name, filename)  # type: ignore
         shutil.copy(self.data(filename), in_path)
         # Convert
-        py2dm.utils.convert_random_nodes(in_path)
+        convert_random_nodes(in_path, export_conversion_tables)
         # Return converted file's path
         basename, ext = os.path.splitext(filename)
         return os.path.join(self._temp_dir.name,  # type: ignore
                             f'{basename}_converted{ext}')
 
     def test_triangle_e6t(self) -> None:
-        path = self.convert('triangleE6T.2dm')
+        path = self.convert('triangleE6T.2dm', False)
         with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_elements, 6)
             self.assertEqual(mesh.num_nodes, 22)
@@ -163,10 +169,34 @@ class RandomIdConverter(unittest.TestCase):
             self.assertEqual(mesh.element(1).card, 'E6T')
 
     def test_unordered_ids(self) -> None:
-        path = self.convert('unordered_ids.2dm')
+        path = self.convert('unordered_ids.2dm', False)
         with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_elements, 2)
             self.assertEqual(mesh.num_nodes, 5)
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.element(1).card, 'E4Q')
             self.assertEqual(mesh.element(2).card, 'E3T')
+
+    def test_triangle_e6t_table(self) -> None:
+        path = self.convert('triangleE6T.2dm', True)
+        basename, _ = os.path.splitext(path)
+        nodes_path = f'{basename}_nodes.csv'
+        with open(nodes_path, 'r', encoding='utf8', newline='') as f_nodes:
+            header, *nodes = list(csv.reader(f_nodes))
+            self.assertEqual(header, ['Old Node ID', 'New Node ID'])
+            self.assertListEqual(nodes[:4], [
+                ['4', '1'],
+                ['5', '2'],
+                ['6', '3'],
+                ['7', '4'],
+            ])
+        elements_path = f'{basename}_elements.csv'
+        with open(elements_path, 'r', encoding='utf8', newline='') as f_elements:
+            header, *elements = list(csv.reader(f_elements))
+            self.assertEqual(header, ['Old Element ID', 'New Element ID'])
+            self.assertListEqual(elements[:4], [
+                ['1', '1'],
+                ['2', '2'],
+                ['3', '3'],
+                ['4', '4'],
+            ])
