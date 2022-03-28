@@ -145,7 +145,7 @@ def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
         output += '.2dm'
     # Check the header of the element file to get the number of element
     # attributes
-    with open(ele_file) as f_elements:
+    with open(ele_file, encoding='utf-8') as f_elements:
         line = f_elements.readline()
         if not line:
             raise RuntimeError('ELE file is empty')
@@ -156,7 +156,7 @@ def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
     with Writer(output, materials=num_materials) as mesh:
         mesh.write_header()
         # Add nodes
-        with open(node_file) as f_nodes:
+        with open(node_file, encoding='utf-8') as f_nodes:
             for index, line in enumerate(f_nodes):
                 if index == 0:
                     num_attributes = int(line.split()[2])
@@ -176,7 +176,7 @@ def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
                     mesh.flush_nodes()
         # Add elements
         cls = Element3T if nodes_per_element == 3 else Element6T
-        with open(ele_file) as f_elements:
+        with open(ele_file, encoding='utf-8') as f_elements:
             for index, line in enumerate(f_elements):
                 if index == 0:
                     continue
@@ -221,7 +221,7 @@ def _process_entities(
     node_strings: List[NodeString] = []
     ns_done: bool = True
     # Process input file
-    with open(filepath) as file_:
+    with open(filepath, encoding='utf-8') as file_:
         for line in file_:
             if line.startswith('ND '):
                 nodes.append(Node.from_line(line))
