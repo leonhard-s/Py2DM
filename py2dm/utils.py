@@ -128,7 +128,7 @@ def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
     shared vertices, then reconnecting all elements.
 
     Note that this function does not check for mesh topology and may
-    create self-intersections if the input meshes are not properly 
+    create self-intersections if the input meshes are not properly
     aligned.
     Likewise, this may create duplicate elements if the input meshes
     overlap exactly.
