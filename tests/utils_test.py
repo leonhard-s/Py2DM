@@ -5,11 +5,12 @@ import os
 import unittest
 import shutil
 import tempfile
-from typing import Tuple
+from typing import List, Tuple
 
 import py2dm  # pylint: disable=import-error
 # pylint: disable=import-error
-from py2dm.utils import convert_random_nodes, convert_unsorted_nodes
+from py2dm.utils import (convert_random_nodes, convert_unsorted_nodes,
+                         merge_meshes)
 
 
 # pylint: disable=missing-function-docstring
@@ -200,3 +201,56 @@ class RandomIdConverter(unittest.TestCase):
                 ['3', '3'],
                 ['4', '4'],
             ])
+
+
+class MeshMerger(unittest.TestCase):
+    """Tests for the py2dm.utils.merge_meshes method."""
+
+    _PATH = os.path.join('tests', 'data')
+
+    _temp_dir: tempfile.TemporaryDirectory  # type: ignore
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._temp_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self._temp_dir.cleanup()  # type: ignore
+
+    @classmethod
+    def data(cls, filename: str) -> str:
+        """Return an absolute path to a synthetic test file."""
+        return os.path.abspath(
+            os.path.join(cls._PATH, filename))
+
+    def merge(self, base: str, added: str) -> str:
+        path = os.path.join(self._temp_dir.name, 'merged.2dm')  # type: ignore
+        merge_meshes(self.data(base), self.data(added), path)
+        return path
+
+    def test_merge_successful(self) -> None:
+        path_base = self.data('merge-mesh-base.2dm')
+        path_added = self.data('merge-mesh-wrap.2dm.')
+        path_merged = self.merge(path_base, path_added)
+        with py2dm.Reader(path_merged) as merged:
+            self.assertEqual(merged.num_elements, 18)
+            self.assertEqual(merged.num_nodes, 16)
+            self.assertEqual(merged.num_node_strings, 0)
+            # Ensure the first mesh's entities are unchanged
+            with py2dm.Reader(path_base) as base:
+                for node in base.nodes:
+                    self.assertEqual(merged.node(node.id), node)
+                for element in base.elements:
+                    self.assertEqual(merged.element(element.id), element)
+            # Ensure all of the added mesh's entities are present
+            nodes: List[Tuple[float, float, float]] = []
+            elements: List[Tuple[int, ...]] = []
+            with py2dm.Reader(path_added) as added:
+                for node in added.nodes:
+                    nodes.append(node.pos)
+            for node in merged.nodes:
+                if node.pos in nodes:
+                    nodes.remove(node.pos)
+            self.assertEqual(len(nodes), 0)
+            self.assertEqual(len(elements), 0)

@@ -8,7 +8,7 @@ compatibility modes, format converters and the likes.
 import csv
 import os
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from ._entities import (Element, Element3T, Element6T, NodeString, Node,
                         element_factory)
@@ -17,6 +17,7 @@ from ._write import Writer
 __all__ = [
     'convert_random_nodes',
     'convert_unsorted_nodes',
+    'merge_meshes',
     'triangle_to_2dm'
 ]
 
@@ -118,6 +119,77 @@ def convert_unsorted_nodes(filepath: str) -> None:
     filename = f'{base_name}_converted{ext}'
     outpath = os.path.join(path, filename)
     _write_converted(outpath, nodes, elements, node_strings)
+
+
+def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
+    """Merge two meshes using their shared vertices.
+
+    This utility will merge two meshes by first merging them at their
+    shared vertices, then reconnecting all elements.
+
+    Note that this function does not check for mesh topology and may
+    create self-intersections if the input meshes are not properly 
+    aligned.
+    Likewise, this may create duplicate elements if the input meshes
+    overlap exactly.
+
+    :param mesh1: Base mesh to extend (all IDs are preserved).
+    :type mesh1: :class:`str`
+    :param mesh2: Mesh to add (IDs may change).
+    :type mesh2: :class:`str`
+    :param output: The output file to write. Defaults to
+        ``<mesh1>_<mesh2>.2dm``.
+    :type output: :class:`str`
+    """
+    if not output:
+        output, _ = os.path.splitext(mesh1)
+        output += f'_{os.path.basename(mesh2)}'
+        if not output.endswith('.2dm'):
+            output += '.2dm'
+    # Read all entities from the first mesh
+    nodes, elements, node_strings = _process_entities(mesh1)
+    mesh1_node_map: Dict[Tuple[float, float], int] = {}
+    mesh1_element_set: List[Set[int]] = []
+    mesh1_node_strings: List[str] = []
+    for node in nodes:
+        mesh1_node_map[(node.x, node.y)] = node.id
+    for element in elements:
+        mesh1_element_set.append(set(element.nodes))
+    for node_string in node_strings:
+        if node_string.name is not None:
+            mesh1_node_strings.append(node_string.name)
+    # Read all entities from the second mesh
+    new_nodes, new_elements, new_node_strings = _process_entities(mesh2)
+    # Deduplicate nodes
+    mesh2_node_map: Dict[int, int] = {}
+    for node in new_nodes:
+        marker: Tuple[float, float] = (node.x, node.y)
+        if marker in mesh1_node_map:
+            # Node already exists, reuse its ID
+            mesh2_node_map[node.id] = mesh1_node_map[marker]
+    # Create output mesh
+    with Writer(output) as writer:
+        # Add nodes
+        for node in nodes:
+            writer.node(node.id, node.x, node.y, node.z)
+        for node in new_nodes:
+            if node.id not in mesh2_node_map:
+                node.id = writer.node(-1, node.x, node.y, node.z)
+        writer.flush_nodes()
+        # Add elements
+        for element in elements:
+            writer.element(element.card, element.id, *element.nodes)
+        for element in new_elements:
+            if set(element.nodes) not in mesh1_element_set:
+                writer.element(element.card, -1, *element.nodes)
+        writer.flush_elements()
+        # Add node strings
+        for node_string in node_strings:
+            writer.node_string(*node_string.nodes, name=node_string.name)
+        for node_string in new_node_strings:
+            if node_string.name not in mesh1_node_strings:
+                writer.node_string(*node_string.nodes, name=node_string.name)
+        writer.flush_node_strings()
 
 
 def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
