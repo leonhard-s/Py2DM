@@ -231,7 +231,7 @@ class MeshMerger(unittest.TestCase):
 
     def test_merge_successful(self) -> None:
         path_base = self.data('merge-mesh-base.2dm')
-        path_added = self.data('merge-mesh-wrap.2dm.')
+        path_added = self.data('merge-mesh-wrap.2dm')
         path_merged = self.merge(path_base, path_added)
         with py2dm.Reader(path_merged) as merged:
             self.assertEqual(merged.num_elements, 18)
