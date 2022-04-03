@@ -174,12 +174,17 @@ def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
             writer.node(node.id, node.x, node.y, node.z)
         for node in new_nodes:
             if node.id not in mesh2_node_map:
-                node.id = writer.node(-1, node.x, node.y, node.z)
+                mesh2_node_map[node.id] = writer.node(
+                    -1, node.x, node.y, node.z)
+            node.id = mesh2_node_map[node.id]
         writer.flush_nodes()
         # Add elements
         for element in elements:
             writer.element(element.card, element.id, *element.nodes)
         for element in new_elements:
+            # Update element node IDs according to the node ID map
+            element.nodes = tuple(mesh2_node_map[n] for n in element.nodes)
+            # Only add unique elements
             if set(element.nodes) not in mesh1_element_set:
                 writer.element(element.card, -1, *element.nodes)
         writer.flush_elements()
