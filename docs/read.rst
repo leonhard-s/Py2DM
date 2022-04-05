@@ -41,7 +41,7 @@ Additionally, the :attr:`py2dm.Reader.extent` property allows finding the extrem
 Sequential access
 -----------------
 
-When retrieving mesh entities in bulk, it is generally recommended to use the iterator factory methods :meth:`py2dm.Reader.iter_nodes`, :meth:`py2dm.Reader.iter_elements`, and :meth:`py2dm.Reader.iter_node_strings`.
+When retrieving mesh entities in bulk, it is generally recommended using the iterator factory methods :meth:`py2dm.Reader.iter_nodes`, :meth:`py2dm.Reader.iter_elements`, and :meth:`py2dm.Reader.iter_node_strings`.
 
 As a shorthand, you can also use the :attr:`py2dm.Reader.nodes`, :attr:`py2dm.Reader.elements`, and :attr:`py2dm.Reader.node_strings` properties respectively. These behave exactly the same as if the corresponding iterator were called with default arguments.
 

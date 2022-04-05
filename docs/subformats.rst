@@ -2,14 +2,14 @@
 2DM Subformats
 ==============
 
-The original `2DM format specification`_ is generally not strictly followed by other software packages (or even later versions of SMS).
+The original `2DM format specification`_ is generally not strictly followed by other software packages or even later versions of SMS.
 
-This fragmentation makes it impossible to full support all substandards out of the gate. The following sections cover the main differences between subformats and how to use create compatible meshes using Py2DM.
+This fragmentation makes it impossible for Py2DM to fully support all substandards by default. The following sections cover the main differences between subformats and how to create compatible meshes using Py2DM.
 
 Zero-indexed ID ranges
 ======================
 
-Py2DM does support zero-based entity indices when the `zero_index` flag is set as part of the :class:`py2dm.Reader` class instantiation:
+Py2DM only supports zero-based entity indices when the `zero_index` flag is set as part of the :class:`py2dm.Reader` class instantiation:
 
 .. code-block:: python3
 
@@ -24,7 +24,7 @@ Invalid ID ranges
 
 The 2DM standard requires node and element IDs to be numbered consecutively. Py2DM uses this assertion to efficiently translate between node indices and their corresponding location in the file.
 
-This in turn means that the default :class:`py2dm.Reader` class does not support opening files with unsorted IDs, or ones with jumps in their ID ranges.
+This in turn means that the default :class:`py2dm.Reader` class does not support opening files with unsorted IDs, or ones with gaps in their ID ranges.
 
 .. note::
 
