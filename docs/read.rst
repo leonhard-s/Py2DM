@@ -95,6 +95,8 @@ Reader class interface
 
    .. autoproperty:: num_node_strings
    
+   .. autoproperty:: extent
+
    .. automethod:: close() -> None
 
    .. automethod:: open() -> None
