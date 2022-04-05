@@ -28,7 +28,7 @@ This in turn means that the default :class:`py2dm.Reader` class does not support
 
 .. note::
 
-   The `py2dm.utils` submodule provides converter functions that allow the conversion of such meshes into a format compatible with Py2DM.
+   The :mod:`py2dm.utils` submodule provides converter functions that allow the conversion of such meshes into a format compatible with Py2DM.
    
    For a list of available utility functions, see :doc:`utils`.
 
