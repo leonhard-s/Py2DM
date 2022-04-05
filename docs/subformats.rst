@@ -28,7 +28,9 @@ This in turn means that the default :class:`py2dm.Reader` class does not support
 
 .. note::
 
-   A utility for renumbering meshes with arbitrary ID ranges to use consecutive IDs is planned, but not yet available in the current version of Py2DM. See `issue #4 <issue-4>`_ in the repository for details.
+   The `py2dm.utils` submodule provides converter functions that allow the conversion of such meshes into a format compatible with Py2DM.
+   
+   For a list of available utility functions, see :doc:`utils`.
 
 BASEMENT mesh format
 ====================
@@ -95,4 +97,3 @@ The following information is a summary of `this post <TUFLOW format post>`_ in t
 .. _POSIX line definition: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
 .. _TUFLOW format post: https://fvforum.tuflow.com/index.php?/topic/31-2dm-mesh-file-format/
 .. _issue-3: https://github.com/leonhard-s/Py2DM/issues/3
-.. _issue-4: https://github.com/leonhard-s/Py2DM/issues/4
