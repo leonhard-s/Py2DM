@@ -26,7 +26,7 @@ This is the recommended mode when using Py2DM objects as your main data type, su
 
    Any mutable lists are deep copied when passing a class instance to any of these methods. There is no danger of unintentional mutation of an object's data after it was passed to this method.
 
-Alternatively, all of the above methods also support a factory interface, where the values passed are forwarded directly to the corresponding object constructor:
+Alternatively, all the above methods also support a factory interface, where the values passed are forwarded directly to the corresponding object constructor:
 
 .. code-block:: python3
 
@@ -41,7 +41,6 @@ When creating elements via the factory pattern, you must also specify the class 
       mesh.element('E3T', 1, 1, 2, 3)
       # Or, alternatively:
       mesh.element(py2dm.Element3T, 2, 3, 2, 4)
-
 
 Automatically assigned IDs
 --------------------------
@@ -63,7 +62,7 @@ The :meth:`py2dm.Writer.element`, :meth:`py2dm.Writer.node`, and :meth:`py2dm.Wr
 
 When the :class:`py2dm.Writer` class's context manager is existed, this is done automatically. Until then, the entire node and element list is cached in memory.
 
-For small meshes (<100'000 elements), this is not a problem. However, for larger meshes it may be preferrable to write the file in chunks of a few thousand entities (i.e. rows) at a time.
+For small meshes (<100'000 elements), this is not a problem. However, for larger meshes it may be preferable to write the file in chunks of a few thousand entities (i.e. rows) at a time.
 
 To do this, the :class:`py2dm.Writer` class provides the :meth:`py2dm.Writer.flush_elements`, :meth:`py2dm.Writer.flush_nodes`, and :meth:`py2dm.Writer.flush_node_strings` methods respectively, which allow committing the cache to disk, freeing up its memory:
 

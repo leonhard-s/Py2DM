@@ -2,14 +2,14 @@
 2DM Subformats
 ==============
 
-The original `2DM format specification`_ is generally not strictly followed by other software packages (or even later versions of SMS).
+The original `2DM format specification`_ is generally not strictly followed by other software packages or even later versions of SMS.
 
-This fragmentation makes it impossible to full support all substandards out of the gate. The following sections cover the main differences between subformats and how to use create compatible meshes using Py2DM.
+This fragmentation makes it impossible for Py2DM to fully support all substandards by default. The following sections cover the main differences between subformats and how to create compatible meshes using Py2DM.
 
 Zero-indexed ID ranges
 ======================
 
-Py2DM does support zero-based entity indices when the `zero_index` flag is set as part of the :class:`py2dm.Reader` class instantiation:
+Py2DM only supports zero-based entity indices when the `zero_index` flag is set as part of the :class:`py2dm.Reader` class instantiation:
 
 .. code-block:: python3
 
@@ -24,11 +24,13 @@ Invalid ID ranges
 
 The 2DM standard requires node and element IDs to be numbered consecutively. Py2DM uses this assertion to efficiently translate between node indices and their corresponding location in the file.
 
-This in turn means that the default :class:`py2dm.Reader` class does not support opening files with unsorted IDs, or ones with jumps in their ID ranges.
+This in turn means that the default :class:`py2dm.Reader` class does not support opening files with unsorted IDs, or ones with gaps in their ID ranges.
 
 .. note::
 
-   A utility for renumbering meshes with arbitrary ID ranges to use consecutive IDs is planned, but not yet available in the current version of Py2DM. See `issue #4 <issue-4>`_ in the repository for details.
+   The `py2dm.utils` submodule provides converter functions that allow the conversion of such meshes into a format compatible with Py2DM.
+   
+   For a list of available utility functions, see :doc:`utils`.
 
 BASEMENT mesh format
 ====================
@@ -95,4 +97,3 @@ The following information is a summary of `this post <TUFLOW format post>`_ in t
 .. _POSIX line definition: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
 .. _TUFLOW format post: https://fvforum.tuflow.com/index.php?/topic/31-2dm-mesh-file-format/
 .. _issue-3: https://github.com/leonhard-s/Py2DM/issues/3
-.. _issue-4: https://github.com/leonhard-s/Py2DM/issues/4
