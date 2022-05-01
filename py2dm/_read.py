@@ -6,9 +6,10 @@ for specific use-cases.
 """
 
 import abc
+import pathlib
 from types import TracebackType
 from typing import (Any, Iterator, List, NamedTuple, Optional, Tuple, Type,
-                    TypeVar)
+                    TypeVar, Union)
 
 from ._entities import Element, Node, NodeString, element_factory
 from .errors import FileIsClosedError
@@ -45,11 +46,12 @@ class ReaderBase(metaclass=abc.ABCMeta):
     readers.
     """
 
-    def __init__(self, filepath: str, **kwargs: Any) -> None:
+    def __init__(self, filepath: Union[str, pathlib.Path], **kwargs: Any) -> None:
         """Instantiate a new reader for `filepath`.
 
         :param filepath: Path to the mesh file to open.
-        :type filepath: :class:`str`
+        :type filepath: :obj:`typing.Union` [
+            :class:`str`, :class:`pathlib.Path` ]
         """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
@@ -421,7 +423,8 @@ class Reader(ReaderBase):
     very large meshes.
     """
 
-    def __init__(self, filepath: str, **kwargs: Any) -> None:
+    def __init__(self, filepath: Union[str, pathlib.Path],
+                 **kwargs: Any) -> None:
         super().__init__(filepath, **kwargs)
 
         self._cache_nodes: List[Node] = []

@@ -7,6 +7,7 @@ without any base class interfaces.
 
 import copy
 import os
+import pathlib
 from types import TracebackType
 from typing import Any, Dict, IO, List, Optional, Tuple, Type, Union, cast, overload
 import warnings
@@ -30,11 +31,12 @@ class Writer:
     methods is called.
     """
 
-    def __init__(self, filepath: str, **kwargs: Any) -> None:
+    def __init__(self, filepath: Union[str, pathlib.Path], **kwargs: Any) -> None:
         """Create a new mesh writer.
 
         :param filepath: Path to the mesh file to write.
-        :type filepath: :class:`str`
+        :type filepath: :obj:`typing.Union` [
+            :class:`str`, :class:`pathlib.Path`]
         """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.

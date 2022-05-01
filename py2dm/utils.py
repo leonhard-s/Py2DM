@@ -7,6 +7,7 @@ compatibility modes, format converters and the likes.
 
 import csv
 import os
+import pathlib
 import warnings
 from typing import Dict, List, Optional, Set, Tuple, Union
 
@@ -23,7 +24,8 @@ __all__ = [
 
 
 def convert_random_nodes(
-        filepath: str, export_conversion_tables: bool = False) -> None:
+        filepath: Union[str, pathlib.Path],
+        export_conversion_tables: bool = False) -> None:
     """Compatibility parser for 2DM files with invalid IDs.
 
     This parser will honour the semantics of any existing IDs (i.e.
@@ -90,7 +92,7 @@ def convert_random_nodes(
                                  translate_nodes, translate_elements)
 
 
-def convert_unsorted_nodes(filepath: str) -> None:
+def convert_unsorted_nodes(filepath: Union[str, pathlib.Path]) -> None:
     """Compatibility parser for 2DM files with unsorted IDs.
 
     The nodes and elements must still produce a consecutive block of
@@ -121,7 +123,9 @@ def convert_unsorted_nodes(filepath: str) -> None:
     _write_converted(outpath, nodes, elements, node_strings)
 
 
-def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
+def merge_meshes(mesh1: Union[str, pathlib.Path],
+                 mesh2: Union[str, pathlib.Path],
+                 output: Union[str, pathlib.Path] = '') -> None:
     """Merge two meshes using their shared vertices.
 
     This utility will merge two meshes by first merging them at their
@@ -134,12 +138,15 @@ def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
     overlap exactly.
 
     :param mesh1: Base mesh to extend (all IDs are preserved).
-    :type mesh1: :class:`str`
+    :type mesh1: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :param mesh2: Mesh to add (IDs may change).
-    :type mesh2: :class:`str`
+    :type mesh2: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :param output: The output file to write. Defaults to
         ``<mesh1>_<mesh2>.2dm``.
-    :type output: :class:`str`
+    :type output: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     """
     if not output:
         output, _ = os.path.splitext(mesh1)
@@ -197,7 +204,9 @@ def merge_meshes(mesh1: str, mesh2: str, output: str = '') -> None:
         writer.flush_node_strings()
 
 
-def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
+def triangle_to_2dm(node_file: Union[str, pathlib.Path],
+                    ele_file: Union[str, pathlib.Path],
+                    output: Union[str, pathlib.Path] = '') -> None:
     """Create a 2DM mesh from "Triangle" output files.
 
     This converter allows the creation of a Py2DM-compatible mesh from
@@ -205,12 +214,15 @@ def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
     `<https://www.cs.cmu.edu/~quake/triangle.html>`_.
 
     :param node_file: The Triangle NODE file to read.
-    :type node_file: :class:`str`
+    :type node_file: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :param ele_file: The Triangle ELE file to read.
-    :type ele_file: :class:`str`
+    :type ele_file: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :param output: The output file to write. Defaults to the name of
         the Triangle output, minus the iteration number.
-    :type output: :class:`str`
+    :type output: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     """
     if not output:
         output, _ = os.path.splitext(node_file)
@@ -286,12 +298,13 @@ def triangle_to_2dm(node_file: str, ele_file: str, output: str = '') -> None:
                     mesh.flush_elements()
 
 
-def _process_entities(
-        filepath: str) -> Tuple[List[Node], List[Element], List[NodeString]]:
+def _process_entities(filepath: Union[str, pathlib.Path]
+                      ) -> Tuple[List[Node], List[Element], List[NodeString]]:
     """Helper function for loading all mesh entities.
 
     :param filepath: Input 2DM file to parse.
-    :type filepath: :class:`str`
+    :type filepath: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :return: A tuple of nodes, elements, and node strings.
     :rtype: :obj:`typing.Tuple` [
        :obj:`typing.List` [:class:`py2dm.Node`],
@@ -324,12 +337,14 @@ def _process_entities(
     return nodes, elements, node_strings
 
 
-def _write_converted(filepath: str, nodes: List[Node], elements: List[Element],
+def _write_converted(filepath: Union[str, pathlib.Path],
+                     nodes: List[Node], elements: List[Element],
                      node_strings: List[NodeString]) -> None:
     """Helper function for writing meshes from memory.
 
     :param filepath: Output path to write to.
-    :type filepath: :class:`str`
+    :type filepath: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     :param nodes: Mesh nodes
     :type nodes: :obj:`typing.List` [:class:`py2dm.Node`]
     :param elements: Mesh elements
