@@ -46,12 +46,15 @@ class ReaderBase(metaclass=abc.ABCMeta):
     readers.
     """
 
-    def __init__(self, filepath: Union[str, pathlib.Path], **kwargs: Any) -> None:
+    def __init__(self, filepath: Union[str, pathlib.Path],
+                 encoding: str = 'utf-8', **kwargs: Any) -> None:
         """Instantiate a new reader for `filepath`.
 
         :param filepath: Path to the mesh file to open.
         :type filepath: :obj:`typing.Union` [
             :class:`str`, :class:`pathlib.Path` ]
+        :param encoding: Encoding to use when reading the file.
+        :type encoding: :class:`str`
         """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
@@ -64,6 +67,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         :type: :class:`str`
         """
         self._closed: bool = True
+        self._encoding: str = encoding
         self._filepath = filepath
         self._num_materials = int(kwargs.get('materials', 0))
         self._float_materials = bool(kwargs.get('allow_float_matid', True))
@@ -276,7 +280,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         Alternatively, you can use the context manager interface, in
         which case both methods will be called automatically.
         """
-        with open(self._filepath) as file_:
+        with open(self._filepath, encoding=self._encoding) as file_:
             self._metadata = _Metadata(
                 *scan_metadata(file_, self._filepath, self._zero_index))
         if self._metadata.name is not None:
@@ -434,7 +438,7 @@ class Reader(ReaderBase):
     def open(self) -> None:
         super().open()
         # Parse and load the entire file
-        with open(self._filepath) as file_:
+        with open(self._filepath, encoding=self._encoding) as file_:
             # Nodes
             if self.num_nodes > 0:
                 file_.seek(self._metadata.pos_nodes)

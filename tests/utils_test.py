@@ -182,7 +182,7 @@ class RandomIdConverter(unittest.TestCase):
         path = self.convert('triangleE6T.2dm', True)
         basename, _ = os.path.splitext(path)
         nodes_path = f'{basename}_nodes.csv'
-        with open(nodes_path, 'r', encoding='utf8', newline='') as f_nodes:
+        with open(nodes_path, 'r', encoding='utf-8', newline='') as f_nodes:
             header, *nodes = list(csv.reader(f_nodes))
             self.assertEqual(header, ['Old Node ID', 'New Node ID'])
             self.assertListEqual(nodes[:4], [
@@ -192,7 +192,7 @@ class RandomIdConverter(unittest.TestCase):
                 ['7', '4'],
             ])
         elements_path = f'{basename}_elements.csv'
-        with open(elements_path, 'r', encoding='utf8', newline='') as f_elements:
+        with open(elements_path, 'r', encoding='utf-8', newline='') as f_elements:
             header, *elements = list(csv.reader(f_elements))
             self.assertEqual(header, ['Old Element ID', 'New Element ID'])
             self.assertListEqual(elements[:4], [

@@ -31,12 +31,15 @@ class Writer:
     methods is called.
     """
 
-    def __init__(self, filepath: Union[str, pathlib.Path], **kwargs: Any) -> None:
+    def __init__(self, filepath: Union[str, pathlib.Path],
+                 encoding: str = 'utf-8', **kwargs: Any) -> None:
         """Create a new mesh writer.
 
         :param filepath: Path to the mesh file to write.
         :type filepath: :obj:`typing.Union` [
             :class:`str`, :class:`pathlib.Path`]
+        :param encoding: Text encoding to use for the file.
+        :type encoding: :class:`str`
         """
         self.name: str = 'Unnamed mesh'
         """Display name of the mesh.
@@ -47,6 +50,7 @@ class Writer:
         :type: :class:`str`
         """
         self._closed: bool = True
+        self._encoding: str = encoding
         self._filepath = filepath
         self._file: IO[str]
         self._num_materials = int(kwargs.get('materials', -1))
@@ -186,7 +190,7 @@ class Writer:
         Alternatively, you can use the context manager interface, in
         which case both methods will be called automatically.
         """
-        self._file = open(self._filepath, 'w')
+        self._file = open(self._filepath, 'w', encoding=self._encoding)
         self._closed = False
 
     @overload
