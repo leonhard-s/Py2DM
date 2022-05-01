@@ -1,5 +1,6 @@
 """Python implementation of the 2DM card parser."""
 
+import pathlib
 from typing import IO, List, Optional, Tuple, Union
 
 from ..errors import CardError, FormatError, ReadError
@@ -149,7 +150,7 @@ def parse_node_string(line: str,   allow_zero_index: bool = False,
     return nodes, is_done, name
 
 
-def scan_metadata(file_: IO[str], filename: str,
+def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
                   allow_zero_index: bool = False) -> _MetadataArgs:
     num_materials_per_elem: Optional[int] = None
     name: Optional[str] = None
@@ -175,6 +176,8 @@ def scan_metadata(file_: IO[str], filename: str,
             if line.startswith('MESH2D'):
                 mesh2d_found = True
             else:
+                if isinstance(filename, pathlib.Path):
+                    filename = str(filename)
                 raise ReadError(
                     'File is not a 2DM mesh file', filename)
         if line.startswith('ND'):
@@ -221,6 +224,8 @@ def scan_metadata(file_: IO[str], filename: str,
         elif line.startswith('NUM_MATERIALS_PER_ELEM'):
             num_materials_per_elem = int(line.split(maxsplit=2)[1])
     if not mesh2d_found:
+        if isinstance(filename, pathlib.Path):
+            filename = str(filename)
         raise ReadError('MESH2D tag not found', filename)
     return (num_nodes, num_elements, num_node_strings, name,
             num_materials_per_elem, nodes_start, elements_start,
