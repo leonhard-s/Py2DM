@@ -7,7 +7,7 @@ from py2dm import __version__ as version
 
 # Read long description
 readme_dir = os.path.dirname(os.path.abspath(__file__))
-with open(os.path.join(readme_dir, 'README.md')) as readme:
+with open(os.path.join(readme_dir, 'README.md'), encoding='utf-8') as readme:
     long_description = readme.read()
 
 # Create C extension

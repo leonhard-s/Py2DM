@@ -1,5 +1,8 @@
 """Defines custom exception and warning types used by Py2DM."""
 
+import pathlib
+from typing import Union
+
 
 class Py2DMError(Exception):
     """Base exception for any errors specific to Py2DM.
@@ -37,11 +40,13 @@ class ReadError(Py2DMError):
     mesh files.
 
     :param filename: Name of the file being read
+    :type filename: :obj:`typing.Union` [
+        :class:`str`, :class:`pathlib.Path`]
     """
 
-    def __init__(self, message: str, filename: str) -> None:
+    def __init__(self, message: str, filename: Union[str, pathlib.Path]) -> None:
         super().__init__(message)
-        self.filename: str = filename
+        self.filename: str = str(filename)
 
 
 class MissingCardError(ReadError):
