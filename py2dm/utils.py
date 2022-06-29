@@ -80,10 +80,15 @@ def convert_random_nodes(
         elements.append(element)
     # Update node strings
     node_strings: List[NodeString] = []
+    translate_node_strings: List[
+        Tuple[Optional[str], Tuple[Tuple[int, int], ...]]] = []
     for node_string in old_node_strings:
+        old_nodes = node_string.nodes
         node_string.nodes = tuple(
-            (translate_nodes[n] for n in node_string.nodes))
+            (translate_nodes[n] for n in old_nodes))
         node_strings.append(node_string)
+        translate_node_strings.append(
+            (node_string.name, tuple(zip(old_nodes, node_string.nodes))))
     # Write converted mesh
     path, filename = os.path.split(filepath)
     base_name, ext = os.path.splitext(filename)
@@ -94,7 +99,7 @@ def convert_random_nodes(
     if export_conversion_tables:
         _write_conversion_tables(os.path.join(path, f'{base_name}_converted'),
                                  translate_nodes, translate_elements,
-                                 encoding=encoding)
+                                 translate_node_strings, encoding=encoding)
 
 
 def convert_unsorted_nodes(filepath: Union[str, pathlib.Path],
@@ -396,6 +401,7 @@ def _write_converted(filepath: Union[str, pathlib.Path],
 
 def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
                              elements: Dict[int, int],
+                             node_strings: List[Tuple[Optional[str], Tuple[Tuple[int, int], ...]]],
                              encoding: str = 'utf-8') -> None:
     """Helper function for exporting conversion tables as CSV files.
 
@@ -406,16 +412,32 @@ def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
     :type nodes: :obj:`typing.Dict` [:class:`int`, :class:`int`]
     :param elements: Element conversion table
     :type elements: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    :param node_strings: Node string conversion table
+    :type node_strings: :obj:`typing.List` [ :obj:`typing.Tuple` [
+        :obj:`typing.Optional` [:class:`str`], :obj:`typing.Tuple` [
+        :obj:`typing.Tuple` [:class:`int`, :class:`int`], ...]]]
     :param encoding: The encoding to use for the output files.
     :type encoding: :class:`str`
     """
-    with open(f'{filepath}_nodes.csv', 'w',
-              encoding=encoding, newline='') as f_nodes:
-        writer = csv.writer(f_nodes)
-        writer.writerow(['Old Node ID', 'New Node ID'])
-        writer.writerows(nodes.items())
-    with open(f'{filepath}_elements.csv', 'w',
-              encoding=encoding, newline='') as f_elements:
-        writer = csv.writer(f_elements)
-        writer.writerow(['Old Element ID', 'New Element ID'])
-        writer.writerows(elements.items())
+    if nodes:
+        with open(f'{filepath}_nodes.csv', 'w',
+                  encoding=encoding, newline='') as f_nodes:
+            writer = csv.writer(f_nodes)
+            writer.writerow(['Old Node ID', 'New Node ID'])
+            writer.writerows(nodes.items())
+    if elements:
+        with open(f'{filepath}_elements.csv', 'w',
+                  encoding=encoding, newline='') as f_elements:
+            writer = csv.writer(f_elements)
+            writer.writerow(['Old Element ID', 'New Element ID'])
+            writer.writerows(elements.items())
+    if node_strings:
+        with open(f'{filepath}_node_strings.csv', 'w',
+                  encoding=encoding, newline='') as f_node_strings:
+            writer = csv.writer(f_node_strings)
+            writer.writerow(['Node String', 'Old Node IDs', 'New Node IDs'])
+            for index, (node_string, pairs) in enumerate(node_strings):
+                if node_string is None:
+                    node_string = f'NS_{index+1}'
+                old, new = (' '.join(str(s) for s in p) for p in zip(*pairs))
+                writer.writerow([node_string, old, new])
