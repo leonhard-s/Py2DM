@@ -149,11 +149,13 @@ class RandomIdConverter(unittest.TestCase):
         return os.path.abspath(
             os.path.join(cls._DATA_DIR, filename))
 
-    def convert(self, filename: str, export_conversion_tables: bool) -> str:
+    def convert(self, filename: str, export_conversion_tables: bool,
+                src_dir: str = _DATA_DIR) -> str:
         """Convert an input file and open the converted copy."""
         # Copy input to temporary directory
         in_path = os.path.join(self._temp_dir.name, filename)  # type: ignore
-        shutil.copy(self.data(filename), in_path)
+        src_path = os.path.abspath(os.path.join(src_dir, filename))
+        shutil.copy(src_path, in_path)
         # Convert
         convert_random_nodes(in_path, export_conversion_tables)
         # Return converted file's path
@@ -177,6 +179,13 @@ class RandomIdConverter(unittest.TestCase):
             self.assertEqual(mesh.num_node_strings, 0)
             self.assertEqual(mesh.element(1).card, 'E4Q')
             self.assertEqual(mesh.element(2).card, 'E3T')
+
+    def test_basic_unsorted_ns(self) -> None:
+        path = self.convert('basic-unsorted-ns.2dm', True, 'tests/data/')
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(mesh.num_elements, 4)
+            self.assertEqual(mesh.num_nodes, 5)
+            self.assertEqual(mesh.num_node_strings, 2)
 
     def test_triangle_e6t_table(self) -> None:
         path = self.convert('triangleE6T.2dm', True)
@@ -245,7 +254,6 @@ class MeshMerger(unittest.TestCase):
                     self.assertEqual(merged.element(element.id), element)
             # Ensure all of the added mesh's entities are present
             nodes: List[Tuple[float, float, float]] = []
-            elements: List[Tuple[int, ...]] = []
             with py2dm.Reader(path_added) as added:
                 for node in added.nodes:
                     nodes.append(node.pos)
@@ -253,4 +261,48 @@ class MeshMerger(unittest.TestCase):
                 if node.pos in nodes:
                     nodes.remove(node.pos)
             self.assertEqual(len(nodes), 0)
-            self.assertEqual(len(elements), 0)
+
+    def test_merge_node_strings(self) -> None:
+        path_base = self.data('merge-mesh-base-ns.2dm')
+        path_added = self.data('merge-mesh-wrap-ns.2dm')
+        path_merged = self.merge(path_base, path_added)
+        with py2dm.Reader(path_merged) as merged:
+            self.assertEqual(merged.num_elements, 18)
+            self.assertEqual(merged.num_nodes, 16)
+            self.assertEqual(merged.num_node_strings, 3)
+            # Ensure the first mesh's entities are unchanged
+            with py2dm.Reader(path_base) as base:
+                for node in base.nodes:
+                    self.assertEqual(merged.node(node.id), node)
+                for element in base.elements:
+                    self.assertEqual(merged.element(element.id), element)
+                for node_string in base.node_strings:
+                    if node_string.name is None:
+                        self.fail('Node string name is None')
+                    self.assertEqual(
+                        merged.node_string(node_string.name), node_string)
+            # Test various merged nodes
+            self.assertTupleEqual(merged.node(9).pos, (1.0, 1.0, 0.0))
+            self.assertTupleEqual(merged.node(10).pos, (2.0, 1.0, 0.0))
+            self.assertTupleEqual(merged.node(12).pos, (2.0, -1.0, 0.0))
+            self.assertTupleEqual(merged.node(16).pos, (-1.0, -2.0, 0.0))
+            # Test various merged elements
+            ele = merged.element(2)
+            self.assertEqual(ele.card, 'E3T')
+            self.assertTupleEqual(ele.nodes, (1, 2, 9))
+            ele = merged.element(9)
+            self.assertEqual(ele.card, 'E3T')
+            self.assertTupleEqual(ele.nodes, (9, 2, 10))
+            ele = merged.element(12)
+            self.assertEqual(ele.card, 'E3T')
+            self.assertTupleEqual(ele.nodes, (12, 2, 3))
+            # Test various merged node stirngs
+            ns_ = merged.node_string('base_one')
+            self.assertEqual(ns_.card, 'NS')
+            self.assertTupleEqual(ns_.nodes, (1, 2, 3))
+            ns_ = merged.node_string('base_two')
+            self.assertEqual(ns_.card, 'NS')
+            self.assertTupleEqual(ns_.nodes, (7, 8, 9))
+            ns_ = merged.node_string('wrap_three')
+            self.assertEqual(ns_.card, 'NS')
+            self.assertTupleEqual(ns_.nodes, (10, 11, 12, 14, 4))

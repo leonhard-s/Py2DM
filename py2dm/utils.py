@@ -218,7 +218,8 @@ def merge_meshes(mesh1: Union[str, pathlib.Path],
             writer.node_string(*node_string.nodes, name=node_string.name)
         for node_string in new_node_strings:
             if node_string.name not in mesh1_node_strings:
-                writer.node_string(*node_string.nodes, name=node_string.name)
+                nodes = tuple(mesh2_node_map[n] for n in node_string.nodes)
+                writer.node_string(*nodes, name=node_string.name)
         writer.flush_node_strings()
 
 
@@ -247,7 +248,6 @@ def triangle_to_2dm(node_file: Union[str, pathlib.Path],
     """
     if not output:
         output, _ = os.path.splitext(node_file)
-        print(f'Output (pre-tail): {output}')
         # Strip iteration number, if any
         if '.' in output:
             output, tail = output.rsplit('.', maxsplit=1)
@@ -256,7 +256,6 @@ def triangle_to_2dm(node_file: Union[str, pathlib.Path],
             except ValueError:
                 # Not an iteration number, re-append tail
                 output = f'{output}.{tail}'
-        print(f'Output (post-tail): {output}')
         output += '.2dm'
     # Check the header of the element file to get the number of element
     # attributes
@@ -347,7 +346,7 @@ def _process_entities(filepath: Union[str, pathlib.Path],
                 continue
             if line.startswith('NS '):
                 ns_previous: Optional[NodeString] = None
-                if ns_done:
+                if not ns_done:
                     ns_previous = node_strings.pop()
                 node_string, ns_done = NodeString.from_line(line, ns_previous)
                 node_strings.append(node_string)
