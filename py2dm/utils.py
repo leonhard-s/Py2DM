@@ -217,7 +217,8 @@ def merge_meshes(mesh1: Union[str, pathlib.Path],
         for node_string in node_strings:
             writer.node_string(*node_string.nodes, name=node_string.name)
         for node_string in new_node_strings:
-            if node_string.name not in mesh1_node_strings:
+            if (node_string.name is None
+                    or node_string.name not in mesh1_node_strings):
                 nodes = tuple(mesh2_node_map[n] for n in node_string.nodes)
                 writer.node_string(*nodes, name=node_string.name)
         writer.flush_node_strings()
