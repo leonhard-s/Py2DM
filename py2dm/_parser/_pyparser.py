@@ -162,9 +162,9 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
     last_node = -1
     last_element = -1
     # File seek offsets
-    nodes_start = 0
-    elements_start = 0
-    node_strings_start = 0
+    nodes_start = -1
+    elements_start = -1
+    node_strings_start = -1
 
     file_.seek(0)
     for index, line_raw in enumerate(iter(file_.readline, '')):
@@ -191,7 +191,7 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
                 raise FormatError('Node IDs have holes',
                                   filename, index+1)
             last_node = id_
-            if nodes_start == 0:
+            if nodes_start < 0:
                 nodes_start = file_.tell() - len(line_raw) - 1
             continue
         if line.split(maxsplit=1)[0] in _ELEMENT_CARDS:
@@ -205,13 +205,13 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
                 raise FormatError('Element IDs have holes',
                                   filename, index+1)
             last_element = id_
-            if elements_start == 0:
+            if elements_start < 0:
                 elements_start = file_.tell() - len(line_raw) - 1
             continue
         if (line.startswith('NS')
                 and '-' in line.split('#', maxsplit=1)[0]):
             num_node_strings += 1
-            if node_strings_start == 0:
+            if node_strings_start < 0:
                 node_strings_start = file_.tell() - len(line_raw) - 1
         elif line.startswith('MESHNAME') or line.startswith('GM'):
             # NOTE: This fails for meshes with double quotes in their
@@ -227,6 +227,13 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
         if isinstance(filename, pathlib.Path):
             filename = str(filename)
         raise ReadError('MESH2D tag not found', filename)
+    # Set *_start offsets to end of file if no instances were found
+    if nodes_start < 0:
+        nodes_start = file_.tell()
+    if elements_start < 0:
+        elements_start = file_.tell()
+    if node_strings_start < 0:
+        node_strings_start = file_.tell()
     return (num_nodes, num_elements, num_node_strings, name,
             num_materials_per_elem, nodes_start, elements_start,
             node_strings_start)
