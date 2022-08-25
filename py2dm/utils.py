@@ -366,7 +366,8 @@ def _process_entities(filepath: Union[str, pathlib.Path],
 def _write_converted(filepath: Union[str, pathlib.Path],
                      nodes: List[Node], elements: List[Element],
                      node_strings: List[NodeString],
-                     encoding: str = 'utf-8') -> None:
+                     encoding: str = 'utf-8',
+                     decimals: int = 10) -> None:
     """Helper function for writing meshes from memory.
 
     :param filepath: Output path to write to.
@@ -380,6 +381,8 @@ def _write_converted(filepath: Union[str, pathlib.Path],
     :type nodes: :obj:`typing.List` [:class:`py2dm.NodeString`]
     :param encoding: Text encoding to use.
     :type encoding: :class:`str`
+    :param decimals: Number of decimal places to use for node coords
+    :type decimals: :class:`int`
     """
     num_materials = elements[0].num_materials if elements else 0
     with Writer(filepath, materials=num_materials,
@@ -387,8 +390,8 @@ def _write_converted(filepath: Union[str, pathlib.Path],
         for index, node in enumerate(nodes):
             writer.node(node)
             if index % 100_000 == 0:
-                writer.flush_nodes()
-        writer.flush_nodes()
+                writer.flush_nodes(decimals=decimals)
+        writer.flush_nodes(decimals=decimals)
         for index, element in enumerate(elements):
             writer.element(element)
             if index % 100_000 == 0:

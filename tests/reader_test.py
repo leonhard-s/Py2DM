@@ -817,9 +817,8 @@ class TestReadExternal(unittest.TestCase):
 
     def test_tm_forum_1(self) -> None:
         path = self.data('tm_forum', 'HYDRO_AS-2D.2dm')
-        # NOTE: This mesh has holes in its element IDs and cannot be read by
-        # Py2DM. Once the converter/conformer has been added, it should be
-        # enabled here.
+        # NOTE: This file is invalid as per the specification and must raise
+        # an exception if opened. A converted version is tested separately.
         with self.assertRaises(py2dm.errors.FormatError):
             py2dm.Reader(path).open()
 
