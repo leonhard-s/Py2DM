@@ -823,7 +823,7 @@ class TestReadExternal(unittest.TestCase):
             py2dm.Reader(path).open()
 
     def test_tm_forum_1_converted(self) -> None:
-        path = self.data('tm_forum', 'HYDRO_AS-2D_converted.2dm')
+        path = self.data('tm_forum', 'converted', 'HYDRO_AS-2D_converted.2dm')
         with py2dm.Reader(path) as mesh:
             self.assertEqual(mesh.num_nodes, 57094)
 
