@@ -208,11 +208,11 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
             if elements_start < 0:
                 elements_start = file_.tell() - len(line_raw) - 1
             continue
-        if (line.startswith('NS')
-                and '-' in line.split('#', maxsplit=1)[0]):
-            num_node_strings += 1
+        if line.startswith('NS'):
             if node_strings_start < 0:
                 node_strings_start = file_.tell() - len(line_raw) - 1
+            if '-' in line.split('#', maxsplit=1)[0]:
+                num_node_strings += 1
         elif line.startswith('MESHNAME') or line.startswith('GM'):
             # NOTE: This fails for meshes with double quotes in their
             # mesh name, but that is an unreasonable thing to want to
