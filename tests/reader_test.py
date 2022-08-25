@@ -822,6 +822,22 @@ class TestReadExternal(unittest.TestCase):
         with self.assertRaises(py2dm.errors.FormatError):
             py2dm.Reader(path).open()
 
+    def test_tm_forum_1_converted(self) -> None:
+        path = self.data('tm_forum', 'HYDRO_AS-2D_converted.2dm')
+        with py2dm.Reader(path) as mesh:
+            self.assertEqual(mesh.num_nodes, 57094)
+
+            self.assertEqual(mesh.num_elements, 111759)
+            self.assertEqual(mesh.num_node_strings, 6)
+            node_strings = list(mesh.node_strings)
+
+            self.assertEqual(node_strings[0].num_nodes, 63)
+            self.assertEqual(node_strings[1].num_nodes, 9)
+            self.assertEqual(node_strings[2].num_nodes, 30)
+            self.assertEqual(node_strings[3].num_nodes, 4)
+            self.assertEqual(node_strings[4].num_nodes, 17)
+            self.assertEqual(node_strings[5].num_nodes, 31)
+
     def test_tm_forum_2(self) -> None:
         path = self.data('tm_forum', 'original_mesh.2dm')
         with py2dm.Reader(path, materials=1) as mesh:
