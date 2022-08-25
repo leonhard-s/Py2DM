@@ -340,17 +340,19 @@ def _process_entities(filepath: Union[str, pathlib.Path],
     node_strings: List[NodeString] = []
     ns_done: bool = True
     # Process input file
-    with open(filepath, encoding=encoding) as file_:
+    with open(filepath, 'r', encoding=encoding) as file_:
+        ns_previous: Optional[NodeString] = None
         for line in file_:
             if line.startswith('ND '):
                 nodes.append(Node.from_line(line))
                 continue
             if line.startswith('NS '):
-                ns_previous: Optional[NodeString] = None
-                if not ns_done:
-                    ns_previous = node_strings.pop()
                 node_string, ns_done = NodeString.from_line(line, ns_previous)
-                node_strings.append(node_string)
+                if ns_done:
+                    node_strings.append(node_string)
+                    ns_previous = None
+                else:
+                    ns_previous = node_string
                 continue
             if line.startswith('E'):
                 try:
