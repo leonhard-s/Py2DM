@@ -19,7 +19,7 @@ __all__ = [
     'convert_random_nodes',
     'convert_unsorted_nodes',
     'merge_meshes',
-    'triangle_to_2dm'
+    'triangle_to_2dm',
 ]
 
 
@@ -80,10 +80,15 @@ def convert_random_nodes(
         elements.append(element)
     # Update node strings
     node_strings: List[NodeString] = []
+    translate_node_strings: List[
+        Tuple[Optional[str], Tuple[Tuple[int, int], ...]]] = []
     for node_string in old_node_strings:
+        old_nodes = node_string.nodes
         node_string.nodes = tuple(
-            (translate_nodes[n] for n in node_string.nodes))
+            (translate_nodes[n] for n in old_nodes))
         node_strings.append(node_string)
+        translate_node_strings.append(
+            (node_string.name, tuple(zip(old_nodes, node_string.nodes))))
     # Write converted mesh
     path, filename = os.path.split(filepath)
     base_name, ext = os.path.splitext(filename)
@@ -94,7 +99,7 @@ def convert_random_nodes(
     if export_conversion_tables:
         _write_conversion_tables(os.path.join(path, f'{base_name}_converted'),
                                  translate_nodes, translate_elements,
-                                 encoding=encoding)
+                                 translate_node_strings, encoding=encoding)
 
 
 def convert_unsorted_nodes(filepath: Union[str, pathlib.Path],
@@ -212,8 +217,10 @@ def merge_meshes(mesh1: Union[str, pathlib.Path],
         for node_string in node_strings:
             writer.node_string(*node_string.nodes, name=node_string.name)
         for node_string in new_node_strings:
-            if node_string.name not in mesh1_node_strings:
-                writer.node_string(*node_string.nodes, name=node_string.name)
+            if (node_string.name is None
+                    or node_string.name not in mesh1_node_strings):
+                nodes = tuple(mesh2_node_map[n] for n in node_string.nodes)
+                writer.node_string(*nodes, name=node_string.name)
         writer.flush_node_strings()
 
 
@@ -242,7 +249,6 @@ def triangle_to_2dm(node_file: Union[str, pathlib.Path],
     """
     if not output:
         output, _ = os.path.splitext(node_file)
-        print(f'Output (pre-tail): {output}')
         # Strip iteration number, if any
         if '.' in output:
             output, tail = output.rsplit('.', maxsplit=1)
@@ -251,7 +257,6 @@ def triangle_to_2dm(node_file: Union[str, pathlib.Path],
             except ValueError:
                 # Not an iteration number, re-append tail
                 output = f'{output}.{tail}'
-        print(f'Output (post-tail): {output}')
         output += '.2dm'
     # Check the header of the element file to get the number of element
     # attributes
@@ -335,17 +340,19 @@ def _process_entities(filepath: Union[str, pathlib.Path],
     node_strings: List[NodeString] = []
     ns_done: bool = True
     # Process input file
-    with open(filepath, encoding=encoding) as file_:
+    with open(filepath, 'r', encoding=encoding) as file_:
+        ns_previous: Optional[NodeString] = None
         for line in file_:
             if line.startswith('ND '):
                 nodes.append(Node.from_line(line))
                 continue
             if line.startswith('NS '):
-                ns_previous: Optional[NodeString] = None
-                if ns_done:
-                    ns_previous = node_strings.pop()
                 node_string, ns_done = NodeString.from_line(line, ns_previous)
-                node_strings.append(node_string)
+                if ns_done:
+                    node_strings.append(node_string)
+                    ns_previous = None
+                else:
+                    ns_previous = node_string
                 continue
             if line.startswith('E'):
                 try:
@@ -359,7 +366,8 @@ def _process_entities(filepath: Union[str, pathlib.Path],
 def _write_converted(filepath: Union[str, pathlib.Path],
                      nodes: List[Node], elements: List[Element],
                      node_strings: List[NodeString],
-                     encoding: str = 'utf-8') -> None:
+                     encoding: str = 'utf-8',
+                     decimals: int = 10) -> None:
     """Helper function for writing meshes from memory.
 
     :param filepath: Output path to write to.
@@ -373,6 +381,8 @@ def _write_converted(filepath: Union[str, pathlib.Path],
     :type nodes: :obj:`typing.List` [:class:`py2dm.NodeString`]
     :param encoding: Text encoding to use.
     :type encoding: :class:`str`
+    :param decimals: Number of decimal places to use for node coords
+    :type decimals: :class:`int`
     """
     num_materials = elements[0].num_materials if elements else 0
     with Writer(filepath, materials=num_materials,
@@ -380,8 +390,8 @@ def _write_converted(filepath: Union[str, pathlib.Path],
         for index, node in enumerate(nodes):
             writer.node(node)
             if index % 100_000 == 0:
-                writer.flush_nodes()
-        writer.flush_nodes()
+                writer.flush_nodes(decimals=decimals)
+        writer.flush_nodes(decimals=decimals)
         for index, element in enumerate(elements):
             writer.element(element)
             if index % 100_000 == 0:
@@ -396,6 +406,7 @@ def _write_converted(filepath: Union[str, pathlib.Path],
 
 def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
                              elements: Dict[int, int],
+                             node_strings: List[Tuple[Optional[str], Tuple[Tuple[int, int], ...]]],
                              encoding: str = 'utf-8') -> None:
     """Helper function for exporting conversion tables as CSV files.
 
@@ -406,16 +417,32 @@ def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
     :type nodes: :obj:`typing.Dict` [:class:`int`, :class:`int`]
     :param elements: Element conversion table
     :type elements: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    :param node_strings: Node string conversion table
+    :type node_strings: :obj:`typing.List` [ :obj:`typing.Tuple` [
+        :obj:`typing.Optional` [:class:`str`], :obj:`typing.Tuple` [
+        :obj:`typing.Tuple` [:class:`int`, :class:`int`], ...]]]
     :param encoding: The encoding to use for the output files.
     :type encoding: :class:`str`
     """
-    with open(f'{filepath}_nodes.csv', 'w',
-              encoding=encoding, newline='') as f_nodes:
-        writer = csv.writer(f_nodes)
-        writer.writerow(['Old Node ID', 'New Node ID'])
-        writer.writerows(nodes.items())
-    with open(f'{filepath}_elements.csv', 'w',
-              encoding=encoding, newline='') as f_elements:
-        writer = csv.writer(f_elements)
-        writer.writerow(['Old Element ID', 'New Element ID'])
-        writer.writerows(elements.items())
+    if nodes:
+        with open(f'{filepath}_nodes.csv', 'w',
+                  encoding=encoding, newline='') as f_nodes:
+            writer = csv.writer(f_nodes)
+            writer.writerow(['Old Node ID', 'New Node ID'])
+            writer.writerows(nodes.items())
+    if elements:
+        with open(f'{filepath}_elements.csv', 'w',
+                  encoding=encoding, newline='') as f_elements:
+            writer = csv.writer(f_elements)
+            writer.writerow(['Old Element ID', 'New Element ID'])
+            writer.writerows(elements.items())
+    if node_strings:
+        with open(f'{filepath}_node_strings.csv', 'w',
+                  encoding=encoding, newline='') as f_node_strings:
+            writer = csv.writer(f_node_strings)
+            writer.writerow(['Node String', 'Old Node IDs', 'New Node IDs'])
+            for index, (node_string, pairs) in enumerate(node_strings):
+                if node_string is None:
+                    node_string = f'NS_{index+1}'
+                old, new = (' '.join(str(s) for s in p) for p in zip(*pairs))
+                writer.writerow([node_string, old, new])

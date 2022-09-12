@@ -5,9 +5,9 @@ in a cPython extension.
 */
 
 #define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
-#include "Python.h"
-#include "assert.h"
+#include <assert.h>
 #include <string>
 #include <vector>
 
@@ -109,11 +109,11 @@ bool is_whitespace(const char c)
  * occurrences.
  */
 std::vector<std::string>
-split_any_whitespace(const std::string s, const ssize_t maxsplit)
+split_any_whitespace(const std::string s, const Py_ssize_t maxsplit)
 {
     std::vector<std::string> chunks;
     size_t start, end = 0, len = s.length();
-    for (ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
+    for (Py_ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
         start = std::string::npos;
         for (size_t i = end; i < len; i++)
@@ -157,7 +157,7 @@ split_any_whitespace(const std::string s, const ssize_t maxsplit)
  * occurrences.
  */
 std::vector<std::string>
-split(const std::string s, std::string d, const ssize_t maxsplit)
+split(const std::string s, std::string d, const Py_ssize_t maxsplit)
 {
     /** NOTE: Python's `str.split()` splits on any whitespace character
      * if no delimiter is specified. Since this requires checking for
@@ -169,7 +169,7 @@ split(const std::string s, std::string d, const ssize_t maxsplit)
     }
     std::vector<std::string> chunks;
     size_t start, end = 0;
-    for (ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
+    for (Py_ssize_t splits = 0; maxsplit < 0 || splits < maxsplit; splits++)
     {
         start = s.find_first_not_of(d, end);
         if (start == std::string::npos)

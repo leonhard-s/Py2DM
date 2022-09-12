@@ -6,14 +6,15 @@ from typing import IO, List, Optional, Tuple, Union
 from ..errors import CardError, FormatError, ReadError
 
 _MetadataArgs = Tuple[
-    int,  # num_nodes
-    int,  # num_elements
-    int,  # num_node_strings
+    int,            # num_nodes
+    int,            # num_elements
+    int,            # num_node_strings
     Optional[str],  # name
     Optional[int],  # num_materials_per_elem
-    int,  # nodes start
-    int,  # elements start
-    int]  # node strings start
+    int,            # nodes start
+    int,            # elements start
+    int,            # node strings start
+]
 
 _ELEMENT_CARDS = [
     'E2L',
@@ -22,7 +23,7 @@ _ELEMENT_CARDS = [
     'E4Q',
     'E6T',
     'E8Q',
-    'E9Q'
+    'E9Q',
 ]
 
 
@@ -105,7 +106,7 @@ def parse_node(line: str, allow_zero_index: bool = False
     return id_, pos_x, pos_y, pos_z
 
 
-def parse_node_string(line: str,   allow_zero_index: bool = False,
+def parse_node_string(line: str, allow_zero_index: bool = False,
                       nodes: Optional[List[int]] = None
                       ) -> Tuple[List[int], bool, str]:
     """Parse a string into a node string.
@@ -162,9 +163,9 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
     last_node = -1
     last_element = -1
     # File seek offsets
-    nodes_start = 0
-    elements_start = 0
-    node_strings_start = 0
+    nodes_start = -1
+    elements_start = -1
+    node_strings_start = -1
 
     file_.seek(0)
     for index, line_raw in enumerate(iter(file_.readline, '')):
@@ -191,7 +192,7 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
                 raise FormatError('Node IDs have holes',
                                   filename, index+1)
             last_node = id_
-            if nodes_start == 0:
+            if nodes_start < 0:
                 nodes_start = file_.tell() - len(line_raw) - 1
             continue
         if line.split(maxsplit=1)[0] in _ELEMENT_CARDS:
@@ -205,14 +206,14 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
                 raise FormatError('Element IDs have holes',
                                   filename, index+1)
             last_element = id_
-            if elements_start == 0:
+            if elements_start < 0:
                 elements_start = file_.tell() - len(line_raw) - 1
             continue
-        if (line.startswith('NS')
-                and '-' in line.split('#', maxsplit=1)[0]):
-            num_node_strings += 1
-            if node_strings_start == 0:
+        if line.startswith('NS'):
+            if node_strings_start < 0:
                 node_strings_start = file_.tell() - len(line_raw) - 1
+            if '-' in line.split('#', maxsplit=1)[0]:
+                num_node_strings += 1
         elif line.startswith('MESHNAME') or line.startswith('GM'):
             # NOTE: This fails for meshes with double quotes in their
             # mesh name, but that is an unreasonable thing to want to
@@ -227,6 +228,13 @@ def scan_metadata(file_: IO[str], filename: Union[str, pathlib.Path],
         if isinstance(filename, pathlib.Path):
             filename = str(filename)
         raise ReadError('MESH2D tag not found', filename)
+    # Set *_start offsets to end of file if no instances were found
+    if nodes_start < 0:
+        nodes_start = file_.tell()
+    if elements_start < 0:
+        elements_start = file_.tell()
+    if node_strings_start < 0:
+        node_strings_start = file_.tell()
     return (num_nodes, num_elements, num_node_strings, name,
             num_materials_per_elem, nodes_start, elements_start,
             node_strings_start)

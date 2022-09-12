@@ -17,7 +17,7 @@ from .errors import FileIsClosedError, Py2DMWarning, WriteError
 from ._typing import Literal
 
 __all__ = [
-    'Writer'
+    'Writer',
 ]
 
 _MeshObject = Union[Entity, NodeString]
@@ -527,9 +527,11 @@ class Writer:
         if 'header' not in self._write_history:
             self.write_header()
         self._check_flush_state('node string')
-        self._file.writelines(
-            (f'{" ".join(n.to_line(**kwargs))}\n'
-             for n in cast(List[NodeString], self._cache[NodeString])))
+        # Remove whitespace around newline characters
+        for node_string in cast(List[NodeString], self._cache[NodeString]):
+            lines = ' '.join(node_string.to_line(**kwargs))
+            lines = '\n'.join(l.strip() for l in lines.split('\n'))
+            self._file.writelines((lines, '\n'))
         self._update_flush_state('node string')
         self._cache[NodeString].clear()
 

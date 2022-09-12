@@ -14,6 +14,7 @@ from ._entities import (Element, Element2L, Element3L, Element3T, Element4Q,
                         Element6T, Element8Q, Element9Q, Entity, LinearElement,
                         Node, NodeString, QuadrilateralElement,
                         TriangularElement)
+from ._parser import implementation
 from ._read import Reader, ReaderBase
 from ._write import Writer
 
@@ -28,6 +29,7 @@ __all__ = [
     'Element9Q',
     'Entity',
     'errors',
+    'implementation',
     'LinearElement',
     'Node',
     'NodeString',
@@ -36,7 +38,7 @@ __all__ = [
     'ReaderBase',
     'TriangularElement',
     'utils',
-    'Writer'
+    'Writer',
 ]
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
