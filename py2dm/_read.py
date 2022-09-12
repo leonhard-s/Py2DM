@@ -465,7 +465,7 @@ class Reader(ReaderBase):
                         element.materials = tuple(
                             element.materials[:self._num_materials])
                     self._cache_elements.append(element)
-                    if element.id >= self.num_elements:
+                    if element.id >= self.num_elements - self._zero_index:
                         break
             # Node strings
             file_.seek(self._metadata.pos_node_strings)
@@ -473,7 +473,7 @@ class Reader(ReaderBase):
             for line in file_:
                 if line.startswith('NS'):
                     node_string, is_done = NodeString.from_line(
-                        line, node_string)
+                        line, node_string, allow_zero_index=self._zero_index)
                     if is_done:
                         self._cache_node_strings.append(node_string)
                         node_string = None
