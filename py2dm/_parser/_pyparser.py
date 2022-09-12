@@ -105,7 +105,7 @@ def parse_node(line: str, allow_zero_index: bool = False
     return id_, pos_x, pos_y, pos_z
 
 
-def parse_node_string(line: str,   allow_zero_index: bool = False,
+def parse_node_string(line: str, allow_zero_index: bool = False,
                       nodes: Optional[List[int]] = None
                       ) -> Tuple[List[int], bool, str]:
     """Parse a string into a node string.
