@@ -17,7 +17,7 @@ from .errors import FileIsClosedError, Py2DMWarning, WriteError
 from ._typing import Literal
 
 __all__ = [
-    'Writer'
+    'Writer',
 ]
 
 _MeshObject = Union[Entity, NodeString]

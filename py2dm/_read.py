@@ -18,7 +18,7 @@ from ._typing import Literal, cached_property
 
 __all__ = [
     'Reader',
-    'ReaderBase'
+    'ReaderBase',
 ]
 
 _ReaderT = TypeVar('_ReaderT', bound='ReaderBase')

@@ -19,7 +19,7 @@ __all__ = [
     'convert_random_nodes',
     'convert_unsorted_nodes',
     'merge_meshes',
-    'triangle_to_2dm'
+    'triangle_to_2dm',
 ]
 
 

@@ -55,5 +55,5 @@ else:
 
 __all__ = [
     'Literal',
-    'cached_property'
+    'cached_property',
 ]

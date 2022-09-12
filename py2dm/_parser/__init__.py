@@ -16,5 +16,5 @@ __all__ = [
     'parse_element',
     'parse_node',
     'parse_node_string',
-    'scan_metadata'
+    'scan_metadata',
 ]

@@ -6,14 +6,15 @@ from typing import IO, List, Optional, Tuple, Union
 from ..errors import CardError, FormatError, ReadError
 
 _MetadataArgs = Tuple[
-    int,  # num_nodes
-    int,  # num_elements
-    int,  # num_node_strings
+    int,            # num_nodes
+    int,            # num_elements
+    int,            # num_node_strings
     Optional[str],  # name
     Optional[int],  # num_materials_per_elem
-    int,  # nodes start
-    int,  # elements start
-    int]  # node strings start
+    int,            # nodes start
+    int,            # elements start
+    int,            # node strings start
+]
 
 _ELEMENT_CARDS = [
     'E2L',
@@ -22,7 +23,7 @@ _ELEMENT_CARDS = [
     'E4Q',
     'E6T',
     'E8Q',
-    'E9Q'
+    'E9Q',
 ]
 
 

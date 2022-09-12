@@ -23,7 +23,7 @@ __all__ = [
     'Node',
     'NodeString',
     'QuadrilateralElement',
-    'TriangularElement'
+    'TriangularElement',
 ]
 
 _Material = Union[int, float]

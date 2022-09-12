@@ -36,7 +36,7 @@ __all__ = [
     'ReaderBase',
     'TriangularElement',
     'utils',
-    'Writer'
+    'Writer',
 ]
 
 __version__ = '0.2.1'
