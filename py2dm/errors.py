@@ -40,8 +40,7 @@ class ReadError(Py2DMError):
     mesh files.
 
     :param filename: Name of the file being read
-    :type filename: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type filename: :class:`str` | :class:`pathlib.Path`
     """
 
     def __init__(self, message: str, filename: Union[str, pathlib.Path]) -> None:

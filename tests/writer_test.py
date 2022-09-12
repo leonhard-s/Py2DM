@@ -33,7 +33,7 @@ class TestWriter(unittest.TestCase):
         """Return a writer class as well as its internal IO buffer.
 
         :return: A monkey-patched writer class using in-memory files.
-        :rtype: :obj:`typing.Tuple` [
+        :rtype: :class:`tuple` [
             :class:`py2dm.Writer`, :obj:`typing.IO` [:class:`str`]]
         """
         writer = py2dm.Writer(self.get_file())

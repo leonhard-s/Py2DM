@@ -51,8 +51,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
         """Instantiate a new reader for `filepath`.
 
         :param filepath: Path to the mesh file to open.
-        :type filepath: :obj:`typing.Union` [
-            :class:`str`, :class:`pathlib.Path` ]
+        :type filepath: :class:`str` | :class:`pathlib.Path`
         :param encoding: Encoding to use when reading the file.
         :type encoding: :class:`str`
         """
@@ -124,7 +123,7 @@ class ReaderBase(metaclass=abc.ABCMeta):
 
             Any successive calls will re-use this value.
 
-        :type: :obj:`typing.Tuple` [:class:`float`, :class:`float`,
+        :type: :class:`tuple` [:class:`float`, :class:`float`,
             :class:`float`, :class:`float`]
         """
         self._require_open()

@@ -645,7 +645,7 @@ def element_factory(line: str) -> Type[Element]:
     :raises ValueError: Raised if the given card doesn't match any
         :class:`py2dm.Element` subclass.
     :return: The element type matching the given card.
-    :rtype: :obj:`typing.Type` [:class:`py2dm.Element`]
+    :rtype: :obj:`type` [:class:`py2dm.Element`]
     """
     for element_group in Element.__subclasses__():
         for subclass in element_group.__subclasses__():

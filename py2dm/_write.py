@@ -36,8 +36,7 @@ class Writer:
         """Create a new mesh writer.
 
         :param filepath: Path to the mesh file to write.
-        :type filepath: :obj:`typing.Union` [
-            :class:`str`, :class:`pathlib.Path`]
+        :type filepath: :class:`str` | :class:`pathlib.Path`
         :param encoding: Text encoding to use for the file.
         :type encoding: :class:`str`
         """
@@ -226,15 +225,13 @@ class Writer:
         automatically based on the number of existing elements.
 
         :param element: The type of element to add.
-        :type element: :obj:`typing.Union` [
-            :obj:`typing.Type` [:class:`py2dm.Element`], :class:`str`]
+        :type element: :obj:`type` [:class:`py2dm.Element`] | :class:`str`
         :param id_: The ID of the element.
         :type id_: :class:`int`
         :param \*nodes: The IDs of the nodes belonging to this element.
         :type \*nodes: :class:`int`
         :param materials: A tuple of material IDs for the element.
-        :type materials: obj:`typing.Tuple` [:obj:`typing.Union` [
-            :class:`int`, :class:`float`]]
+        :type materials: :class:`tuple` [:class:`int` | :class:`float`]
         :return: The ID of the element that was added.
         :rtype: :class:`int`
         """
@@ -258,8 +255,7 @@ class Writer:
         automatically based on the number of existing elements.
 
         :param element: The instance or type of element to add.
-        :type element: :obj:`typing.Union` [:class:`py2dm.Element`,
-            :obj:`typing.Type` [:class:`py2dm.Element`], :class:`str`]
+        :type element: :class:`py2dm.Element` | :obj:`type` [:class:`py2dm.Element`] | :class:`str`]
         :param \*args: Extra arguments to forward to the class's
             initialiser.
         :type \*args: :obj:`typing.Any`
@@ -363,8 +359,7 @@ class Writer:
 
         :param node: The node instance to add, or the ID of the node to
             create.
-        :type node: :obj:`typing.Union` [
-            :class:`py2dm.Node`, :class:`int`]
+        :type node: :class:`py2dm.Node` | :class:`int`
         :param \*args: Extra arguments to forward to the
             :class:`py2dm.Node` initialiser.
         :type \*args: :obj:`typing.Any`
@@ -424,7 +419,7 @@ class Writer:
             string.
         :type \*nodes: :class:`int`
         :param name: An optional name for the node string.
-        :type name: :obj:`typing.Optional` [:class:`str`]
+        :type name: :class:`str` | :obj:`None`
         :return: The zero-based index of the node string in the mesh's
             list of node strings.
         :rtype: :class:`int`
@@ -446,8 +441,7 @@ class Writer:
 
         :param node_string: The node string instance to add, or the ID
             of the first node for the node string to create.
-        :type node: :obj:`typing.Union` [
-            :class:`py2dm.NodeString`, :class:`int`]
+        :type node: :class:`py2dm.NodeString` | :class:`int`
         :param \*args: Extra arguments to forward to the
             :class:`py2dm.NodeString` initialiser.
         :type \*args: :obj:`typing.Any`
