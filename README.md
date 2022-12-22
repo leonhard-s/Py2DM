@@ -3,7 +3,7 @@
 A Python module for reading and writing [SMS 2DM](https://www.xmswiki.com/wiki/SMS:2D_Mesh_Files_*.2dm) mesh files.
 
 ![PyPI - License](https://img.shields.io/pypi/l/py2dm)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/leonhard-s/py2dm/python-unittest.yml)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/leonhard-s/py2dm/python-unittest.yml?label=tests)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/leonhard-s/py2dm/python-publish.yml)
 [![Coveralls github branch](https://img.shields.io/coveralls/github/leonhard-s/Py2DM/master)](https://coveralls.io/github/leonhard-s/Py2DM)
 [![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/leonhard-s/py2dm)](https://www.codefactor.io/repository/github/leonhard-s/py2dm)
