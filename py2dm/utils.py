@@ -153,15 +153,12 @@ def merge_meshes(mesh1: Union[str, pathlib.Path],
     overlap exactly.
 
     :param mesh1: Base mesh to extend (all IDs are preserved).
-    :type mesh1: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type mesh1: :class:`str` | :class:`pathlib.Path`
     :param mesh2: Mesh to add (IDs may change).
-    :type mesh2: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type mesh2: :class:`str` | :class:`pathlib.Path`
     :param output: The output file to write. Defaults to
         ``<mesh1>_<mesh2>.2dm``.
-    :type output: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type output: :class:`str` | :class:`pathlib.Path`
     :param encoding: Text encoding to use for all file operations.
     :type encoding: :class:`str`
     """
@@ -235,15 +232,12 @@ def triangle_to_2dm(node_file: Union[str, pathlib.Path],
     `<https://www.cs.cmu.edu/~quake/triangle.html>`_.
 
     :param node_file: The Triangle NODE file to read.
-    :type node_file: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type node_file: :class:`str` | :class:`pathlib.Path`
     :param ele_file: The Triangle ELE file to read.
-    :type ele_file: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type ele_file: :class:`str` | :class:`pathlib.Path`
     :param output: The output file to write. Defaults to the name of
         the Triangle output, minus the iteration number.
-    :type output: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type output: :class:`str` | :class:`pathlib.Path`
     :param encoding: The encoding to use for input and output files.
     :type encoding: :class:`str`
     """
@@ -325,15 +319,14 @@ def _process_entities(filepath: Union[str, pathlib.Path],
     """Helper function for loading all mesh entities.
 
     :param filepath: Input 2DM file to parse.
-    :type filepath: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type filepath: :class:`str` | :class:`pathlib.Path`
     :param encoding: The encoding to use for input file.
     :type encoding: :class:`str`
     :return: A tuple of nodes, elements, and node strings.
-    :rtype: :obj:`typing.Tuple` [
-       :obj:`typing.List` [:class:`py2dm.Node`],
-       :obj:`typing.List` [:class:`py2dm.Element`],
-       :obj:`typing.List` [:class:`py2dm.NodeString`]]
+    :rtype: :class:`tuple` [
+       :class:`list` [:class:`py2dm.Node`],
+       :class:`list` [:class:`py2dm.Element`],
+       :class:`list` [:class:`py2dm.NodeString`]]
     """
     nodes: List[Node] = []
     elements: List[Element] = []
@@ -371,14 +364,13 @@ def _write_converted(filepath: Union[str, pathlib.Path],
     """Helper function for writing meshes from memory.
 
     :param filepath: Output path to write to.
-    :type filepath: :obj:`typing.Union` [
-        :class:`str`, :class:`pathlib.Path`]
+    :type filepath: :class:`str` | :class:`pathlib.Path`
     :param nodes: Mesh nodes
-    :type nodes: :obj:`typing.List` [:class:`py2dm.Node`]
+    :type nodes: :class:`list` [:class:`py2dm.Node`]
     :param elements: Mesh elements
-    :type nodes: :obj:`typing.List` [:class:`py2dm.Element`]
+    :type nodes: :class:`list` [:class:`py2dm.Element`]
     :param node_strings: Mesh node strings
-    :type nodes: :obj:`typing.List` [:class:`py2dm.NodeString`]
+    :type nodes: :class:`list` [:class:`py2dm.NodeString`]
     :param encoding: Text encoding to use.
     :type encoding: :class:`str`
     :param decimals: Number of decimal places to use for node coords
@@ -414,13 +406,13 @@ def _write_conversion_tables(filepath: str, nodes: Dict[int, int],
         "_elements.csv" suffix is added automatically.
     :type filepath: :class:`str`
     :param nodes: Node conversion table
-    :type nodes: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    :type nodes: :class:`dict` [:class:`int`, :class:`int`]
     :param elements: Element conversion table
-    :type elements: :obj:`typing.Dict` [:class:`int`, :class:`int`]
+    :type elements: :class:`dict` [:class:`int`, :class:`int`]
     :param node_strings: Node string conversion table
-    :type node_strings: :obj:`typing.List` [ :obj:`typing.Tuple` [
-        :obj:`typing.Optional` [:class:`str`], :obj:`typing.Tuple` [
-        :obj:`typing.Tuple` [:class:`int`, :class:`int`], ...]]]
+    :type node_strings: :class:`list` [ :class:`tuple` [
+        :class:`str` | :obj:`None`, :class:`tuple` [
+        :class:`tuple` [:class:`int`, :class:`int`], ...]]]
     :param encoding: The encoding to use for the output files.
     :type encoding: :class:`str`
     """

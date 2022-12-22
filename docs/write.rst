@@ -115,7 +115,7 @@ Writer class interface
 
    .. method:: element(element: py2dm.Element) -> int
 
-   .. automethod:: element(element: Union[typing.Type[py2dm.Element], str], id_: int, *nodes: int, materials: tuple[Union[int, float], ...] = None) -> int
+   .. automethod:: element(element: type[py2dm.Element] | str, id_: int, *nodes: int, materials: tuple[int | float, ...] = None) -> int
       :noindex:
 
    .. method:: node(node: py2dm.Node) -> int
