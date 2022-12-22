@@ -42,7 +42,7 @@ class cached_property(Generic[_T]):  # pragma: no cover
         ...
 
     def __get__(self, *args: Any, **kwargs: Any) -> Any:
-        pass
+        ...
 
 
 try:
